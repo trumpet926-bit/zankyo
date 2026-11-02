@@ -26,7 +26,10 @@ function micErrorMessage(e) {
 // ---------- タブ ----------
 document.querySelectorAll('.tab').forEach((tab) => {
   tab.addEventListener('click', () => {
-    if (tab.dataset.panel !== 'tuner') stopTuner(); // 他の画面ではマイクを使わない
+    if (tab.dataset.panel !== 'tuner') {
+      stopTuner(); // 他の画面ではマイクを使わない
+      stopDrone();
+    }
     document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t === tab));
     document.querySelectorAll('.panel').forEach((p) => {
       p.classList.toggle('active', p.id === `panel-${tab.dataset.panel}`);
@@ -427,6 +430,7 @@ $('tunerStartStop').addEventListener('click', async () => {
     $('tunerError').hidden = false;
     return;
   }
+  stopDrone(); // 基準音をマイクが拾わないように止める
   try {
     await tuner.start();
     $('tunerStartStop').textContent = 'マイクをオフ';
@@ -441,9 +445,90 @@ function setA4(value) {
   setReferencePitch(settings.a4);
   $('a4Value').textContent = settings.a4;
   saveSettings(settings);
+  drone.retune();
+  renderDrone();
 }
 $('a4Down').addEventListener('click', () => setA4(settings.a4 - 1));
 $('a4Up').addEventListener('click', () => setA4(settings.a4 + 1));
+
+// ---------- 基準音（音叉の代わり） ----------
+const drone = new Drone();
+const DRONE_LOWEST = 36; // C2
+const DRONE_HIGHEST = 84; // C6
+
+function renderDrone() {
+  $('droneName').textContent = nameWithOctave(KEY_NAMES[drone.midi % 12], drone.midi);
+  $('droneFreq').textContent = `${drone.frequency.toFixed(1)} Hz`;
+  $('droneToggle').textContent = drone.playing ? '止める' : '鳴らす';
+  $('droneToggle').classList.toggle('playing', drone.playing);
+  $('dronePrev').disabled = drone.midi <= DRONE_LOWEST;
+  $('droneNext').disabled = drone.midi >= DRONE_HIGHEST;
+  $('droneOctDown').disabled = drone.midi - 12 < DRONE_LOWEST;
+  $('droneOctUp').disabled = drone.midi + 12 > DRONE_HIGHEST;
+  document.querySelectorAll('#droneTimbres button').forEach((b) => {
+    b.classList.toggle('selected', b.dataset.timbre === drone.timbre);
+  });
+}
+
+function setDroneNote(midi) {
+  if (midi < DRONE_LOWEST || midi > DRONE_HIGHEST) return;
+  drone.setNote(midi);
+  settings.droneMidi = midi;
+  saveSettings(settings);
+  renderDrone();
+}
+
+// 今のオクターブの中で、指定の音（0=C 〜 11=B）を選ぶ
+function setDronePitchClass(pc) {
+  const octaveBase = drone.midi - (drone.midi % 12);
+  setDroneNote(octaveBase + pc);
+}
+
+function stopDrone() {
+  if (!drone.playing) return;
+  drone.stop();
+  renderDrone();
+}
+
+$('droneToggle').addEventListener('click', async () => {
+  if (drone.playing) {
+    stopDrone();
+    return;
+  }
+  stopTuner(); // マイクが基準音を拾わないようにする
+  await drone.start();
+  renderDrone();
+});
+$('dronePrev').addEventListener('click', () => setDroneNote(drone.midi - 1));
+$('droneNext').addEventListener('click', () => setDroneNote(drone.midi + 1));
+$('droneOctDown').addEventListener('click', () => setDroneNote(drone.midi - 12));
+$('droneOctUp').addEventListener('click', () => setDroneNote(drone.midi + 12));
+$('droneBb').addEventListener('click', () => setDronePitchClass(10));
+$('droneA').addEventListener('click', () => setDronePitchClass(9));
+
+DRONE_TIMBRES.forEach((t) => {
+  const btn = document.createElement('button');
+  btn.dataset.timbre = t.id;
+  btn.textContent = t.name;
+  btn.addEventListener('click', () => {
+    drone.setTimbre(t.id);
+    settings.droneTimbre = t.id;
+    saveSettings(settings);
+    renderDrone();
+  });
+  $('droneTimbres').appendChild(btn);
+});
+
+$('droneVolume').addEventListener('input', (e) => {
+  drone.setVolume(Number(e.target.value));
+  settings.droneVolume = drone.volume;
+  saveSettings(settings);
+});
+
+drone.midi = settings.droneMidi;
+drone.timbre = settings.droneTimbre;
+drone.volume = settings.droneVolume;
+$('droneVolume').value = drone.volume;
 
 // ---------- 録音 ----------
 const recorder = new Recorder();

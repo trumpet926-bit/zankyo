@@ -22,6 +22,9 @@ const DEFAULT_SETTINGS = {
   scaleRepeat: false,
   a4: 442, // 基準のA（ラ）の周波数
   tunerSensitivity: 4, // 1=鈍い 〜 5=敏感
+  droneMidi: 70, // 基準音の高さ（70 = B♭4）
+  droneTimbre: 'fork', // 基準音の音色
+  droneVolume: 0.6, // 基準音の音量
   recWithMetronome: false,
 };
 

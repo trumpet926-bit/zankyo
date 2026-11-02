@@ -144,6 +144,40 @@
       <button class="btn primary big full-width" id="tunerStartStop">マイクをオン</button>
       <p class="error" id="tunerError" hidden></p>
 
+      <!-- 基準音（音叉の代わり） -->
+      <div class="drone-card">
+        <h2>基準音</h2>
+        <div class="drone-main">
+          <button class="round-btn small" id="dronePrev" aria-label="半音下げる">◀</button>
+          <div class="drone-note">
+            <div class="drone-name" id="droneName">B♭4</div>
+            <div class="drone-freq" id="droneFreq">466.2 Hz</div>
+          </div>
+          <button class="round-btn small" id="droneNext" aria-label="半音上げる">▶</button>
+          <button class="btn primary drone-toggle" id="droneToggle">鳴らす</button>
+        </div>
+        <div class="drone-row">
+          <div class="seg drone-quick">
+            <button id="droneBb">B♭</button>
+            <button id="droneA">A</button>
+          </div>
+          <span class="player-label">オクターブ</span>
+          <div class="seg drone-oct">
+            <button id="droneOctDown" aria-label="1オクターブ下げる">−</button>
+            <button id="droneOctUp" aria-label="1オクターブ上げる">＋</button>
+          </div>
+        </div>
+        <div class="drone-row">
+          <span class="player-label">音色</span>
+          <div class="seg" id="droneTimbres"></div>
+        </div>
+        <div class="drone-row">
+          <span class="player-label">音量</span>
+          <input type="range" id="droneVolume" min="0.1" max="1" step="0.05" class="bpm-slider">
+        </div>
+        <p class="note">鳴らしている間は、チューナーのマイクはオフになります。</p>
+      </div>
+
       <h2>感度</h2>
       <div class="sensitivity-row">
         <span class="note">鈍い</span>
@@ -346,6 +380,7 @@
   <script src="js/scale-player.js"></script>
   <script src="js/pitch.js"></script>
   <script src="js/tuner.js"></script>
+  <script src="js/drone.js"></script>
   <script src="js/recordings-db.js"></script>
   <script src="js/recorder.js"></script>
   <script src="js/player.js"></script>

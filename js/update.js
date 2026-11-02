@@ -8,7 +8,7 @@
   // 演奏・録音の最中や、文字を入力している最中は更新しない
   function busy() {
     const active = document.activeElement;
-    return metronome.isRunning || recorder.isRecording || scalePlayer.isRunning || tuner.isRunning ||
+    return metronome.isRunning || recorder.isRecording || scalePlayer.isRunning || tuner.isRunning || drone.playing ||
       player.playing || syncHooks.active() ||
       (active && active.tagName === 'INPUT' && active.type === 'text');
   }

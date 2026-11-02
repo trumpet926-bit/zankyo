@@ -18,6 +18,7 @@ const FILES = [
   'js/scale-player.js',
   'js/pitch.js',
   'js/tuner.js',
+  'js/drone.js',
   'js/recordings-db.js',
   'js/recorder.js',
   'js/player.js',
