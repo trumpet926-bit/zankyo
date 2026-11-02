@@ -7,6 +7,33 @@ function setReferencePitch(hz) {
   referencePitch = hz;
 }
 
+// iPhone（Safari 17以降）での音の扱い方を切り替える
+// 普段は消音スイッチがオンでも鳴る「再生専用」、マイクを使うあいだは「再生と録音」にする
+function setAudioSessionForMic(useMic) {
+  if (navigator.audioSession) {
+    navigator.audioSession.type = useMic ? 'play-and-record' : 'playback';
+  }
+}
+
+// マイクを使い始める（失敗したら音の扱い方を元に戻す）
+async function openMicrophone() {
+  setAudioSessionForMic(true);
+  try {
+    // 楽器の音をそのまま拾うため、通話用の自動補正は切る
+    return await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+    });
+  } catch (e) {
+    setAudioSessionForMic(false);
+    throw e;
+  }
+}
+
+function closeMicrophone(stream) {
+  stream.getTracks().forEach((track) => track.stop());
+  setAudioSessionForMic(false);
+}
+
 function getAudioContext() {
   if (!sharedAudioContext) {
     sharedAudioContext = new (window.AudioContext || window.webkitAudioContext)();

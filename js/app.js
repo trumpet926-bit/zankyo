@@ -6,9 +6,21 @@ const scalePlayer = new ScalePlayer();
 const tuner = new Tuner();
 const $ = (id) => document.getElementById(id);
 
-// iPhone（Safari 17以降）で消音スイッチがオンでも音を鳴らす
-if (navigator.audioSession) {
-  navigator.audioSession.type = 'playback';
+// iPhone で消音スイッチがオンでも音を鳴らす
+setAudioSessionForMic(false);
+
+// マイクを使えなかったときの理由を、わかりやすい文にする
+function micErrorMessage(e) {
+  switch (e && e.name) {
+    case 'NotAllowedError':
+      return 'マイクの使用が許可されていません。iPhoneは「設定」→「アプリ」→「Safari」→「マイク」を「確認」か「許可」にして、アプリを開き直してください。';
+    case 'NotFoundError':
+      return 'マイクが見つかりませんでした。';
+    case 'NotReadableError':
+      return 'マイクを使えませんでした。通話中や、ほかのアプリがマイクを使っていないか確認してください。';
+    default:
+      return `マイクを使えませんでした。（${e && e.name ? e.name : '原因不明'}）`;
+  }
 }
 
 // ---------- タブ ----------
@@ -302,7 +314,7 @@ $('tunerStartStop').addEventListener('click', async () => {
     await tuner.start();
     $('tunerStartStop').textContent = 'マイクをオフ';
   } catch (e) {
-    $('tunerError').textContent = 'マイクを使えませんでした。ブラウザでマイクの使用を許可しているか確認してください。';
+    $('tunerError').textContent = micErrorMessage(e);
     $('tunerError').hidden = false;
   }
 });
@@ -420,7 +432,7 @@ async function startRecording() {
   try {
     await recorder.start();
   } catch (e) {
-    showRecError('マイクを使えませんでした。ブラウザでマイクの使用を許可しているか確認してください。');
+    showRecError(micErrorMessage(e));
     return;
   }
   if (settings.recWithMetronome && !metronome.isRunning) {

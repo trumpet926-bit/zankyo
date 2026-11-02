@@ -9,10 +9,7 @@ class Tuner {
   async start() {
     this.ctx = getAudioContext();
     await this.ctx.resume();
-    // 楽器の音をそのまま拾うため、通話用の自動補正は切る
-    this.stream = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
-    });
+    this.stream = await openMicrophone();
     this.source = this.ctx.createMediaStreamSource(this.stream);
     this.analyser = this.ctx.createAnalyser();
     this.analyser.fftSize = 2048;
@@ -27,7 +24,7 @@ class Tuner {
     this.isRunning = false;
     cancelAnimationFrame(this.frame);
     this.source.disconnect();
-    this.stream.getTracks().forEach((track) => track.stop()); // マイクを解放する
+    closeMicrophone(this.stream);
   }
 
   loop() {

@@ -7,10 +7,7 @@ class Recorder {
   }
 
   async start() {
-    // 楽器の音をそのまま録るため、通話用の自動補正は切る
-    this.stream = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
-    });
+    this.stream = await openMicrophone();
     // ブラウザが対応している形式を選ぶ（Chrome/Android は webm、iPhone は mp4）
     const mimeType = ['audio/webm;codecs=opus', 'audio/mp4', 'audio/webm']
       .find((type) => MediaRecorder.isTypeSupported(type));
@@ -44,7 +41,7 @@ class Recorder {
       this.mediaRecorder.onstop = () => {
         const blob = new Blob(this.chunks, { type: this.mediaRecorder.mimeType });
         this.source.disconnect();
-        this.stream.getTracks().forEach((track) => track.stop()); // マイクを解放する
+        closeMicrophone(this.stream);
         resolve({ blob, duration });
       };
       this.mediaRecorder.stop();
