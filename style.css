@@ -35,7 +35,7 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic UI", "Meiryo", sans-serif;
   background: var(--bg);
   color: var(--text);
-  padding-bottom: calc(64px + env(safe-area-inset-bottom));
+  padding-bottom: calc(76px + env(safe-area-inset-bottom));
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -307,7 +307,7 @@ label.checkbox { font-size: 15px; }
 .rec-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
 .rec-actions a { text-decoration: none; }
 
-.tab.recording::after { content: " ●"; color: #dc2626; }
+.tab.recording .tab-icon::after { content: ""; position: absolute; top: 2px; right: 10px; width: 8px; height: 8px; border-radius: 50%; background: #dc2626; }
 
 /* 書の透かし（画面の右下にうっすら） */
 body::before {
@@ -634,3 +634,38 @@ button, .tab, .chip, .key-btn {
   text-align: center;
 }
 .update-banner.done { background: var(--good); color: #ffffff; }
+
+/* 下のタブのアイコン */
+:root { --accent-soft: rgba(180, 83, 9, 0.14); }
+@media (prefers-color-scheme: dark) {
+  :root { --accent-soft: rgba(245, 158, 11, 0.2); }
+}
+.tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 2px 10px;
+  font-size: 10.5px;
+}
+.tab-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 30px;
+  border-radius: 15px;
+  transition: background 0.2s;
+}
+.tab-icon svg { width: 24px; height: 24px; }
+.tab-icon .line { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.tab-icon .beam { fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; }
+.tab-icon .dot { fill: currentColor; }
+.tab.active .tab-icon { background: var(--accent-soft); }
+.tab.active .tab-icon svg { animation: tab-pop 0.35s ease-out; }
+@keyframes tab-pop {
+  0% { transform: scale(0.8); }
+  60% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
