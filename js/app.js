@@ -51,20 +51,32 @@ async function keepScreenOn(on) {
 }
 
 // ---------- メトロノーム ----------
-function setBpm(value) {
-  const bpm = Math.min(240, Math.max(30, Math.round(value)));
-  settings.bpm = bpm;
-  metronome.bpm = bpm;
+// 部屋（みんなで合わせる）に入っている間は、テンポ・拍子・スタート／ストップを部屋に送る
+// 中身は sync-ui.js が差し込む
+const syncHooks = { active: () => false, toggle: null, bpm: null, beats: null };
+
+function showBpm(bpm) {
   $('bpmValue').textContent = bpm;
   $('bpmSlider').value = bpm;
   $('bigBpm').textContent = bpm;
-  saveSettings(settings);
 }
 
-function renderBeatDots() {
+function setBpm(value) {
+  const bpm = Math.min(240, Math.max(30, Math.round(value)));
+  settings.bpm = bpm;
+  saveSettings(settings);
+  showBpm(bpm);
+  if (syncHooks.active()) {
+    syncHooks.bpm(bpm);
+  } else {
+    metronome.bpm = bpm;
+  }
+}
+
+function renderBeatDots(count = metronome.beats) {
   [$('beatDots'), $('bigDots')].forEach((dots) => {
     dots.innerHTML = '';
-    for (let i = 0; i < metronome.beats; i++) {
+    for (let i = 0; i < count; i++) {
       const dot = document.createElement('div');
       dot.className = 'beat-dot';
       dots.appendChild(dot);
@@ -114,13 +126,7 @@ $('closeBigView').addEventListener('click', () => {
 });
 $('bigBpmDown').addEventListener('click', () => setBpm(settings.bpm - 1));
 $('bigBpmUp').addEventListener('click', () => setBpm(settings.bpm + 1));
-$('bigStartStop').addEventListener('click', () => {
-  if (metronome.isRunning) {
-    stopMetronome();
-  } else {
-    startMetronome();
-  }
-});
+$('bigStartStop').addEventListener('click', () => toggleMetronomeByUser());
 
 // 音と光のオン・オフ（通常の画面と大きな表示の両方にある）
 function renderToggles() {
@@ -145,8 +151,12 @@ $('bpmSlider').addEventListener('input', (e) => setBpm(Number(e.target.value)));
 
 $('beatsSelect').addEventListener('change', (e) => {
   settings.beats = Number(e.target.value);
-  metronome.beats = settings.beats;
   saveSettings(settings);
+  if (syncHooks.active()) {
+    syncHooks.beats(settings.beats);
+    return;
+  }
+  metronome.beats = settings.beats;
   renderBeatDots();
 });
 
@@ -175,31 +185,43 @@ function renderRhythms() {
   });
 }
 
+function showMetronomeRunning(running) {
+  $('startStop').textContent = running ? 'ストップ' : 'スタート';
+  $('bigStartStop').textContent = running ? 'ストップ' : 'スタート';
+  if (running) {
+    keepScreenOn(true);
+  } else {
+    clearBeatDisplay();
+    if ($('bigView').hidden) keepScreenOn(false);
+  }
+}
+
+// この端末のメトロノームだけを止める（部屋の全員は止めない）
 function stopMetronome() {
   if (!metronome.isRunning) return;
   metronome.stop();
-  $('startStop').textContent = 'スタート';
-  $('bigStartStop').textContent = 'スタート';
-  clearBeatDisplay();
-  if ($('bigView').hidden) keepScreenOn(false);
+  showMetronomeRunning(false);
 }
 
 async function startMetronome() {
   if (metronome.isRunning) return;
   scalePlayer.stop();
   await metronome.start();
-  $('startStop').textContent = 'ストップ';
-  $('bigStartStop').textContent = 'ストップ';
-  keepScreenOn(true);
+  showMetronomeRunning(true);
 }
 
-$('startStop').addEventListener('click', () => {
-  if (metronome.isRunning) {
+// スタート／ストップのボタン（部屋に入っていれば全員のメトロノームを動かす）
+function toggleMetronomeByUser() {
+  if (syncHooks.active()) {
+    syncHooks.toggle();
+  } else if (metronome.isRunning) {
     stopMetronome();
   } else {
     startMetronome();
   }
-});
+}
+
+$('startStop').addEventListener('click', () => toggleMetronomeByUser());
 
 // タップした間隔からテンポを決める（指が触れた瞬間に反応させて、間隔を正確にとる）
 let tapTimes = [];
@@ -530,7 +552,8 @@ async function startRecording() {
     showRecError(micErrorMessage(e));
     return;
   }
-  if (settings.recWithMetronome && !metronome.isRunning) {
+  // 部屋に入っているときは、部屋のメトロノームに合わせて録音する（勝手に鳴らし始めない）
+  if (settings.recWithMetronome && !metronome.isRunning && !syncHooks.active()) {
     await startMetronome();
     metronomeStartedByRecorder = true;
   }

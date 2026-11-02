@@ -1,0 +1,37 @@
+{
+  "rules": {
+    "rooms": {
+      "$code": {
+        ".read": "$code.matches(/^[0-9]{6}$/)",
+        "state": {
+          ".write": "$code.matches(/^[0-9]{6}$/)",
+          ".validate": "newData.hasChildren(['bpm', 'beats', 'running', 'anchorAt'])",
+          "bpm": { ".validate": "newData.isNumber() && newData.val() >= 30 && newData.val() <= 240" },
+          "beats": { ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 7" },
+          "running": { ".validate": "newData.isBoolean()" },
+          "anchorAt": { ".validate": "newData.isNumber()" },
+          "at": { ".validate": "newData.isNumber()" },
+          "by": { ".validate": "newData.isString() && newData.val().length <= 20" },
+          "action": { ".validate": "newData.isString() && newData.val().length <= 10" },
+          "$other": { ".validate": false }
+        },
+        "members": {
+          "$memberId": {
+            ".write": "$code.matches(/^[0-9]{6}$/) && $memberId.matches(/^[a-z0-9]{12}$/)",
+            ".validate": "newData.hasChildren(['name'])",
+            "name": { ".validate": "newData.isString() && newData.val().length <= 20" },
+            "joinedAt": { ".validate": "newData.isNumber()" },
+            "$other": { ".validate": false }
+          }
+        }
+      }
+    },
+    "clock": {
+      "$memberId": {
+        ".read": "$memberId.matches(/^[a-z0-9]{12}$/)",
+        ".write": "$memberId.matches(/^[a-z0-9]{12}$/)",
+        ".validate": "newData.isNumber()"
+      }
+    }
+  }
+}

@@ -491,3 +491,51 @@ button, .tab, .chip, .key-btn {
 .big-toggles { display: flex; gap: 12px; }
 .big-toggles .toggle { background: #1c1a28; border-color: #44403c; color: #a8a29e; }
 .big-toggles .toggle[aria-pressed="true"] { background: #f59e0b; border-color: #f59e0b; color: #1c1917; }
+
+/* みんなで合わせる */
+.sync-card {
+  margin: 24px 0 8px;
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+.sync-card h2 { margin-top: 0; }
+.sync-join { display: flex; gap: 8px; margin-top: 10px; }
+.code-input {
+  flex: 1;
+  min-width: 0;
+  font-size: 20px;
+  letter-spacing: 0.2em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.note.invited { color: var(--accent); font-weight: 700; }
+.sync-room { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.sync-code { font-size: 28px; letter-spacing: 0.12em; font-variant-numeric: tabular-nums; }
+.sync-qr { margin: 10px 0; text-align: center; }
+.qr-image { display: inline-block; padding: 8px; border-radius: 10px; background: #ffffff; line-height: 0; }
+.qr-image svg { width: 200px; height: 200px; }
+.sync-me { margin: 10px 0 6px; }
+.sync-members { display: flex; flex-wrap: wrap; gap: 6px; }
+.member { padding: 4px 10px; border-radius: 999px; background: var(--beat); font-size: 14px; }
+.member.me { background: var(--accent); color: var(--accent-text); font-weight: 700; }
+.sync-message { min-height: 1.6em; margin: 10px 0; font-size: 15px; font-weight: 600; }
+.sync-message.fresh { animation: sync-fresh 1.5s ease-out; }
+@keyframes sync-fresh {
+  from { color: var(--accent); transform: scale(1.04); }
+  to { color: var(--text); transform: scale(1); }
+}
+.sync-offset { flex-direction: column; align-items: stretch; gap: 4px; font-size: 14px; margin-top: 8px; }
+
+/* 大きな表示の部屋の情報 */
+.big-room {
+  position: absolute !important;
+  top: calc(16px + env(safe-area-inset-top));
+  left: 16px;
+  right: 64px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #d6cfc0;
+  white-space: pre-line;
+}

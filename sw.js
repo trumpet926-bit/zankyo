@@ -1,7 +1,7 @@
 // 電波がなくても動くようにする仕組み（サービスワーカー）
 // ネットにつながるときは常に最新のファイルを使い、つながらないときは保存しておいたファイルを使う
 
-const CACHE_NAME = 'zankyo-v2';
+const CACHE_NAME = 'zankyo-v3';
 const FILES = [
   './',
   'index.html',
@@ -18,6 +18,8 @@ const FILES = [
   'js/recordings-db.js',
   'js/recorder.js',
   'js/app.js',
+  'js/sync.js',
+  'js/sync-ui.js',
   'js/install.js',
   'icons/logo.png',
   'icons/icon-32.png',

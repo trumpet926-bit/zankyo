@@ -24,19 +24,66 @@ class Metronome {
     this.onBeat = null; // 拍が鳴った瞬間に呼ばれる（画面表示用）
     this.ctx = null;
     this.timer = null;
+    // みんなで合わせるとき用
+    this.audioLead = 0; // スピーカーから音が出るまでの遅れ（秒）。その分だけ早めに鳴らす
+    this.pending = null; // 次に切り替える時間軸
   }
 
   setRhythm(id) {
     this.rhythm = RHYTHMS.find((r) => r.id === id) || RHYTHMS[0];
   }
 
-  async start() {
+  async prepare() {
     this.ctx = getAudioContext();
     await this.ctx.resume();
-    this.output = this.ctx.createGain();
-    this.output.connect(this.ctx.destination);
+    if (!this.isRunning) {
+      this.output = this.ctx.createGain();
+      this.output.connect(this.ctx.destination);
+    }
+  }
+
+  async start() {
+    await this.prepare();
+    this.audioLead = 0;
+    this.pending = null;
     this.currentBeat = 0;
     this.nextTime = this.ctx.currentTime + 0.05;
+    this.run();
+  }
+
+  // 時間軸（anchor=1拍目の時刻［AudioContextの時刻・秒］、bpm、拍子）に合わせて鳴らし始める
+  // 1拍目の時刻がすでに過ぎていれば、今の位置の次の拍から刻む
+  async startSynced(timeline, audioLead) {
+    await this.prepare();
+    this.audioLead = audioLead;
+    this.pending = null;
+    this.alignTo(timeline, this.ctx.currentTime + audioLead + 0.02);
+    this.run();
+  }
+
+  // 鳴らしている途中で、指定の時刻から新しい時間軸に切り替える（テンポや拍子の変更）
+  changeAt(timeline) {
+    this.pending = timeline;
+  }
+
+  // 時計のずれを直すため、今の時間軸の位置に合わせ直す（ずれが小さいときだけ使う）
+  realign(timeline) {
+    if (!this.isRunning || this.pending) return;
+    this.alignTo(timeline, this.nextTime - 30 / this.bpm);
+  }
+
+  // from 以降で最初の拍を、次に鳴らす拍にする
+  alignTo({ anchor, bpm, beats }, from) {
+    const beatLen = 60 / bpm;
+    const n = Math.max(0, Math.ceil((from - anchor) / beatLen - 1e-6));
+    this.bpm = bpm;
+    this.beats = beats;
+    this.nextTime = anchor + n * beatLen;
+    this.currentBeat = n % beats;
+  }
+
+  run() {
+    if (this.isRunning) return;
     this.isRunning = true;
     this.timer = setInterval(() => this.schedule(), 25);
   }
@@ -44,18 +91,28 @@ class Metronome {
   stop() {
     clearInterval(this.timer);
     if (this.output) this.output.disconnect(); // 予約済みの刻みの音も止める
+    this.output = null;
+    this.pending = null;
     this.isRunning = false;
   }
 
   schedule() {
     const lookahead = 0.1; // 0.1秒先まで予約
-    while (this.nextTime < this.ctx.currentTime + lookahead) {
+    while (this.nextTime - this.audioLead < this.ctx.currentTime + lookahead) {
+      // 新しい時間軸の切り替え時刻に来たら、そちらに乗り換える
+      if (this.pending && this.nextTime >= this.pending.anchor - 30 / this.bpm) {
+        const timeline = this.pending;
+        this.pending = null;
+        this.alignTo(timeline, this.nextTime - 30 / this.bpm);
+        continue;
+      }
       const beat = this.currentBeat % this.beats;
       const beatLen = 60 / this.bpm;
+      const soundTime = Math.max(this.ctx.currentTime, this.nextTime - this.audioLead);
       if (this.sound) {
-        playClick(this.ctx, this.output, this.nextTime, beat === 0 && this.accent && this.beats > 1);
+        playClick(this.ctx, this.output, soundTime, beat === 0 && this.accent && this.beats > 1);
         this.rhythm.offsets.slice(1).forEach((offset) => {
-          playSubClick(this.ctx, this.output, this.nextTime + offset * beatLen);
+          playSubClick(this.ctx, this.output, soundTime + offset * beatLen);
         });
       }
       this.notifyBeat(this.nextTime, beat);

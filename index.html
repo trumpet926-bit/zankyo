@@ -83,6 +83,37 @@
         <button class="btn" id="openBigView">大きく表示</button>
       </div>
 
+      <!-- みんなで合わせる -->
+      <div class="sync-card">
+        <h2>みんなで合わせる</h2>
+        <div id="syncOut">
+          <p class="note" id="syncInvite">同じ部屋に入った人どうしで、メトロノームのテンポと拍がそろいます。インターネットにつながっている必要があります。</p>
+          <button class="btn primary full-width" id="syncCreate">部屋を作る</button>
+          <div class="sync-join">
+            <input type="text" inputmode="numeric" maxlength="6" id="syncCodeInput" placeholder="6桁の番号" class="code-input" autocomplete="off">
+            <button class="btn" id="syncJoin">部屋に入る</button>
+          </div>
+        </div>
+        <div id="syncIn" hidden>
+          <div class="sync-room">
+            <span>部屋 <b class="sync-code" id="syncCode"></b></span>
+            <button class="btn small" id="syncInviteBtn">招待する</button>
+          </div>
+          <div class="sync-qr" id="syncQr" hidden></div>
+          <div class="sync-me">あなたは <b id="syncMe"></b> です</div>
+          <div class="sync-members" id="syncMembers"></div>
+          <div class="sync-message" id="syncMessage"></div>
+          <label class="sync-offset">音のタイミング補正
+            <input type="range" id="syncOffset" min="-100" max="100" step="5" class="bpm-slider">
+            <span class="note" id="syncOffsetValue">0 ms</span>
+          </label>
+          <p class="note">ほかの人より音が早く聞こえるときは右へ、遅いときは左へ動かします。リズム・音・光は自分だけの設定です。</p>
+          <button class="btn danger small" id="syncLeave">部屋を出る</button>
+        </div>
+        <p class="note" id="syncStatus" hidden></p>
+        <p class="error" id="syncError" hidden></p>
+      </div>
+
       <p class="note">iPhoneで音が出ないときは、本体の消音スイッチ（マナーモード）をオフにしてください。</p>
     </section>
 
@@ -203,6 +234,7 @@
   <div class="big-view" id="bigView" hidden>
     <div class="big-flash" id="bigFlash"></div>
     <button class="big-close" id="closeBigView" aria-label="閉じる">×</button>
+    <div class="big-room" id="bigRoom" hidden></div>
     <div class="big-beat" id="bigBeat">–</div>
     <div class="big-dots" id="bigDots"></div>
     <div class="big-info"><span id="bigBpm">100</span> BPM</div>
@@ -235,6 +267,8 @@
   <script src="js/recordings-db.js"></script>
   <script src="js/recorder.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/sync.js"></script>
+  <script src="js/sync-ui.js"></script>
   <script src="js/install.js"></script>
 </body>
 </html>
