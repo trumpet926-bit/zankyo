@@ -347,3 +347,11 @@ body::before {
   margin-left: -1px;
   background: var(--text);
 }
+
+/* iPhone で、すばやく2回タップしたときに画面が拡大されないようにする（指2本の拡大はそのまま使える） */
+html { touch-action: manipulation; }
+button, .tab, .chip, .key-btn {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}

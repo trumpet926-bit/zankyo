@@ -118,9 +118,10 @@ $('startStop').addEventListener('click', () => {
   }
 });
 
-// タップした間隔からテンポを決める
+// タップした間隔からテンポを決める（指が触れた瞬間に反応させて、間隔を正確にとる）
 let tapTimes = [];
-$('tapTempo').addEventListener('click', () => {
+$('tapTempo').addEventListener('pointerdown', (e) => {
+  e.preventDefault();
   const now = performance.now();
   if (tapTimes.length && now - tapTimes[tapTimes.length - 1] > 2000) tapTimes = [];
   tapTimes.push(now);
