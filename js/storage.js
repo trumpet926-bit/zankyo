@@ -15,6 +15,7 @@ const DEFAULT_SETTINGS = {
   countIn: true,
   scaleRepeat: false,
   a4: 442, // 基準のA（ラ）の周波数
+  tunerSensitivity: 4, // 1=鈍い 〜 5=敏感
   recWithMetronome: false,
 };
 

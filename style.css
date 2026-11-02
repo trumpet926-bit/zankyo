@@ -327,3 +327,23 @@ body::before {
 }
 .app-header, main { position: relative; z-index: 1; }
 .tab-bar { z-index: 2; }
+
+/* チューナーの感度 */
+.sensitivity-row { display: flex; align-items: center; gap: 12px; }
+.sensitivity-row .note { margin: 0; white-space: nowrap; }
+.input-meter {
+  position: relative;
+  height: 10px;
+  margin: 12px 0 4px;
+  border-radius: 5px;
+  background: var(--beat);
+}
+.input-meter .level-bar { border-radius: 5px; }
+.level-mark {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--text);
+}

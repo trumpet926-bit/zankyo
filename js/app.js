@@ -270,9 +270,20 @@ function clearTunerDisplay() {
   $('tunerCents').innerHTML = '&nbsp;';
   $('meterNeedle').style.left = '50%';
   $('tunerDisplay').className = 'tuner-display';
+  if (!tuner.isRunning) $('tunerLevel').style.width = '0%';
 }
 
-tuner.onPitch = (freq) => {
+function setTunerSensitivity(level) {
+  settings.tunerSensitivity = level;
+  tuner.setSensitivity(level);
+  $('tunerSensitivity').value = level;
+  $('tunerLevelMark').style.left = `${rmsToLevel(tuner.minRms) * 100}%`;
+  saveSettings(settings);
+}
+$('tunerSensitivity').addEventListener('input', (e) => setTunerSensitivity(Number(e.target.value)));
+
+tuner.onPitch = (freq, rms) => {
+  $('tunerLevel').style.width = `${rmsToLevel(rms) * 100}%`;
   const now = performance.now();
   if (freq === null) {
     if (now - lastHeard > 300) recentFreqs = []; // 音が途切れたら、ためた値を捨てる
@@ -486,6 +497,7 @@ $('recWithMetronome').addEventListener('change', (e) => {
 
 // ---------- 初期表示 ----------
 setA4(settings.a4);
+setTunerSensitivity(settings.tunerSensitivity);
 loadRecordings();
 
 metronome.beats = settings.beats;

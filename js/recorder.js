@@ -51,11 +51,7 @@ class Recorder {
   loop() {
     if (!this.isRecording) return;
     this.analyser.getFloatTimeDomainData(this.buf);
-    let rms = 0;
-    for (let i = 0; i < this.buf.length; i++) rms += this.buf[i] * this.buf[i];
-    rms = Math.sqrt(rms / this.buf.length);
-    // -60dB〜0dB を 0〜1 にする
-    const level = Math.max(0, Math.min(1, (20 * Math.log10(rms + 1e-9) + 60) / 60));
+    const level = rmsToLevel(rmsOf(this.buf));
     if (this.onLevel) this.onLevel(level, (performance.now() - this.startedAt) / 1000);
     this.frame = requestAnimationFrame(() => this.loop());
   }

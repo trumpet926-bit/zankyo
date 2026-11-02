@@ -84,6 +84,18 @@
       <button class="btn primary big full-width" id="tunerStartStop">マイクをオン</button>
       <p class="error" id="tunerError" hidden></p>
 
+      <h2>感度</h2>
+      <div class="sensitivity-row">
+        <span class="note">鈍い</span>
+        <input type="range" id="tunerSensitivity" min="1" max="5" step="1" value="4" class="bpm-slider">
+        <span class="note">敏感</span>
+      </div>
+      <div class="input-meter">
+        <div class="level-bar" id="tunerLevel"></div>
+        <div class="level-mark" id="tunerLevelMark"></div>
+      </div>
+      <p class="note">バーはマイクに入っている音の大きさです。縦の線を越えると反応します。反応しにくいときは感度を上げ、まわりの音に反応してしまうときは下げてください。</p>
+
       <h2>基準の高さ（A）</h2>
       <div class="tempo-row">
         <button class="round-btn small" id="a4Down" aria-label="基準を下げる">−</button>

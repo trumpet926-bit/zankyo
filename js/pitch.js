@@ -1,12 +1,8 @@
 // 音の高さ（周波数）を求める（YIN法）
-// buf: マイクの波形データ、戻り値: 周波数(Hz)。音が小さい・はっきりしないときは null
+// buf: マイクの波形データ、threshold: 音程とみなす厳しさ（小さいほど厳しい）
+// 戻り値: 周波数(Hz)。音程がはっきりしないときは null
 
-function detectPitch(buf, sampleRate) {
-  let rms = 0;
-  for (let i = 0; i < buf.length; i++) rms += buf[i] * buf[i];
-  rms = Math.sqrt(rms / buf.length);
-  if (rms < 0.01) return null; // 音が小さすぎる
-
+function detectPitch(buf, sampleRate, threshold = 0.15) {
   const half = Math.floor(buf.length / 2);
   const minTau = Math.max(2, Math.floor(sampleRate / 2500)); // 2500Hz まで
   const maxTau = Math.min(half - 2, Math.floor(sampleRate / 40)); // 40Hz まで
@@ -34,7 +30,7 @@ function detectPitch(buf, sampleRate) {
   // 差が十分小さくなる最初の位置（＝1周期の長さ）を探す
   let tau = -1;
   for (let t = minTau; t <= maxTau; t++) {
-    if (cmnd[t] < 0.15) {
+    if (cmnd[t] < threshold) {
       while (t + 1 <= maxTau && cmnd[t + 1] < cmnd[t]) t++;
       tau = t;
       break;

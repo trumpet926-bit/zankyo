@@ -29,6 +29,18 @@ async function openMicrophone() {
   }
 }
 
+// 波形データの音の大きさ（RMS）
+function rmsOf(buf) {
+  let sum = 0;
+  for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
+  return Math.sqrt(sum / buf.length);
+}
+
+// 音の大きさをメーター用の 0〜1 にする（-60dB〜0dB）
+function rmsToLevel(rms) {
+  return Math.max(0, Math.min(1, (20 * Math.log10(rms + 1e-9) + 60) / 60));
+}
+
 function closeMicrophone(stream) {
   stream.getTracks().forEach((track) => track.stop());
   setAudioSessionForMic(false);
