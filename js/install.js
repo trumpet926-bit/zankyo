@@ -47,8 +47,11 @@
   if (dismissed()) return;
 
   if (isIOS) {
+    // Chrome・Edge・Firefox では共有ボタンがアドレスバーの近くにある
+    const isOtherBrowser = /CriOS|EdgiOS|FxiOS/.test(ua);
+    const where = isOtherBrowser ? 'アドレスバーの右にある' : '画面下の';
     show('ホーム画面に追加すると、アプリとして使えます',
-      '<ol><li>画面下の <b>共有ボタン</b>（□に↑のマーク）を押す</li>' +
+      `<ol><li>${where} <b>共有ボタン</b>（□に↑のマーク）を押す</li>` +
       '<li><b>「ホーム画面に追加」</b>を選ぶ（見当たらないときは下にスクロール）</li>' +
       '<li>右上の <b>「追加」</b>を押す</li></ol>');
     return;
