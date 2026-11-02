@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1a1726">
+  <meta name="description" content="メトロノーム・チューナー・音階・録音をひとつにまとめた楽器練習アプリ">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="残響">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>残響 PracticeTool</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-32.png" sizes="32x32" type="image/png">
+  <link rel="icon" href="icons/icon-192.png" sizes="192x192" type="image/png">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="app-header">
+    <h1 class="brand">
+      <img src="icons/logo.png" alt="残響" class="brand-logo">
+      <span class="brand-sub">PracticeTool</span>
+    </h1>
+  </header>
+
+  <main>
+    <!-- メトロノーム -->
+    <section class="panel active" id="panel-metronome">
+      <div class="bpm-display">
+        <button class="round-btn" id="bpmDown" aria-label="テンポを下げる">−</button>
+        <div>
+          <div class="bpm-value" id="bpmValue">100</div>
+          <div class="bpm-label">BPM</div>
+        </div>
+        <button class="round-btn" id="bpmUp" aria-label="テンポを上げる">＋</button>
+      </div>
+      <input type="range" id="bpmSlider" min="30" max="240" value="100" class="bpm-slider">
+
+      <div class="beat-dots" id="beatDots"></div>
+
+      <div class="row">
+        <label>拍子
+          <select id="beatsSelect">
+            <option value="1">1拍</option>
+            <option value="2">2拍</option>
+            <option value="3">3拍</option>
+            <option value="4" selected>4拍</option>
+            <option value="5">5拍</option>
+            <option value="6">6拍</option>
+            <option value="7">7拍</option>
+          </select>
+        </label>
+        <label class="checkbox"><input type="checkbox" id="accentCheck" checked> 1拍目を強調</label>
+      </div>
+
+      <div class="row">
+        <button class="btn primary big" id="startStop">スタート</button>
+        <button class="btn big" id="tapTempo">タップ</button>
+      </div>
+
+      <p class="note">iPhoneで音が出ないときは、本体の消音スイッチ（マナーモード）をオフにしてください。</p>
+    </section>
+
+    <!-- チューナー -->
+    <section class="panel" id="panel-tuner">
+      <div class="tuner-display" id="tunerDisplay">
+        <div class="tuner-note"><span id="tunerNote">–</span><span class="tuner-octave" id="tunerOctave"></span></div>
+        <div class="tuner-freq" id="tunerFreq">&nbsp;</div>
+        <div class="tuner-meter">
+          <div class="meter-tick" style="left: 0%"></div>
+          <div class="meter-tick" style="left: 25%"></div>
+          <div class="meter-tick center" style="left: 50%"></div>
+          <div class="meter-tick" style="left: 75%"></div>
+          <div class="meter-tick" style="left: 100%"></div>
+          <div class="meter-needle" id="meterNeedle"></div>
+        </div>
+        <div class="meter-labels">
+          <span>♭ 低い</span>
+          <span class="tuner-cents" id="tunerCents">&nbsp;</span>
+          <span>高い ♯</span>
+        </div>
+      </div>
+
+      <button class="btn primary big full-width" id="tunerStartStop">マイクをオン</button>
+      <p class="error" id="tunerError" hidden></p>
+
+      <h2>基準の高さ（A）</h2>
+      <div class="tempo-row">
+        <button class="round-btn small" id="a4Down" aria-label="基準を下げる">−</button>
+        <span class="tempo-value"><span id="a4Value">442</span> Hz</span>
+        <button class="round-btn small" id="a4Up" aria-label="基準を上げる">＋</button>
+      </div>
+      <p class="note">吹奏楽では 442Hz がよく使われます。音階の音もこの高さで鳴ります。表示される音名は実音です。</p>
+    </section>
+
+    <!-- 音階 -->
+    <section class="panel" id="panel-scale">
+      <h2>調</h2>
+      <div class="key-grid" id="keyGrid"></div>
+
+      <h2>種類</h2>
+      <select id="scaleTypeSelect" class="full"></select>
+
+      <div class="row">
+        <label>始める高さ
+          <select id="scaleOctave">
+            <option value="-2">2オクターブ下</option>
+            <option value="-1">1オクターブ下</option>
+            <option value="0">標準</option>
+            <option value="1">1オクターブ上</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="scale-view">
+        <div class="scale-title" id="scaleTitle"></div>
+        <div class="scale-start" id="scaleStart"></div>
+        <div class="note-chips" id="noteChips"></div>
+        <p class="note">音名を押すと、その音が鳴ります。</p>
+      </div>
+
+      <h2>テンポ</h2>
+      <div class="tempo-row">
+        <button class="round-btn small" id="scaleBpmDown" aria-label="テンポを下げる">−</button>
+        <span class="tempo-value"><span id="scaleBpmValue">80</span> BPM</span>
+        <button class="round-btn small" id="scaleBpmUp" aria-label="テンポを上げる">＋</button>
+      </div>
+      <input type="range" id="scaleBpmSlider" min="30" max="200" value="80" class="bpm-slider">
+
+      <div class="row">
+        <label>音の長さ
+          <select id="notesPerBeat">
+            <option value="1">1拍に1音（4分音符）</option>
+            <option value="2">1拍に2音（8分音符）</option>
+          </select>
+        </label>
+      </div>
+      <div class="options">
+        <label class="checkbox"><input type="checkbox" id="scaleClick"> メトロノームも鳴らす</label>
+        <label class="checkbox"><input type="checkbox" id="countIn"> 始める前に4拍数える</label>
+        <label class="checkbox"><input type="checkbox" id="scaleRepeat"> くり返す</label>
+      </div>
+
+      <button class="btn primary big full-width" id="scaleStartStop">再生</button>
+    </section>
+
+    <!-- 録音 -->
+    <section class="panel" id="panel-recorder">
+      <div class="rec-panel">
+        <div class="rec-time" id="recTime">0:00</div>
+        <div class="level-meter"><div class="level-bar" id="levelBar"></div></div>
+        <button class="rec-button" id="recButton" aria-label="録音"><span class="rec-icon"></span></button>
+        <div class="rec-status" id="recStatus">押すと録音を始めます</div>
+      </div>
+
+      <label class="checkbox"><input type="checkbox" id="recWithMetronome"> メトロノームを鳴らしながら録音</label>
+      <p class="note">テンポと拍子は「メトロノーム」画面の設定を使います。イヤホンで聞くと、メトロノームの音が録音に入りません。</p>
+      <p class="error" id="recError" hidden></p>
+
+      <h2>録音したもの</h2>
+      <div id="recList"></div>
+    </section>
+  </main>
+
+  <nav class="tab-bar">
+    <button class="tab active" data-panel="metronome">メトロノーム</button>
+    <button class="tab" data-panel="tuner">チューナー</button>
+    <button class="tab" data-panel="scale">音階</button>
+    <button class="tab" data-panel="recorder">録音</button>
+  </nav>
+
+  <script src="js/music.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/metronome.js"></script>
+  <script src="js/scale-player.js"></script>
+  <script src="js/pitch.js"></script>
+  <script src="js/tuner.js"></script>
+  <script src="js/recordings-db.js"></script>
+  <script src="js/recorder.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
