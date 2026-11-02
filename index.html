@@ -32,6 +32,10 @@
     </h1>
   </header>
 
+  <!-- 新しい版のお知らせ -->
+  <div class="update-banner" id="updateBanner" hidden>新しい版があります。止めたあと（部屋に入っているときは出たあと）に自動で更新します。</div>
+  <div class="update-banner done" id="updatedToast" hidden>新しい版に更新しました</div>
+
   <main>
     <!-- ホーム画面に追加する案内（必要なときだけ表示） -->
     <div class="install-banner" id="installBanner" hidden>
@@ -293,6 +297,7 @@
     <button class="tab" data-panel="recorder">録音</button>
   </nav>
 
+  <script src="js/version.js"></script>
   <script src="js/music.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/audio.js"></script>
@@ -308,5 +313,6 @@
   <script src="js/sync.js"></script>
   <script src="js/sync-ui.js"></script>
   <script src="js/install.js"></script>
+  <script src="js/update.js"></script>
 </body>
 </html>

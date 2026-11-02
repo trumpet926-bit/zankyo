@@ -621,3 +621,16 @@ button, .tab, .chip, .key-btn {
 
 /* hidden を付けた要素は、display の指定があっても必ず隠す */
 [hidden] { display: none !important; }
+
+/* 新しい版のお知らせ */
+.update-banner {
+  position: relative;
+  z-index: 3;
+  padding: 10px 16px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+}
+.update-banner.done { background: var(--good); color: #ffffff; }

@@ -1,12 +1,15 @@
 // 電波がなくても動くようにする仕組み（サービスワーカー）
 // ネットにつながるときは常に最新のファイルを使い、つながらないときは保存しておいたファイルを使う
 
-const CACHE_NAME = 'zankyo-v5';
+importScripts('js/version.js'); // 版の番号（変わると、このサービスワーカーも新しくなる）
+
+const CACHE_NAME = `zankyo-${APP_VERSION}`;
 const FILES = [
   './',
   'index.html',
   'style.css',
   'manifest.webmanifest',
+  'js/version.js',
   'js/music.js',
   'js/storage.js',
   'js/audio.js',
@@ -22,6 +25,7 @@ const FILES = [
   'js/sync.js',
   'js/sync-ui.js',
   'js/install.js',
+  'js/update.js',
   'icons/logo.png',
   'icons/icon-32.png',
   'icons/icon-180.png',
@@ -32,7 +36,9 @@ const FILES = [
 ];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(FILES)));
+  // ブラウザの一時保存ではなく、必ずサーバーから取り直して保存する
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) =>
+    cache.addAll(FILES.map((file) => new Request(file, { cache: 'reload' })))));
   self.skipWaiting();
 });
 
@@ -46,8 +52,12 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const request = event.request;
   if (request.method !== 'GET' || new URL(request.url).origin !== location.origin) return;
+  // 毎回サーバーに「新しくなっていないか」を確かめる（GitHub の一時保存で古いファイルを使わないように）
+  const fresh = request.mode === 'navigate'
+    ? fetch(request.url, { cache: 'no-cache', credentials: 'same-origin' })
+    : fetch(request, { cache: 'no-cache' });
   event.respondWith(
-    fetch(request)
+    fresh
       .then((response) => {
         const copy = response.clone();
         caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
