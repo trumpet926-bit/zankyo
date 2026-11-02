@@ -64,6 +64,18 @@ function playClick(ctx, destination, time, strong) {
   osc.stop(time + 0.06);
 }
 
+// 拍の中の細かい刻みの音（拍の音より低く小さい）
+function playSubClick(ctx, destination, time) {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.frequency.value = 700;
+  gain.gain.setValueAtTime(0.35, time);
+  gain.gain.exponentialRampToValueAtTime(0.001, time + 0.04);
+  osc.connect(gain).connect(destination);
+  osc.start(time);
+  osc.stop(time + 0.05);
+}
+
 // 音程のある音（金管っぽい少し明るい音）
 function playTone(ctx, destination, midi, time, duration) {
   const freq = referencePitch * Math.pow(2, (midi - 69) / 12);

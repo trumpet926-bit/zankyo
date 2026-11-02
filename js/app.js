@@ -94,6 +94,27 @@ $('accentCheck').addEventListener('change', (e) => {
   saveSettings(settings);
 });
 
+// リズムのボタン（1拍の中で鳴る位置を小さな図で示す）
+function renderRhythms() {
+  const grid = $('rhythmGrid');
+  grid.innerHTML = '';
+  RHYTHMS.forEach((r) => {
+    const btn = document.createElement('button');
+    btn.className = 'rhythm-btn' + (r.id === settings.rhythm ? ' selected' : '');
+    const ticks = r.offsets
+      .map((o, i) => `<span class="rhythm-tick${i === 0 ? ' main' : ''}" style="left: ${o * 100}%"></span>`)
+      .join('');
+    btn.innerHTML = `<span class="rhythm-pic">${ticks}</span><span class="rhythm-name">${r.name}</span>`;
+    btn.addEventListener('click', () => {
+      settings.rhythm = r.id;
+      metronome.setRhythm(r.id);
+      saveSettings(settings);
+      renderRhythms();
+    });
+    grid.appendChild(btn);
+  });
+}
+
 function stopMetronome() {
   if (!metronome.isRunning) return;
   metronome.stop();
@@ -503,6 +524,8 @@ loadRecordings();
 
 metronome.beats = settings.beats;
 metronome.accent = settings.accent;
+metronome.setRhythm(settings.rhythm);
+renderRhythms();
 $('beatsSelect').value = settings.beats;
 $('accentCheck').checked = settings.accent;
 setBpm(settings.bpm);

@@ -6,6 +6,7 @@ const DEFAULT_SETTINGS = {
   bpm: 100,
   beats: 4,
   accent: true,
+  rhythm: 'quarter',
   scaleKey: 0, // 0=C 〜 11=B
   scaleType: 'major',
   scaleOctave: 0,
