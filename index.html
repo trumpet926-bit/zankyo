@@ -225,7 +225,44 @@
       <p class="note">テンポと拍子は「メトロノーム」画面の設定を使います。イヤホンで聞くと、メトロノームの音が録音に入りません。</p>
       <p class="error" id="recError" hidden></p>
 
-      <h2>録音したもの</h2>
+      <!-- 再生プレーヤー（一覧から選んだ録音を再生する） -->
+      <div class="player" id="player" hidden>
+        <div class="player-title" id="playerTitle"></div>
+        <div class="seek-wrap">
+          <div class="loop-region" id="loopRegion" hidden></div>
+          <input type="range" id="playerSeek" min="0" max="1000" value="0" class="bpm-slider player-seek" aria-label="再生位置">
+        </div>
+        <div class="player-times"><span id="playerPos">0:00</span><span id="playerDur">0:00</span></div>
+        <div class="player-controls">
+          <button class="round-btn skip-btn" id="playerBack" aria-label="5秒戻す">−5秒</button>
+          <button class="player-play" id="playerPlay" aria-label="再生"></button>
+          <button class="round-btn skip-btn" id="playerFwd" aria-label="5秒進める">+5秒</button>
+        </div>
+        <div class="player-row">
+          <span class="player-label">速さ</span>
+          <div class="seg" id="playerRates">
+            <button data-rate="0.5">0.5倍</button>
+            <button data-rate="0.75">0.75倍</button>
+            <button data-rate="1">1倍</button>
+          </div>
+        </div>
+        <div class="player-row">
+          <span class="player-label">くり返し</span>
+          <div class="seg">
+            <button id="loopA">A</button>
+            <button id="loopB">B</button>
+            <button id="loopClear">解除</button>
+          </div>
+        </div>
+        <p class="note" id="loopInfo">始めたい位置で「A」、終わりたい位置で「B」を押すと、その間をくり返します。</p>
+        <p class="error" id="playerError" hidden></p>
+      </div>
+
+      <div class="list-head">
+        <h2>録音したもの</h2>
+        <button class="btn small" id="importButton">ファイルを開く</button>
+        <input type="file" id="importInput" accept="audio/*,.m4a,.mp3,.wav,.webm,.aac,.ogg" multiple hidden>
+      </div>
       <div id="recList"></div>
     </section>
   </main>
@@ -266,6 +303,7 @@
   <script src="js/tuner.js"></script>
   <script src="js/recordings-db.js"></script>
   <script src="js/recorder.js"></script>
+  <script src="js/player.js"></script>
   <script src="js/app.js"></script>
   <script src="js/sync.js"></script>
   <script src="js/sync-ui.js"></script>

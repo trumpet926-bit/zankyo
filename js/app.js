@@ -447,8 +447,9 @@ $('a4Up').addEventListener('click', () => setA4(settings.a4 + 1));
 
 // ---------- 録音 ----------
 const recorder = new Recorder();
+const player = new PracticePlayer();
 let recordings = []; // 新しい順
-let objectUrls = [];
+let selectedId = null; // プレーヤーで開いている録音
 let canSaveRecordings = true;
 let metronomeStartedByRecorder = false;
 
@@ -457,55 +458,65 @@ function formatTime(seconds) {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 }
 
+// 0.1秒まで表示する（例：1:05.3）
+function formatTimeFine(seconds) {
+  const tenths = Math.floor(seconds * 10);
+  return `${formatTime(tenths / 10)}.${tenths % 10}`;
+}
+
 function formatDate(time) {
   const d = new Date(time);
   const pad = (n) => String(n).padStart(2, '0');
   return `${d.getMonth() + 1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+// 録音1件：{ id, createdAt, duration, blob, name?（付けた名前）, fileName?（取り込んだファイル名）, imported? }
+function displayName(rec) {
+  return rec.name || formatDate(rec.createdAt);
+}
+
+const EXTENSIONS = { 'audio/mp4': 'm4a', 'audio/x-m4a': 'm4a', 'audio/mpeg': 'mp3', 'audio/wav': 'wav', 'audio/x-wav': 'wav', 'audio/ogg': 'ogg', 'audio/aac': 'aac', 'audio/webm': 'webm' };
+const MIME_TYPES = { m4a: 'audio/mp4', mp4: 'audio/mp4', mp3: 'audio/mpeg', wav: 'audio/wav', ogg: 'audio/ogg', aac: 'audio/aac', webm: 'audio/webm' };
+
 function fileNameFor(rec) {
+  if (rec.fileName) return rec.fileName;
   const d = new Date(rec.createdAt);
   const pad = (n) => String(n).padStart(2, '0');
-  const ext = rec.blob.type.includes('mp4') ? 'm4a' : 'webm';
-  return `練習_${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}.${ext}`;
+  const ext = EXTENSIONS[rec.blob.type.split(';')[0]] || 'webm';
+  const base = rec.name
+    ? rec.name.replace(/[\\/:*?"<>|]/g, '_')
+    : `練習_${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+  return `${base}.${ext}`;
 }
 
 function renderRecordings() {
-  objectUrls.forEach((url) => URL.revokeObjectURL(url));
-  objectUrls = [];
   const list = $('recList');
   list.innerHTML = '';
   if (!canSaveRecordings) {
     list.innerHTML = '<p class="note">この開き方では録音を保存できないため、ページを閉じると消えます。</p>';
   }
   if (recordings.length === 0) {
-    list.insertAdjacentHTML('beforeend', '<p class="note">まだ録音はありません。</p>');
+    list.insertAdjacentHTML('beforeend', '<p class="note">まだ録音はありません。「ファイルを開く」で、スマホに保存した音声も取り込めます。</p>');
     return;
   }
   recordings.forEach((rec) => {
-    const url = URL.createObjectURL(rec.blob);
-    objectUrls.push(url);
     const item = document.createElement('div');
-    item.className = 'rec-item';
+    item.className = 'rec-item' + (rec.id === selectedId ? ' selected' : '');
     item.innerHTML = `
-      <div class="rec-head">
-        <span class="rec-title">${formatDate(rec.createdAt)}</span>
-        <span class="rec-dur">${formatTime(rec.duration)}</span>
-      </div>
-      <audio controls preload="metadata" src="${url}"></audio>
+      <button class="rec-main">
+        <span class="rec-title"></span>
+        <span class="rec-meta">${formatDate(rec.createdAt)} ・ ${formatTime(rec.duration)}${rec.imported ? ' ・ 取り込み' : ''}</span>
+      </button>
       <div class="rec-actions">
-        <a class="btn small" href="${url}" download="${fileNameFor(rec)}">端末に保存</a>
-        <button class="btn small danger">削除</button>
+        <button class="btn small" data-act="rename">名前</button>
+        <button class="btn small" data-act="share">共有・保存</button>
+        <button class="btn small danger" data-act="delete">削除</button>
       </div>`;
-    // Chrome の録音は長さの情報がなく、途中から再生できないことがあるので、一度最後まで読ませる
-    const audio = item.querySelector('audio');
-    audio.addEventListener('loadedmetadata', () => {
-      if (audio.duration === Infinity) {
-        audio.currentTime = 1e101;
-        audio.addEventListener('timeupdate', () => { audio.currentTime = 0; }, { once: true });
-      }
-    });
-    item.querySelector('.danger').addEventListener('click', () => deleteRecording(rec));
+    item.querySelector('.rec-title').textContent = displayName(rec); // 名前は文字としてそのまま表示する
+    item.querySelector('.rec-main').addEventListener('click', () => openInPlayer(rec, true));
+    item.querySelector('[data-act="rename"]').addEventListener('click', () => renameRecording(rec));
+    item.querySelector('[data-act="share"]').addEventListener('click', () => shareRecording(rec));
+    item.querySelector('[data-act="delete"]').addEventListener('click', () => deleteRecording(rec));
     list.appendChild(item);
   });
 }
@@ -520,14 +531,181 @@ async function loadRecordings() {
   renderRecordings();
 }
 
+async function storeRecording(rec) {
+  if (!canSaveRecordings) return;
+  try {
+    await recordingsDb.add(rec);
+  } catch (e) {
+    canSaveRecordings = false;
+  }
+}
+
+function renameRecording(rec) {
+  const name = prompt('名前を入力してください（例：〇〇の曲 Bメロ）', rec.name || '');
+  if (name === null) return;
+  rec.name = name.trim().slice(0, 40) || undefined;
+  storeRecording(rec);
+  renderRecordings();
+  if (rec.id === selectedId) $('playerTitle').textContent = displayName(rec);
+}
+
+// 共有メニュー（ファイルに保存・LINE・AirDrop など）で渡す。共有できない端末（PC など）ではダウンロード
+async function shareRecording(rec) {
+  const file = new File([rec.blob], fileNameFor(rec), { type: rec.blob.type || 'audio/mp4' });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: displayName(rec) });
+    } catch (e) {
+      // 共有を取りやめたときなど
+    }
+    return;
+  }
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(file);
+  link.download = file.name;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(link.href), 10000);
+}
+
 async function deleteRecording(rec) {
-  if (!confirm(`${formatDate(rec.createdAt)} の録音を削除しますか？`)) return;
+  if (!confirm(`「${displayName(rec)}」を削除しますか？`)) return;
   recordings = recordings.filter((r) => r.id !== rec.id);
+  if (rec.id === selectedId) {
+    player.unload();
+    selectedId = null;
+    $('player').hidden = true;
+  }
   if (canSaveRecordings) {
     try { await recordingsDb.remove(rec.id); } catch (e) { /* 画面からは消す */ }
   }
   renderRecordings();
 }
+
+// ---------- 再生プレーヤー ----------
+function openInPlayer(rec, autoplay) {
+  if (rec.id !== selectedId) {
+    selectedId = rec.id;
+    player.load(rec.blob, rec.duration);
+    $('playerTitle').textContent = displayName(rec);
+    $('playerError').hidden = true;
+    $('player').hidden = false;
+    renderRecordings();
+  }
+  $('player').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  if (autoplay && !player.playing) player.toggle();
+}
+
+const PLAY_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>';
+const PAUSE_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h4v14H6zM14 5h4v14h-4z" fill="currentColor"/></svg>';
+let seeking = false; // 位置のバーを指で動かしている最中
+
+player.onUpdate = () => {
+  const dur = player.duration;
+  const pos = player.position;
+  $('playerPos').textContent = formatTime(pos);
+  $('playerDur').textContent = formatTime(dur);
+  if (!seeking && dur > 0) $('playerSeek').value = Math.round((pos / dur) * 1000);
+  $('playerPlay').innerHTML = player.playing ? PAUSE_ICON : PLAY_ICON;
+  $('playerPlay').setAttribute('aria-label', player.playing ? '一時停止' : '再生');
+  document.querySelectorAll('#playerRates button').forEach((b) => {
+    b.classList.toggle('selected', Number(b.dataset.rate) === player.rate);
+  });
+
+  // くり返しの区間を、位置のバーの上に色で示す
+  const region = $('loopRegion');
+  if (player.loopA !== null && dur > 0) {
+    const end = player.loopB !== null ? player.loopB : pos;
+    region.style.left = `${(player.loopA / dur) * 100}%`;
+    region.style.width = `${(Math.max(0, end - player.loopA) / dur) * 100}%`;
+    region.classList.toggle('pending', player.loopB === null);
+    region.hidden = false;
+  } else {
+    region.hidden = true;
+  }
+  $('loopA').classList.toggle('selected', player.loopA !== null);
+  $('loopB').classList.toggle('selected', player.loopB !== null);
+  $('loopInfo').textContent = player.loopB !== null
+    ? `${formatTimeFine(player.loopA)} 〜 ${formatTimeFine(player.loopB)} をくり返しています`
+    : player.loopA !== null
+      ? `${formatTimeFine(player.loopA)} から。終わりたい位置で「B」を押してください`
+      : '始めたい位置で「A」、終わりたい位置で「B」を押すと、その間をくり返します。';
+};
+
+player.onError = () => {
+  $('playerError').textContent = 'このファイルは、この端末では再生できない形式です。';
+  $('playerError').hidden = false;
+};
+
+$('playerPlay').addEventListener('click', () => player.toggle());
+$('playerBack').addEventListener('click', () => player.skip(-5));
+$('playerFwd').addEventListener('click', () => player.skip(5));
+$('playerSeek').addEventListener('input', (e) => {
+  seeking = true;
+  $('playerPos').textContent = formatTime((Number(e.target.value) / 1000) * player.duration);
+});
+$('playerSeek').addEventListener('change', (e) => {
+  seeking = false;
+  player.seek((Number(e.target.value) / 1000) * player.duration);
+});
+document.querySelectorAll('#playerRates button').forEach((b) => {
+  b.addEventListener('click', () => player.setRate(Number(b.dataset.rate)));
+});
+$('loopA').addEventListener('click', () => player.setA());
+$('loopB').addEventListener('click', () => player.setB());
+$('loopClear').addEventListener('click', () => player.clearLoop());
+
+// ---------- ファイルの取り込み ----------
+// 長さを調べる（読めないときは 0）
+function audioDuration(blob) {
+  return new Promise((resolve) => {
+    const audio = new Audio();
+    const url = URL.createObjectURL(blob);
+    const done = (value) => {
+      URL.revokeObjectURL(url);
+      resolve(Number.isFinite(value) ? value : 0);
+    };
+    audio.addEventListener('loadedmetadata', () => {
+      if (audio.duration !== Infinity) return done(audio.duration);
+      audio.currentTime = 1e101;
+      audio.addEventListener('timeupdate', () => done(audio.duration), { once: true });
+    });
+    audio.addEventListener('error', () => done(0));
+    setTimeout(() => done(0), 8000);
+    audio.preload = 'metadata';
+    audio.src = url;
+  });
+}
+
+$('importButton').addEventListener('click', () => $('importInput').click());
+$('importInput').addEventListener('change', async (e) => {
+  const files = Array.from(e.target.files);
+  e.target.value = ''; // 同じファイルをもう一度選べるようにする
+  let first = null;
+  for (const file of files) {
+    const ext = (file.name.split('.').pop() || '').toLowerCase();
+    const type = file.type || MIME_TYPES[ext] || '';
+    if (!type.startsWith('audio/') && !MIME_TYPES[ext]) continue;
+    const blob = new Blob([file], { type: type || 'audio/mp4' });
+    const rec = {
+      id: `rec-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      createdAt: Date.now(),
+      duration: await audioDuration(blob),
+      blob,
+      name: file.name.replace(/\.[^.]+$/, '').slice(0, 40),
+      fileName: file.name,
+      imported: true,
+    };
+    recordings.unshift(rec);
+    await storeRecording(rec);
+    if (!first) first = rec;
+  }
+  renderRecordings();
+  if (first) {
+    openInPlayer(first, false);
+  } else if (files.length) {
+    alert('音声ファイルを選んでください。');
+  }
+});
 
 recorder.onLevel = (level, seconds) => {
   $('levelBar').style.width = `${level * 100}%`;
@@ -546,6 +724,7 @@ async function startRecording() {
     return;
   }
   stopTuner();
+  player.pause(); // 再生中の音が録音に入らないようにする
   try {
     await recorder.start();
   } catch (e) {
@@ -578,14 +757,9 @@ async function stopRecording() {
 
   const rec = { id: `rec-${Date.now()}`, createdAt: Date.now(), duration, blob };
   recordings.unshift(rec);
-  if (canSaveRecordings) {
-    try {
-      await recordingsDb.add(rec);
-    } catch (e) {
-      canSaveRecordings = false;
-    }
-  }
+  await storeRecording(rec);
   renderRecordings();
+  openInPlayer(rec, false); // 録り終えたらすぐ聞き返せるように、プレーヤーで開いておく
 }
 
 $('recButton').addEventListener('click', () => {

@@ -539,3 +539,78 @@ button, .tab, .chip, .key-btn {
   color: #d6cfc0;
   white-space: pre-line;
 }
+
+/* 録音の再生プレーヤー */
+.player {
+  margin: 16px 0;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--surface);
+  border: 2px solid var(--accent);
+}
+.player-title { font-size: 17px; font-weight: 700; margin-bottom: 8px; overflow-wrap: anywhere; }
+.seek-wrap { position: relative; }
+.player-seek { position: relative; z-index: 1; margin: 6px 0; }
+.loop-region {
+  position: absolute;
+  top: 50%;
+  height: 14px;
+  margin-top: -7px;
+  border-radius: 4px;
+  background: var(--accent);
+  opacity: 0.3;
+}
+.loop-region.pending { opacity: 0.15; }
+.player-times { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.player-controls { display: flex; align-items: center; justify-content: center; gap: 24px; margin: 12px 0 16px; }
+.skip-btn { font-size: 14px; font-weight: 600; }
+.player-play {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  border: none;
+  background: var(--accent);
+  color: var(--accent-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.player-play svg { width: 40px; height: 40px; }
+.player-row { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+.player-label { width: 64px; font-size: 14px; color: var(--muted); flex-shrink: 0; }
+.seg { display: flex; flex: 1; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.seg button {
+  flex: 1;
+  font: inherit;
+  font-size: 14px;
+  padding: 9px 4px;
+  border: none;
+  border-left: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+.seg button:first-child { border-left: none; }
+.seg button.selected { background: var(--accent); color: var(--accent-text); font-weight: 700; }
+
+/* 録音の一覧 */
+.list-head { display: flex; align-items: center; justify-content: space-between; margin: 24px 0 10px; }
+.list-head h2 { margin: 0; }
+.rec-item.selected { border-color: var(--accent); }
+.rec-main {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.rec-main .rec-title { overflow-wrap: anywhere; }
+.rec-meta { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
