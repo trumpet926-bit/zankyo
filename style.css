@@ -669,3 +669,15 @@ button, .tab, .chip, .key-btn {
   60% { transform: scale(1.12); }
   100% { transform: scale(1); }
 }
+
+/* iPhone のホーム画面アプリでは、マイクを使ったあとなどに表示範囲が短く計算され、
+   下のタブの下にすき間ができることがある。タブの背景を下に伸ばして、すき間を隠す */
+.tab-bar::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 120px;
+  background: var(--surface);
+}
