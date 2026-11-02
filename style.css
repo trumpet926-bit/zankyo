@@ -401,3 +401,93 @@ button, .tab, .chip, .key-btn {
 .rhythm-btn.selected { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
 .rhythm-icon { width: 56px; height: 38px; }
 .rhythm-name { font-size: 11px; line-height: 1.3; text-align: center; white-space: pre-line; }
+
+/* 音・光のオン・オフ */
+.toggle {
+  font: inherit;
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+}
+.toggle::after { content: " オフ"; }
+.toggle[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+.toggle[aria-pressed="true"]::after { content: " オン"; }
+
+/* 大きな表示（明るい・暗いの設定に関係なく、いつも暗い背景） */
+.big-view {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));
+  background: #0e0c17;
+  color: #fef3c7;
+  overflow: hidden;
+}
+.big-view[hidden] { display: none; }
+.big-view > :not(.big-flash) { position: relative; z-index: 1; }
+.big-flash { position: absolute; inset: 0; opacity: 0; pointer-events: none; }
+.big-flash.flash { background: #fef3c7; animation: big-flash 0.3s ease-out forwards; --peak: 0.28; }
+.big-flash.flash-strong { background: #f59e0b; animation: big-flash 0.3s ease-out forwards; --peak: 0.7; }
+@keyframes big-flash {
+  from { opacity: var(--peak); }
+  to { opacity: 0; }
+}
+.big-close {
+  position: absolute !important;
+  top: calc(8px + env(safe-area-inset-top));
+  right: 8px;
+  width: 48px;
+  height: 48px;
+  border: none;
+  background: none;
+  color: #a8a29e;
+  font-size: 32px;
+  cursor: pointer;
+}
+.big-beat {
+  font-size: min(60vw, 42vh);
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.big-beat.strong { color: #ffffff; }
+.big-dots { display: flex; gap: 14px; }
+.big-dots .beat-dot { width: 22px; height: 22px; background: #2c2840; }
+.big-dots .beat-dot.on { background: #fef3c7; }
+.big-dots .beat-dot.on.strong { background: #f59e0b; }
+.big-info { font-size: 24px; color: #d6cfc0; font-variant-numeric: tabular-nums; }
+.big-info span { font-size: 40px; font-weight: 700; color: #fef3c7; }
+.big-controls { display: flex; align-items: center; gap: 20px; }
+.big-round {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 1px solid #44403c;
+  background: #1c1a28;
+  color: #fef3c7;
+  font-size: 30px;
+  cursor: pointer;
+}
+.big-start {
+  font: inherit;
+  font-size: 22px;
+  font-weight: 700;
+  min-width: 140px;
+  padding: 18px 24px;
+  border-radius: 14px;
+  border: none;
+  background: #f59e0b;
+  color: #1c1917;
+  cursor: pointer;
+}
+.big-toggles { display: flex; gap: 12px; }
+.big-toggles .toggle { background: #1c1a28; border-color: #44403c; color: #a8a29e; }
+.big-toggles .toggle[aria-pressed="true"] { background: #f59e0b; border-color: #f59e0b; color: #1c1917; }

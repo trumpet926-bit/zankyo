@@ -19,6 +19,7 @@ class Metronome {
     this.beats = 4;
     this.accent = true;
     this.rhythm = RHYTHMS[0];
+    this.sound = true; // false にすると音を出さずに拍だけ刻む（光だけで見るとき）
     this.isRunning = false;
     this.onBeat = null; // 拍が鳴った瞬間に呼ばれる（画面表示用）
     this.ctx = null;
@@ -51,10 +52,12 @@ class Metronome {
     while (this.nextTime < this.ctx.currentTime + lookahead) {
       const beat = this.currentBeat % this.beats;
       const beatLen = 60 / this.bpm;
-      playClick(this.ctx, this.output, this.nextTime, beat === 0 && this.accent && this.beats > 1);
-      this.rhythm.offsets.slice(1).forEach((offset) => {
-        playSubClick(this.ctx, this.output, this.nextTime + offset * beatLen);
-      });
+      if (this.sound) {
+        playClick(this.ctx, this.output, this.nextTime, beat === 0 && this.accent && this.beats > 1);
+        this.rhythm.offsets.slice(1).forEach((offset) => {
+          playSubClick(this.ctx, this.output, this.nextTime + offset * beatLen);
+        });
+      }
       this.notifyBeat(this.nextTime, beat);
       this.nextTime += beatLen;
       this.currentBeat = beat + 1;

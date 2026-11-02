@@ -57,25 +57,87 @@ function setBpm(value) {
   metronome.bpm = bpm;
   $('bpmValue').textContent = bpm;
   $('bpmSlider').value = bpm;
+  $('bigBpm').textContent = bpm;
   saveSettings(settings);
 }
 
 function renderBeatDots() {
-  const dots = $('beatDots');
-  dots.innerHTML = '';
-  for (let i = 0; i < metronome.beats; i++) {
-    const dot = document.createElement('div');
-    dot.className = 'beat-dot';
-    dots.appendChild(dot);
-  }
+  [$('beatDots'), $('bigDots')].forEach((dots) => {
+    dots.innerHTML = '';
+    for (let i = 0; i < metronome.beats; i++) {
+      const dot = document.createElement('div');
+      dot.className = 'beat-dot';
+      dots.appendChild(dot);
+    }
+  });
 }
 
 metronome.onBeat = (beat) => {
-  document.querySelectorAll('.beat-dot').forEach((dot, i) => {
-    dot.classList.toggle('on', i === beat);
-    dot.classList.toggle('strong', i === 0 && metronome.accent && metronome.beats > 1);
-  });
+  const strong = beat === 0 && metronome.accent && metronome.beats > 1;
+  if (settings.metroLight) {
+    document.querySelectorAll('.beat-dot').forEach((dot) => {
+      const i = Array.prototype.indexOf.call(dot.parentNode.children, dot);
+      dot.classList.toggle('on', i === beat);
+      dot.classList.toggle('strong', i === 0 && strong);
+    });
+  }
+  if (!$('bigView').hidden) showBigBeat(beat, strong);
 };
+
+// ---------- 大きな表示 ----------
+function showBigBeat(beat, strong) {
+  $('bigBeat').textContent = beat + 1;
+  $('bigBeat').classList.toggle('strong', strong);
+  if (!settings.metroLight) return;
+  // 光らせるアニメーションを、毎拍はじめから再生し直す
+  const flash = $('bigFlash');
+  flash.className = 'big-flash';
+  void flash.offsetWidth;
+  flash.style.animationDuration = `${Math.min(0.35, (60 / metronome.bpm) * 0.8)}s`;
+  flash.className = 'big-flash ' + (strong ? 'flash-strong' : 'flash');
+}
+
+function clearBeatDisplay() {
+  document.querySelectorAll('.beat-dot').forEach((d) => d.classList.remove('on'));
+  $('bigBeat').textContent = '–';
+  $('bigBeat').classList.remove('strong');
+  $('bigFlash').className = 'big-flash';
+}
+
+$('openBigView').addEventListener('click', () => {
+  $('bigView').hidden = false;
+  keepScreenOn(true);
+});
+$('closeBigView').addEventListener('click', () => {
+  $('bigView').hidden = true;
+  if (!metronome.isRunning) keepScreenOn(false);
+});
+$('bigBpmDown').addEventListener('click', () => setBpm(settings.bpm - 1));
+$('bigBpmUp').addEventListener('click', () => setBpm(settings.bpm + 1));
+$('bigStartStop').addEventListener('click', () => {
+  if (metronome.isRunning) {
+    stopMetronome();
+  } else {
+    startMetronome();
+  }
+});
+
+// 音と光のオン・オフ（通常の画面と大きな表示の両方にある）
+function renderToggles() {
+  document.querySelectorAll('[data-toggle]').forEach((btn) => {
+    btn.setAttribute('aria-pressed', settings[btn.dataset.toggle] ? 'true' : 'false');
+  });
+}
+document.querySelectorAll('[data-toggle]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const key = btn.dataset.toggle;
+    settings[key] = !settings[key];
+    metronome.sound = settings.metroSound;
+    if (!settings.metroLight) clearBeatDisplay();
+    saveSettings(settings);
+    renderToggles();
+  });
+});
 
 $('bpmDown').addEventListener('click', () => setBpm(settings.bpm - 1));
 $('bpmUp').addEventListener('click', () => setBpm(settings.bpm + 1));
@@ -117,8 +179,9 @@ function stopMetronome() {
   if (!metronome.isRunning) return;
   metronome.stop();
   $('startStop').textContent = 'スタート';
-  document.querySelectorAll('.beat-dot').forEach((d) => d.classList.remove('on'));
-  keepScreenOn(false);
+  $('bigStartStop').textContent = 'スタート';
+  clearBeatDisplay();
+  if ($('bigView').hidden) keepScreenOn(false);
 }
 
 async function startMetronome() {
@@ -126,6 +189,7 @@ async function startMetronome() {
   scalePlayer.stop();
   await metronome.start();
   $('startStop').textContent = 'ストップ';
+  $('bigStartStop').textContent = 'ストップ';
   keepScreenOn(true);
 }
 
@@ -523,7 +587,9 @@ loadRecordings();
 metronome.beats = settings.beats;
 metronome.accent = settings.accent;
 metronome.setRhythm(settings.rhythm);
+metronome.sound = settings.metroSound;
 renderRhythms();
+renderToggles();
 $('beatsSelect').value = settings.beats;
 $('accentCheck').checked = settings.accent;
 setBpm(settings.bpm);

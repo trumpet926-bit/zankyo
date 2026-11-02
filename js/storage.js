@@ -7,6 +7,8 @@ const DEFAULT_SETTINGS = {
   beats: 4,
   accent: true,
   rhythm: 'quarter',
+  metroSound: true, // メトロノームの音
+  metroLight: true, // メトロノームの光
   scaleKey: 0, // 0=C 〜 11=B
   scaleType: 'major',
   scaleOctave: 0,

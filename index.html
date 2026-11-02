@@ -77,6 +77,12 @@
         <button class="btn big" id="tapTempo">タップ</button>
       </div>
 
+      <div class="row">
+        <button class="toggle" data-toggle="metroSound" aria-pressed="true">音</button>
+        <button class="toggle" data-toggle="metroLight" aria-pressed="true">光</button>
+        <button class="btn" id="openBigView">大きく表示</button>
+      </div>
+
       <p class="note">iPhoneで音が出ないときは、本体の消音スイッチ（マナーモード）をオフにしてください。</p>
     </section>
 
@@ -192,6 +198,24 @@
       <div id="recList"></div>
     </section>
   </main>
+
+  <!-- メトロノームの大きな表示（譜面台に置いても見えるように） -->
+  <div class="big-view" id="bigView" hidden>
+    <div class="big-flash" id="bigFlash"></div>
+    <button class="big-close" id="closeBigView" aria-label="閉じる">×</button>
+    <div class="big-beat" id="bigBeat">–</div>
+    <div class="big-dots" id="bigDots"></div>
+    <div class="big-info"><span id="bigBpm">100</span> BPM</div>
+    <div class="big-controls">
+      <button class="big-round" id="bigBpmDown" aria-label="テンポを下げる">−</button>
+      <button class="big-start" id="bigStartStop">スタート</button>
+      <button class="big-round" id="bigBpmUp" aria-label="テンポを上げる">＋</button>
+    </div>
+    <div class="big-toggles">
+      <button class="toggle" data-toggle="metroSound" aria-pressed="true">音</button>
+      <button class="toggle" data-toggle="metroLight" aria-pressed="true">光</button>
+    </div>
+  </div>
 
   <nav class="tab-bar">
     <button class="tab active" data-panel="metronome">メトロノーム</button>
