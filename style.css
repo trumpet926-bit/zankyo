@@ -614,3 +614,10 @@ button, .tab, .chip, .key-btn {
 }
 .rec-main .rec-title { overflow-wrap: anywhere; }
 .rec-meta { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* 録音の名前の書き換え */
+.rename-form { display: flex; flex-direction: column; gap: 8px; }
+.rename-input { width: 100%; font-size: 16px; } /* 16px 未満だと iPhone が自動で拡大するため */
+
+/* hidden を付けた要素は、display の指定があっても必ず隠す */
+[hidden] { display: none !important; }

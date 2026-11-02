@@ -514,7 +514,7 @@ function renderRecordings() {
       </div>`;
     item.querySelector('.rec-title').textContent = displayName(rec); // 名前は文字としてそのまま表示する
     item.querySelector('.rec-main').addEventListener('click', () => openInPlayer(rec, true));
-    item.querySelector('[data-act="rename"]').addEventListener('click', () => renameRecording(rec));
+    item.querySelector('[data-act="rename"]').addEventListener('click', () => startRename(item, rec));
     item.querySelector('[data-act="share"]').addEventListener('click', () => shareRecording(rec));
     item.querySelector('[data-act="delete"]').addEventListener('click', () => deleteRecording(rec));
     list.appendChild(item);
@@ -540,13 +540,38 @@ async function storeRecording(rec) {
   }
 }
 
-function renameRecording(rec) {
-  const name = prompt('名前を入力してください（例：〇〇の曲 Bメロ）', rec.name || '');
-  if (name === null) return;
-  rec.name = name.trim().slice(0, 40) || undefined;
-  storeRecording(rec);
+// 名前は一覧の中で直接書き換える
+// （ブラウザ標準の入力ダイアログは、iPhone のホーム画面アプリで閉じたあとにボタンが押せなくなることがあるため使わない）
+function startRename(item, rec) {
+  item.querySelector('.rec-main').hidden = true;
+  item.querySelector('.rec-actions').hidden = true;
+  const form = document.createElement('form');
+  form.className = 'rename-form';
+  form.innerHTML = `
+    <input type="text" maxlength="40" class="rename-input" placeholder="例：〇〇の曲 Bメロ" enterkeyhint="done">
+    <div class="rec-actions">
+      <button type="button" class="btn small" data-act="cancel">やめる</button>
+      <button type="submit" class="btn small primary">保存</button>
+    </div>`;
+  const input = form.querySelector('input');
+  input.value = rec.name || '';
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    rec.name = input.value.trim().slice(0, 40) || undefined;
+    storeRecording(rec);
+    finishRename();
+    if (rec.id === selectedId) $('playerTitle').textContent = displayName(rec);
+  });
+  form.querySelector('[data-act="cancel"]').addEventListener('click', finishRename);
+  item.appendChild(form);
+  input.focus();
+}
+
+function finishRename() {
+  // キーボードを閉じ、iPhone で画面の位置がずれたままにならないよう、位置を合わせ直す
+  if (document.activeElement) document.activeElement.blur();
+  window.scrollTo(window.scrollX, window.scrollY);
   renderRecordings();
-  if (rec.id === selectedId) $('playerTitle').textContent = displayName(rec);
 }
 
 // 共有メニュー（ファイルに保存・LINE・AirDrop など）で渡す。共有できない端末（PC など）ではダウンロード
@@ -555,10 +580,11 @@ async function shareRecording(rec) {
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
     try {
       await navigator.share({ files: [file], title: displayName(rec) });
+      return;
     } catch (e) {
-      // 共有を取りやめたときなど
+      if (e.name === 'AbortError') return; // 共有を取りやめたとき
+      alert('共有メニューを開けなかったため、ダウンロードで保存します。');
     }
-    return;
   }
   const link = document.createElement('a');
   link.href = URL.createObjectURL(file);
