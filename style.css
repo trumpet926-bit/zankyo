@@ -865,7 +865,8 @@ input.switch:checked::before { transform: translateX(20px); }
 }
 main { overflow-x: clip; } /* 入ってくる途中の画面で、横にはみ出さないように */
 
-/* iPhone のホーム画面アプリでは、中身が画面より短い画面（録音など）で、
-   下のタブが上の時計・電波表示の高さ分だけ浮く不具合がある。
-   ページの高さを、常に画面よりその分だけ長くして防ぐ */
-html { min-height: calc(100% + env(safe-area-inset-top)); }
+/* iPhone のホーム画面アプリでは、中身が画面より短い画面（録音など）で、表示範囲が上の時計・電波表示の
+   高さ分だけ短くなり、下にアプリの描けないすき間ができる。そのすき間はページ全体の背景色で塗られるので、
+   ページ全体の背景をタブと同じ色にして、タブが下まで続いて見えるようにする（各画面の背景は body の色） */
+html { background-color: var(--surface); overscroll-behavior-y: none; }
+body { min-height: 100vh; }
