@@ -24,6 +24,7 @@ const FILES = [
   'js/recorder.js',
   'js/player.js',
   'js/app.js',
+  'js/calib.js',
   'js/sync.js',
   'js/sync-ui.js',
   'js/install.js',

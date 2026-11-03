@@ -527,6 +527,13 @@ button, .tab, .chip, .key-btn {
   to { color: var(--text); transform: scale(1); }
 }
 .sync-offset { flex-direction: column; align-items: stretch; gap: 4px; font-size: 14px; margin-top: 8px; }
+.member .ref-mark { margin-left: 4px; font-size: 11px; font-weight: 700; color: var(--accent); }
+.member.me .ref-mark { color: var(--accent-text); }
+.sync-calib { margin: 8px 0 4px; }
+.sync-calib .note { margin: 6px 0 0; }
+.sync-calib-live { margin: 0 0 8px; padding: 8px 10px; border-radius: 10px; background: var(--beat); font-weight: 700; }
+#syncCalibResult.ok { color: var(--text); font-weight: 600; }
+#syncCalibResult.fail { color: var(--danger); font-weight: 600; }
 
 /* 大きな表示の部屋の情報 */
 .big-room {

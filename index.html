@@ -155,8 +155,14 @@
           <div class="sync-me">あなたは <b id="syncMe"></b> です</div>
           <div class="sync-members" id="syncMembers"></div>
           <div class="sync-message" id="syncMessage"></div>
-          <label class="sync-offset">音のタイミング補正
-            <input type="range" id="syncOffset" min="-100" max="100" step="5" class="bpm-slider">
+          <div class="sync-calib">
+            <p class="sync-calib-live" id="syncCalibLive" hidden></p>
+            <button class="btn primary full-width" id="syncCalib" hidden>基準の台に自動で合わせる</button>
+            <p class="note" id="syncCalibNote"></p>
+            <p class="note" id="syncCalibResult" hidden></p>
+          </div>
+          <label class="sync-offset">音のタイミング補正（手で微調整）
+            <input type="range" id="syncOffset" min="-200" max="200" step="5" class="bpm-slider">
             <span class="note" id="syncOffsetValue">0 ms</span>
           </label>
           <p class="note">ほかの人より音が早く聞こえるときは右へ、遅いときは左へ動かします。リズム・音・光は自分だけの設定です。</p>
@@ -528,6 +534,7 @@
   <script src="js/recorder.js"></script>
   <script src="js/player.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/calib.js"></script>
   <script src="js/sync.js"></script>
   <script src="js/sync-ui.js"></script>
   <script src="js/install.js"></script>

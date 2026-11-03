@@ -101,13 +101,21 @@
 
   room.onMembers = (members) => {
     const box = $('syncMembers');
+    const refId = room.referenceId();
     box.innerHTML = '';
     Object.entries(members).forEach(([id, m]) => {
       const chip = document.createElement('span');
       chip.className = 'member' + (id === settings.syncId ? ' me' : '');
       chip.textContent = m.name;
+      if (id === refId) {
+        const mark = document.createElement('span');
+        mark.className = 'ref-mark';
+        mark.textContent = '基準';
+        chip.appendChild(mark);
+      }
       box.appendChild(chip);
     });
+    renderCalib();
   };
 
   function renderMessage(s) {
@@ -194,6 +202,8 @@
     $('syncIn').hidden = true;
     $('syncOut').hidden = false;
     $('syncQr').hidden = true;
+    $('syncCalibLive').hidden = true;
+    $('syncCalibResult').hidden = true;
     $('bigRoom').hidden = true;
   });
 
@@ -209,9 +219,13 @@
   });
 
   // ---------- 音のタイミング補正 ----------
+  function offsetText(ms) {
+    return `${ms > 0 ? '+' : ''}${ms} ms`;
+  }
+
   function showOffset() {
     $('syncOffset').value = settings.syncOffsetMs;
-    $('syncOffsetValue').textContent = `${settings.syncOffsetMs > 0 ? '+' : ''}${settings.syncOffsetMs} ms`;
+    $('syncOffsetValue').textContent = offsetText(settings.syncOffsetMs);
   }
   $('syncOffset').addEventListener('input', (e) => {
     settings.syncOffsetMs = Number(e.target.value);
@@ -220,6 +234,121 @@
     if (following && room.state && room.state.running) metronome.realign(timelineOf(room.state));
   });
   showOffset();
+
+  // ---------- 基準の台に自動で合わせる ----------
+  let calibrating = false;
+  let calibScheduled = null;
+  let calibLiveTimer = null;
+
+  function renderCalib() {
+    const refId = room.referenceId();
+    const ref = refId && room.members[refId];
+    const isRef = refId === settings.syncId;
+    $('syncCalib').hidden = isRef || !ref;
+    $('syncCalibNote').textContent = isRef
+      ? 'この台が基準です。ほかの人が音合わせをするときは、この台からも「ピッ」と鳴ります。画面を開いたままにしてください。'
+      : ref
+        ? `基準は ${ref.name}さんの台です。ボタンを押すと、基準の台と自分の台から音が${CALIB_BEATS}回鳴ります（約${Math.round((CALIB_BEATS * CALIB_INTERVAL_MS) / 1000)}秒）。その間は楽器を吹かずに静かにしてください。結果はこの端末に記録されるので、毎回やる必要はありません。`
+        : '';
+  }
+
+  function showCalibResult(text, kind = '') {
+    const box = $('syncCalibResult');
+    box.textContent = text;
+    box.className = `note ${kind}`;
+    box.hidden = false;
+  }
+
+  // 部屋の時刻（ミリ秒）に音が耳に届くよう、スピーカーの遅れの分だけ早めた時刻
+  function soundTimeOf(serverMs) {
+    return toCtxTime(serverMs) - audioLead();
+  }
+
+  // 誰かが音合わせを始めたら、全員のメトロノームを止め、基準の台と合わせる台は短い音を鳴らす
+  room.onCalib = (c) => {
+    clearTimeout(calibLiveTimer);
+    const now = room.serverNow();
+    if (!c || c.endAt < now) {
+      $('syncCalibLive').hidden = true;
+      return;
+    }
+    const ctx = getAudioContext();
+    ctx.resume();
+    metronome.muteFrom = soundTimeOf(c.startAt) - 0.15;
+    metronome.muteTo = soundTimeOf(c.endAt) + 0.15;
+
+    const mine = c.id === settings.syncId;
+    const isRef = room.referenceId() === settings.syncId;
+    const freq = mine ? CALIB_SELF_HZ : isRef ? CALIB_REF_HZ : 0;
+    const key = `${c.id}:${c.startAt}`;
+    if (freq && calibScheduled !== key) {
+      calibScheduled = key;
+      for (let i = 0; i < CALIB_BEATS; i++) {
+        const time = soundTimeOf(c.startAt + i * CALIB_INTERVAL_MS);
+        if (time > ctx.currentTime) playCalibBeep(ctx, ctx.destination, freq, time);
+      }
+    }
+    if (!mine) {
+      $('syncCalibLive').textContent = isRef
+        ? `${c.name}さんが音合わせ中です。この台（基準）からも音が鳴ります。`
+        : `${c.name}さんが音合わせ中です。少しの間、静かにしてください。`;
+      $('syncCalibLive').hidden = false;
+      calibLiveTimer = setTimeout(() => { $('syncCalibLive').hidden = true; }, c.endAt - now + 500);
+    }
+  };
+
+  async function autoCalibrate() {
+    if (calibrating) return;
+    calibrating = true;
+    $('syncCalib').disabled = true;
+    showCalibResult('マイクを準備しています…');
+    getAudioContext().resume(); // iPhone は画面を触ったときにしか音を出せないため、ここで準備する
+    let stream = null;
+    let capture = null;
+    try {
+      try {
+        stream = await openMicrophone();
+      } catch (e) {
+        throw new CalibError('マイクを使えませんでした。マイクの使用を許可してください。');
+      }
+      capture = startCalibCapture(stream);
+      let calib;
+      try {
+        calib = await room.startCalib();
+      } catch (e) {
+        throw new CalibError('音合わせを始められませんでした。もう一度お試しください。');
+      }
+      if (!calib) throw new CalibError('ほかの人が音合わせ中です。終わってからもう一度押してください。');
+      showCalibResult('音合わせ中です。静かにしてください…');
+      await new Promise((resolve) => setTimeout(resolve, calib.endAt - room.serverNow() + 600));
+      const samples = capture.stop();
+      capture = null;
+      const lag = measureCalibLag(samples, getAudioContext().sampleRate);
+
+      // 自分の音が遅れて届いていた分だけ、早めに鳴らす
+      const before = settings.syncOffsetMs;
+      const wanted = Math.round((before - lag) / 5) * 5;
+      settings.syncOffsetMs = Math.max(-200, Math.min(200, wanted));
+      saveSettings(settings);
+      showOffset();
+      if (following && room.state && room.state.running) metronome.realign(timelineOf(room.state));
+
+      const size = Math.round(Math.abs(lag));
+      const found = size < 3 ? `基準の台とほぼぴったりでした（ずれ ${size} ms）。` : `自分の音が基準より ${size} ms ${lag > 0 ? '遅れて' : '早く'}聞こえていました。`;
+      const limit = settings.syncOffsetMs !== wanted ? '（補正できるいちばん端までにしました）' : '';
+      showCalibResult(`${found}補正を ${offsetText(settings.syncOffsetMs)} にしました${limit}。途中でずれを感じたら、下のバーで調整してください。`, 'ok');
+    } catch (e) {
+      showCalibResult(e instanceof CalibError ? e.message : 'うまく測れませんでした。もう一度お試しください。', 'fail');
+    } finally {
+      if (capture) capture.stop();
+      if (stream) closeMicrophone(stream);
+      room.endCalib();
+      calibrating = false;
+      $('syncCalib').disabled = false;
+    }
+  }
+
+  $('syncCalib').addEventListener('click', autoCalibrate);
 
   // ---------- 招待（QRコードとリンク） ----------
   function inviteUrl() {

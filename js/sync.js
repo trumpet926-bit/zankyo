@@ -46,6 +46,9 @@ class SyncRoom {
     this.offset = 0; // サーバーの時計 − この端末の時計（ミリ秒）
     this.onState = null; // (state, previousState)
     this.onMembers = null; // (members)
+    this.calib = null; // 音合わせ中の人と時刻
+    this.onCalib = null; // (calib)
+    this.joinedAt = null; // この端末が部屋に入った時刻（つなぎ直しても変えない）
   }
 
   // Firebase のプログラムは、部屋の機能を使うときにだけ読み込む
@@ -112,6 +115,7 @@ class SyncRoom {
 
   async enter(db, code) {
     await this.measureClock();
+    this.joinedAt = null;
     this.db = db;
     this.code = code;
     this.roomRef = db.ref(`rooms/${code}`);
@@ -128,17 +132,23 @@ class SyncRoom {
     this.connectedRef.on('value', (snap) => {
       if (snap.val() !== true) return;
       this.memberRef.onDisconnect().remove();
-      this.memberRef.set({ name: this.name, joinedAt: firebase.database.ServerValue.TIMESTAMP });
+      this.memberRef.set({ name: this.name, joinedAt: this.joinedAt || firebase.database.ServerValue.TIMESTAMP });
     });
 
     this.roomRef.child('members').on('value', (snap) => {
       this.members = snap.val() || {};
+      const me = this.members[this.memberId];
+      if (me && typeof me.joinedAt === 'number' && !this.joinedAt) this.joinedAt = me.joinedAt;
       if (this.onMembers) this.onMembers(this.members);
     });
     this.roomRef.child('state').on('value', (snap) => {
       const previous = this.state;
       this.state = snap.val();
       if (this.state && this.onState) this.onState(this.state, previous);
+    });
+    this.roomRef.child('calib').on('value', (snap) => {
+      this.calib = snap.val();
+      if (this.onCalib) this.onCalib(this.calib);
     });
   }
 
@@ -147,11 +157,37 @@ class SyncRoom {
     this.connectedRef.off();
     this.roomRef.child('members').off();
     this.roomRef.child('state').off();
+    this.roomRef.child('calib').off();
     this.memberRef.onDisconnect().cancel();
     this.memberRef.remove();
     this.code = null;
     this.state = null;
+    this.calib = null;
     this.members = {};
+  }
+
+  // 基準の台：いちばん前から部屋にいる人（ふつうは部屋を作った人）
+  referenceId() {
+    const list = Object.entries(this.members).filter(([, m]) => typeof m.joinedAt === 'number');
+    list.sort(([idA, a], [idB, b]) => a.joinedAt - b.joinedAt || (idA < idB ? -1 : 1));
+    return list.length ? list[0][0] : null;
+  }
+
+  // 音合わせを始める。ほかの人が音合わせ中なら null
+  async startCalib() {
+    const startAt = this.serverNow() + 1500; // 基準の台に届く余裕を見て、少し先から鳴らす
+    const calib = { id: this.memberId, name: this.name, startAt, endAt: startAt + CALIB_BEATS * CALIB_INTERVAL_MS };
+    const result = await this.roomRef.child('calib').transaction((current) => {
+      if (current && current.endAt + 1000 > this.serverNow()) return undefined;
+      return calib;
+    });
+    return result.committed ? calib : null;
+  }
+
+  endCalib() {
+    this.roomRef.child('calib')
+      .transaction((current) => (current && current.id === this.memberId ? null : undefined))
+      .catch(() => {});
   }
 
   // 共有している状態を書き換える（誰かと同時に変えても壊れないよう、最新の状態をもとに計算する）

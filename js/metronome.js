@@ -27,6 +27,8 @@ class Metronome {
     // みんなで合わせるとき用
     this.audioLead = 0; // スピーカーから音が出るまでの遅れ（秒）。その分だけ早めに鳴らす
     this.pending = null; // 次に切り替える時間軸
+    this.muteFrom = 0; // この間（AudioContext の時刻・秒）は音を出さない（音合わせ中）
+    this.muteTo = 0;
   }
 
   setRhythm(id) {
@@ -109,7 +111,8 @@ class Metronome {
       const beat = this.currentBeat % this.beats;
       const beatLen = 60 / this.bpm;
       const soundTime = Math.max(this.ctx.currentTime, this.nextTime - this.audioLead);
-      if (this.sound) {
+      const muted = soundTime >= this.muteFrom && soundTime <= this.muteTo;
+      if (this.sound && !muted) {
         playClick(this.ctx, this.output, soundTime, beat === 0 && this.accent && this.beats > 1);
         this.rhythm.offsets.slice(1).forEach((offset) => {
           playSubClick(this.ctx, this.output, soundTime + offset * beatLen);

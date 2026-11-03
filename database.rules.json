@@ -15,6 +15,15 @@
           "action": { ".validate": "newData.isString() && newData.val().length <= 10" },
           "$other": { ".validate": false }
         },
+        "calib": {
+          ".write": "$code.matches(/^[0-9]{6}$/)",
+          ".validate": "newData.hasChildren(['id', 'name', 'startAt', 'endAt'])",
+          "id": { ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9]{12}$/)" },
+          "name": { ".validate": "newData.isString() && newData.val().length <= 20" },
+          "startAt": { ".validate": "newData.isNumber()" },
+          "endAt": { ".validate": "newData.isNumber() && newData.val() > newData.parent().child('startAt').val() && newData.val() - newData.parent().child('startAt').val() <= 20000" },
+          "$other": { ".validate": false }
+        },
         "members": {
           "$memberId": {
             ".write": "$code.matches(/^[0-9]{6}$/) && $memberId.matches(/^[a-z0-9]{12}$/)",
