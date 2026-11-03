@@ -23,6 +23,28 @@ function micErrorMessage(e) {
   }
 }
 
+// ---------- 下のタブの位置のずれを直す ----------
+// iPhone のホーム画面アプリでは、マイクを使ったあとなどに表示範囲が上の時計や電波表示の分だけ
+// 短く計算され、下のタブが浮いてしまうことがある。画面全体の高さと比べ、短くなった分だけ下げて戻す
+function fixTabBarPosition() {
+  const standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  const bar = document.querySelector('.tab-bar');
+  if (!standalone) return;
+  const portrait = window.innerHeight > window.innerWidth;
+  const screenHeight = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
+  const gap = screenHeight - window.innerHeight;
+  // ずれは上の表示の高さ（およそ20〜60px）。それより大きいときはキーボードなので触らない
+  bar.style.bottom = gap > 0 && gap <= 80 ? `${-gap}px` : '';
+}
+['resize', 'orientationchange', 'pageshow'].forEach((name) => window.addEventListener(name, fixTabBarPosition));
+document.addEventListener('visibilitychange', fixTabBarPosition);
+// 録音を始めた・止めた直後は、表示範囲が少し遅れて変わることがあるので、何度か確かめる
+function recheckTabBarPosition() {
+  [100, 500, 1500].forEach((ms) => setTimeout(fixTabBarPosition, ms));
+}
+window.addEventListener('microphonechange', recheckTabBarPosition);
+recheckTabBarPosition();
+
 // ---------- タブ ----------
 const PANEL_ORDER = ['metronome', 'tuner', 'scale', 'recorder'];
 
