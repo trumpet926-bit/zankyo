@@ -319,14 +319,38 @@ $('scaleBpmDown').addEventListener('click', () => setScaleBpm(settings.scaleBpm 
 $('scaleBpmUp').addEventListener('click', () => setScaleBpm(settings.scaleBpm + 1));
 $('scaleBpmSlider').addEventListener('input', (e) => setScaleBpm(Number(e.target.value)));
 
-[['notesPerBeat', 'value'], ['scaleClick', 'checked'], ['countIn', 'checked'], ['scaleRepeat', 'checked']]
+[['scaleClick', 'checked'], ['countIn', 'checked'], ['scaleRepeat', 'checked']]
   .forEach(([id, prop]) => {
     $(id)[prop] = settings[id];
     $(id).addEventListener('change', (e) => {
-      settings[id] = prop === 'value' ? Number(e.target.value) : e.target.checked;
+      settings[id] = e.target.checked;
       saveSettings(settings);
     });
   });
+
+// 音の長さ（1拍あたりの音の数）：2分音符＝0.5、4分音符＝1、8分音符＝2
+const NOTE_LENGTHS = [
+  { value: 0.5, icon: 'half', name: '2分音符', sub: '1音を2拍' },
+  { value: 1, icon: 'quarter', name: '4分音符', sub: '1音を1拍' },
+  { value: 2, icon: 'eighth', name: '8分音符', sub: '1拍に2音' },
+];
+
+function renderNoteLengths() {
+  const box = $('noteLengths');
+  box.innerHTML = '';
+  NOTE_LENGTHS.forEach((n) => {
+    const btn = document.createElement('button');
+    btn.className = 'rhythm-btn' + (n.value === settings.notesPerBeat ? ' selected' : '');
+    btn.setAttribute('aria-label', `${n.name}（${n.sub}）`);
+    btn.innerHTML = `${rhythmIcon(n.icon)}<span class="rhythm-name">${n.name}\n${n.sub}</span>`;
+    btn.addEventListener('click', () => {
+      setScaleOption('notesPerBeat', n.value);
+      renderNoteLengths();
+    });
+    box.appendChild(btn);
+  });
+}
+renderNoteLengths();
 
 scalePlayer.onNote = (index) => {
   document.querySelectorAll('#noteChips .chip').forEach((chip, i) => {

@@ -746,3 +746,8 @@ button, .tab, .chip, .key-btn {
 .a4-value { font-size: 22px; font-weight: 700; min-width: 64px; text-align: center; font-variant-numeric: tabular-nums; }
 .a4-value small { font-size: 12px; font-weight: 400; margin-left: 2px; color: var(--muted); }
 .common-setting .round-btn.small { width: 38px; height: 38px; font-size: 20px; }
+
+/* 音階の音の長さ */
+.note-length-head { font-size: 14px; font-weight: 700; margin: 16px 0 6px; }
+.note-lengths { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.note-lengths .rhythm-name { font-size: 12px; }

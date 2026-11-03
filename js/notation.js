@@ -8,6 +8,7 @@ const STEM_DX = 3.6; // 符頭の中心から符尾までの距離
 // beams: [始まりの音符, 終わりの音符, 段（0=8分, 1=16分）]
 // stubs: 短い連桁 [音符, 段, 向き(-1=左)]、tuplet: 3連符の印（'beam' か 'bracket'）
 const RHYTHM_ICONS = {
+  half: { notes: [{ x: 30, hollow: true }] },
   quarter: { notes: [{ x: 30 }] },
   eighth: { notes: [{ x: 18 }, { x: 42 }], beams: [[0, 1, 0]] },
   triplet: { notes: [{ x: 12 }, { x: 30 }, { x: 48 }], beams: [[0, 2, 0]], tuplet: 'beam' },
@@ -25,7 +26,10 @@ function rhythmIcon(id) {
   let svg = '';
 
   spec.notes.forEach((n) => {
-    svg += `<ellipse cx="${n.x}" cy="${HEAD_Y}" rx="4.6" ry="3.3" transform="rotate(-20 ${n.x} ${HEAD_Y})"/>`;
+    // 2分音符は白い（中の抜けた）玉で描く
+    svg += n.hollow
+      ? `<ellipse cx="${n.x}" cy="${HEAD_Y}" rx="4" ry="2.7" transform="rotate(-20 ${n.x} ${HEAD_Y})" fill="none" stroke="currentColor" stroke-width="1.7"/>`
+      : `<ellipse cx="${n.x}" cy="${HEAD_Y}" rx="4.6" ry="3.3" transform="rotate(-20 ${n.x} ${HEAD_Y})"/>`;
     svg += `<rect x="${stemX(n)}" y="${STEM_TOP}" width="1.4" height="${HEAD_Y - STEM_TOP - 1}"/>`;
     if (n.dot) svg += `<circle cx="${n.x + 9}" cy="${HEAD_Y - 1}" r="1.7"/>`;
     if (n.flag) {

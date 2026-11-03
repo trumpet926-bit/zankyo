@@ -261,14 +261,8 @@
       </div>
       <input type="range" id="scaleBpmSlider" min="30" max="200" value="80" class="bpm-slider">
 
-      <div class="row">
-        <label>音の長さ
-          <select id="notesPerBeat">
-            <option value="1">1拍に1音（4分音符）</option>
-            <option value="2">1拍に2音（8分音符）</option>
-          </select>
-        </label>
-      </div>
+      <div class="note-length-head">音の長さ</div>
+      <div class="note-lengths" id="noteLengths"></div>
       <div class="options">
         <label class="checkbox"><input type="checkbox" id="scaleClick"> メトロノームも鳴らす</label>
         <label class="checkbox"><input type="checkbox" id="countIn"> 始める前に4拍数える</label>

@@ -16,7 +16,8 @@ const DEFAULT_SETTINGS = {
   scaleType: 'major',
   scaleOctave: 0,
   scaleBpm: 80,
-  notesPerBeat: 1,
+  notesPerBeat: 0.5, // 音階の音の長さ（0.5=2分音符、1=4分音符、2=8分音符）
+  halfNoteDefault: true, // 音階を2分音符を基本にした版に切り替え済みか
   scaleClick: true,
   countIn: true,
   scaleRepeat: false,
@@ -34,6 +35,11 @@ function loadSettings() {
     const settings = { ...DEFAULT_SETTINGS, ...saved };
     // 以前の版では楽器ごとに保存していたので、数値でなければ初期値に戻す
     if (typeof settings.scaleOctave !== 'number') settings.scaleOctave = 0;
+    // 音階を2分音符を基本にした版に変えたので、以前から使っている人も一度だけ2分音符にする
+    if (saved && !saved.halfNoteDefault) {
+      settings.notesPerBeat = 0.5;
+      settings.halfNoteDefault = true;
+    }
     return settings;
   } catch (e) {
     return { ...DEFAULT_SETTINGS };
