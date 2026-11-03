@@ -6,31 +6,63 @@
         "state": {
           ".write": "$code.matches(/^[0-9]{6}$/)",
           ".validate": "newData.hasChildren(['bpm', 'beats', 'running', 'anchorAt'])",
-          "bpm": { ".validate": "newData.isNumber() && newData.val() >= 30 && newData.val() <= 240" },
-          "beats": { ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 7" },
-          "running": { ".validate": "newData.isBoolean()" },
-          "anchorAt": { ".validate": "newData.isNumber()" },
-          "at": { ".validate": "newData.isNumber()" },
-          "by": { ".validate": "newData.isString() && newData.val().length <= 20" },
-          "action": { ".validate": "newData.isString() && newData.val().length <= 10" },
-          "$other": { ".validate": false }
+          "bpm": {
+            ".validate": "newData.isNumber() && newData.val() >= 30 && newData.val() <= 240"
+          },
+          "beats": {
+            ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 7"
+          },
+          "running": {
+            ".validate": "newData.isBoolean()"
+          },
+          "anchorAt": {
+            ".validate": "newData.isNumber()"
+          },
+          "at": {
+            ".validate": "newData.isNumber()"
+          },
+          "by": {
+            ".validate": "newData.isString() && newData.val().length <= 20"
+          },
+          "action": {
+            ".validate": "newData.isString() && newData.val().length <= 10"
+          },
+          "$other": {
+            ".validate": false
+          }
         },
         "calib": {
           ".write": "$code.matches(/^[0-9]{6}$/)",
           ".validate": "newData.hasChildren(['id', 'name', 'startAt', 'endAt'])",
-          "id": { ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9]{12}$/)" },
-          "name": { ".validate": "newData.isString() && newData.val().length <= 20" },
-          "startAt": { ".validate": "newData.isNumber()" },
-          "endAt": { ".validate": "newData.isNumber() && newData.val() > newData.parent().child('startAt').val() && newData.val() - newData.parent().child('startAt').val() <= 20000" },
-          "$other": { ".validate": false }
+          "id": {
+            ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9]{12}$/)"
+          },
+          "name": {
+            ".validate": "newData.isString() && newData.val().length <= 20"
+          },
+          "startAt": {
+            ".validate": "newData.isNumber()"
+          },
+          "endAt": {
+            ".validate": "newData.isNumber() && newData.val() > newData.parent().child('startAt').val() && newData.val() - newData.parent().child('startAt').val() <= 20000"
+          },
+          "$other": {
+            ".validate": false
+          }
         },
         "members": {
           "$memberId": {
             ".write": "$code.matches(/^[0-9]{6}$/) && $memberId.matches(/^[a-z0-9]{12}$/)",
             ".validate": "newData.hasChildren(['name'])",
-            "name": { ".validate": "newData.isString() && newData.val().length <= 20" },
-            "joinedAt": { ".validate": "newData.isNumber()" },
-            "$other": { ".validate": false }
+            "name": {
+              ".validate": "newData.isString() && newData.val().length <= 20"
+            },
+            "joinedAt": {
+              ".validate": "newData.isNumber()"
+            },
+            "$other": {
+              ".validate": false
+            }
           }
         }
       }
@@ -40,6 +72,43 @@
         ".read": "$memberId.matches(/^[a-z0-9]{12}$/)",
         ".write": "$memberId.matches(/^[a-z0-9]{12}$/)",
         ".validate": "newData.isNumber()"
+      }
+    },
+    "usage": {
+      ".read": true,
+      "days": {
+        "$day": {
+          "$id": {
+            ".write": "$day.matches(/^20[0-9]{2}-[0-9]{2}-[0-9]{2}$/) && $id.matches(/^[a-z0-9]{12}$/)",
+            "p": {
+              ".validate": "newData.isString() && newData.val().length <= 10"
+            },
+            "s": {
+              ".validate": "newData.isBoolean()"
+            },
+            "v": {
+              ".validate": "newData.isString() && newData.val().length <= 20"
+            },
+            "f": {
+              "$feature": {
+                ".validate": "newData.isBoolean() && $feature.matches(/^[a-z]{1,12}$/)"
+              }
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        }
+      },
+      "rooms": {
+        "$day": {
+          "$code": {
+            "$id": {
+              ".write": "$day.matches(/^20[0-9]{2}-[0-9]{2}-[0-9]{2}$/) && $code.matches(/^[0-9]{6}$/) && $id.matches(/^[a-z0-9]{12}$/)",
+              ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 100"
+            }
+          }
+        }
       }
     }
   }

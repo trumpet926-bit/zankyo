@@ -309,6 +309,7 @@ async function startMetronome() {
   scalePlayer.stop();
   await metronome.start();
   showMetronomeRunning(true);
+  usage.track('metronome');
 }
 
 // スタート／ストップのボタン（部屋に入っていれば全員のメトロノームを動かす）
@@ -509,6 +510,7 @@ function renderGuide(id) {
 function openGuide() {
   renderGuide(settings.scaleType);
   $('guideView').hidden = false;
+  usage.track('guide');
   document.body.style.overflow = 'hidden'; // 後ろの画面がスクロールしないようにする
 }
 
@@ -554,6 +556,7 @@ async function startScale() {
   });
   $('scaleStartStop').textContent = '停止';
   keepScreenOn(true);
+  usage.track('scale');
 }
 
 // ---------- チューナー ----------
@@ -631,6 +634,7 @@ $('tunerStartStop').addEventListener('click', async () => {
   try {
     await tuner.start();
     $('tunerStartStop').textContent = 'マイクをオフ';
+    usage.track('tuner');
   } catch (e) {
     $('tunerError').textContent = micErrorMessage(e);
     $('tunerError').hidden = false;
@@ -695,6 +699,7 @@ $('droneToggle').addEventListener('click', async () => {
   stopTuner(); // マイクが基準音を拾わないようにする
   await drone.start();
   renderDrone();
+  usage.track('drone');
 });
 $('dronePrev').addEventListener('click', () => setDroneNote(drone.midi - 1));
 $('droneNext').addEventListener('click', () => setDroneNote(drone.midi + 1));
@@ -1045,6 +1050,7 @@ async function startRecording({ withMetronome = settings.recWithMetronome, onErr
     onError(micErrorMessage(e));
     return false;
   }
+  usage.track('recorder');
   // 部屋に入っているときは、部屋のメトロノームに合わせて録音する（勝手に鳴らし始めない）
   if (withMetronome && !metronome.isRunning && !syncHooks.active()) {
     await startMetronome();

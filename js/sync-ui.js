@@ -116,6 +116,7 @@
       box.appendChild(chip);
     });
     renderCalib();
+    if (room.code) usage.room(room.code, Object.keys(members).length);
   };
 
   function renderMessage(s) {
@@ -156,6 +157,7 @@
   }
 
   function entered() {
+    usage.track('sync');
     joinedAt = room.serverNow();
     $('syncOut').hidden = true;
     $('syncIn').hidden = false;
@@ -312,6 +314,7 @@
         throw new CalibError('マイクを使えませんでした。マイクの使用を許可してください。');
       }
       capture = startCalibCapture(stream);
+      usage.track('calib');
       let calib;
       try {
         calib = await room.startCalib();

@@ -13,6 +13,7 @@ const FILES = [
   'js/music.js',
   'js/scale-guide.js',
   'js/storage.js',
+  'js/usage.js',
   'js/audio.js',
   'js/metronome.js',
   'js/notation.js',

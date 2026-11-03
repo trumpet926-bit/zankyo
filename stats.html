@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>使われ方</title>
+<style>
+  :root {
+    --bg: #f5f5f4; --surface: #ffffff; --text: #1c1917; --muted: #78716c; --border: #e7e5e4;
+    --bar: #b45309; --bar-soft: #f3e3cf; --grid: #e7e5e4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0c0a09; --surface: #1c1917; --text: #f5f5f4; --muted: #a8a29e; --border: #292524;
+      --bar: #f59e0b; --bar-soft: #3b2a14; --grid: #292524; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, "Hiragino Sans", "Yu Gothic UI", sans-serif; }
+  main { max-width: 720px; margin: 0 auto; padding: 16px 16px 40px; }
+  h1 { font-size: 22px; margin: 8px 0 4px; }
+  h2 { font-size: 16px; margin: 0 0 12px; }
+  .sub { color: var(--muted); font-size: 13px; margin: 0 0 16px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 14px; }
+  .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
+  .tile { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 12px; }
+  .tile .label { font-size: 12px; color: var(--muted); }
+  .tile .num { font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .tile .unit { font-size: 13px; color: var(--muted); margin-left: 2px; }
+  @media (max-width: 480px) { .tiles { grid-template-columns: repeat(2, 1fr); } }
+  .chart { position: relative; }
+  .chart svg { display: block; width: 100%; height: 180px; overflow: visible; }
+  .axis { font-size: 11px; fill: var(--muted); }
+  .tip { position: absolute; pointer-events: none; background: var(--text); color: var(--bg); font-size: 12px; padding: 4px 8px; border-radius: 6px; white-space: nowrap; transform: translate(-50%, -110%); }
+  .rows { display: grid; gap: 8px; }
+  .row { display: grid; grid-template-columns: 8.5em 1fr 6.5em; align-items: center; gap: 8px; font-size: 14px; }
+  .track { height: 10px; border-radius: 5px; background: var(--bar-soft); overflow: hidden; }
+  .fill { height: 100%; border-radius: 5px; background: var(--bar); }
+  .val { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); font-size: 13px; }
+  .val b { color: var(--text); font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+  th, td { text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 500; font-size: 12px; }
+  .empty { color: var(--muted); font-size: 14px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>残響 PracticeTool の使われ方</h1>
+  <p class="sub" id="updated">読み込んでいます…</p>
+
+  <div class="tiles">
+    <div class="tile"><div class="label">今日</div><div class="num" id="tToday">–</div></div>
+    <div class="tile"><div class="label">この7日</div><div class="num" id="t7">–</div></div>
+    <div class="tile"><div class="label">この30日</div><div class="num" id="t30">–</div></div>
+    <div class="tile"><div class="label">これまでの合計</div><div class="num" id="tAll">–</div></div>
+  </div>
+
+  <section class="card">
+    <h2>毎日の台数（この30日）</h2>
+    <div class="chart" id="daily"></div>
+  </section>
+
+  <section class="card">
+    <h2>使われた機能（この30日に開いた台のうち）</h2>
+    <div class="rows" id="features"></div>
+  </section>
+
+  <section class="card">
+    <h2>端末（この30日）</h2>
+    <div class="rows" id="platforms"></div>
+  </section>
+
+  <section class="card">
+    <h2>みんなで合わせる（この30日）</h2>
+    <div id="rooms"></div>
+  </section>
+
+  <section class="card">
+    <h2>アプリの版（この7日に開いた台）</h2>
+    <div id="versions"></div>
+  </section>
+</main>
+<script>
+const URL_BASE = 'https://zankyo-855d9-default-rtdb.asia-southeast1.firebasedatabase.app/usage.json';
+const FEATURES = [
+  ['metronome', 'メトロノーム'], ['tuner', 'チューナー'], ['drone', '基準音'], ['scale', '音階'],
+  ['guide', '音階の解説'], ['recorder', '録音'], ['sync', 'みんなで合わせる'], ['calib', '自動補正'],
+];
+const PLATFORMS = { iphone: 'iPhone', ipad: 'iPad', android: 'Android', pc: 'パソコン' };
+
+const $ = (id) => document.getElementById(id);
+const pad = (n) => String(n).padStart(2, '0');
+const dayKey = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+function lastDays(n) {
+  const out = [];
+  const d = new Date();
+  for (let i = n - 1; i >= 0; i--) out.push(dayKey(new Date(d.getFullYear(), d.getMonth(), d.getDate() - i)));
+  return out;
+}
+function uniqueIds(days, data) {
+  const ids = new Set();
+  days.forEach((day) => Object.keys(data[day] || {}).forEach((id) => ids.add(id)));
+  return ids;
+}
+function esc(s) {
+  return String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+}
+
+function barRows(box, items, total) {
+  if (!total) {
+    box.innerHTML = '<p class="empty">まだ記録がありません。</p>';
+    return;
+  }
+  box.innerHTML = items.map(([label, count]) => {
+    const pct = Math.round((count / total) * 100);
+    return `<div class="row"><span>${esc(label)}</span><div class="track"><div class="fill" style="width:${pct}%"></div></div>` +
+      `<span class="val"><b>${count}</b>台 ${pct}%</span></div>`;
+  }).join('');
+}
+
+function dailyChart(box, days, counts) {
+  const W = 600, H = 180, left = 28, bottom = 22, top = 8;
+  const max = Math.max(1, ...counts);
+  const step = Math.max(1, Math.ceil(max / 4));
+  const yMax = step * Math.ceil(max / step);
+  const slot = (W - left) / days.length;
+  const barW = Math.max(2, slot - 2); // 棒どうしの間に 2px のすき間
+  const y = (v) => top + (H - top - bottom) * (1 - v / yMax);
+  let svg = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="毎日の台数">`;
+  for (let v = 0; v <= yMax; v += step) {
+    svg += `<line x1="${left}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grid)" stroke-width="1"/>`;
+    svg += `<text class="axis" x="${left - 6}" y="${y(v) + 4}" text-anchor="end">${v}</text>`;
+  }
+  counts.forEach((c, i) => {
+    const x = left + i * slot + 1;
+    if (c > 0) {
+      const h = H - bottom - y(c);
+      const r = Math.min(4, barW / 2, h);
+      // 上の角だけ丸くする
+      svg += `<path fill="var(--bar)" d="M${x},${H - bottom} V${y(c) + r} Q${x},${y(c)} ${x + r},${y(c)} H${x + barW - r} Q${x + barW},${y(c)} ${x + barW},${y(c) + r} V${H - bottom} Z"/>`;
+    }
+    svg += `<rect data-i="${i}" x="${left + i * slot}" y="${top}" width="${slot}" height="${H - top - bottom}" fill="transparent"/>`;
+    if ((days.length - 1 - i) % 7 === 0) {
+      svg += `<text class="axis" x="${x + barW / 2}" y="${H - 6}" text-anchor="middle">${Number(days[i].slice(5, 7))}/${Number(days[i].slice(8))}</text>`;
+    }
+  });
+  svg += '</svg><div class="tip" hidden></div>';
+  box.innerHTML = svg;
+  const tip = box.querySelector('.tip');
+  box.querySelectorAll('rect[data-i]').forEach((rect) => {
+    const show = () => {
+      const i = Number(rect.dataset.i);
+      const svgRect = box.querySelector('svg').getBoundingClientRect();
+      const boxRect = box.getBoundingClientRect();
+      tip.textContent = `${Number(days[i].slice(5, 7))}月${Number(days[i].slice(8))}日：${counts[i]}台`;
+      tip.style.left = `${svgRect.left - boxRect.left + ((left + (i + 0.5) * slot) / W) * svgRect.width}px`;
+      tip.style.top = `${svgRect.top - boxRect.top + (y(counts[i]) / H) * svgRect.height}px`;
+      tip.hidden = false;
+    };
+    rect.addEventListener('mouseenter', show);
+    rect.addEventListener('touchstart', show, { passive: true });
+    rect.addEventListener('mouseleave', () => { tip.hidden = true; });
+  });
+}
+
+async function load() {
+  const res = await fetch(URL_BASE, { cache: 'no-store' });
+  const all = (await res.json()) || {};
+  const data = all.days || {};
+  const roomData = all.rooms || {};
+  const days30 = lastDays(30);
+  const days7 = days30.slice(-7);
+
+  $('tToday').textContent = uniqueIds(days30.slice(-1), data).size;
+  $('t7').textContent = uniqueIds(days7, data).size;
+  $('t30').textContent = uniqueIds(days30, data).size;
+  $('tAll').textContent = uniqueIds(Object.keys(data), data).size;
+
+  dailyChart($('daily'), days30, days30.map((d) => Object.keys(data[d] || {}).length));
+
+  // この30日に、各機能を1回でも使った台
+  const active = uniqueIds(days30, data);
+  const used = {};
+  const platformOf = {};
+  days30.forEach((day) => Object.entries(data[day] || {}).forEach(([id, rec]) => {
+    Object.keys(rec.f || {}).forEach((f) => { (used[f] = used[f] || new Set()).add(id); });
+    if (rec.p) platformOf[id] = `${PLATFORMS[rec.p] || rec.p} ${rec.s ? 'アプリ' : 'ブラウザ'}`;
+  }));
+  barRows($('features'), FEATURES.map(([key, label]) => [label, used[key] ? used[key].size : 0])
+    .sort((a, b) => b[1] - a[1]), active.size);
+
+  const platformCounts = {};
+  Object.values(platformOf).forEach((p) => { platformCounts[p] = (platformCounts[p] || 0) + 1; });
+  barRows($('platforms'), Object.entries(platformCounts).sort((a, b) => b[1] - a[1]), Object.keys(platformOf).length);
+
+  // 部屋：日ごとの部屋の数と、いちばん多かった人数
+  const roomRows = days30.slice().reverse().filter((d) => roomData[d]).map((d) => {
+    const rooms = Object.values(roomData[d]);
+    const sizes = rooms.map((r) => Math.max(...Object.values(r)));
+    return `<tr><td>${Number(d.slice(5, 7))}月${Number(d.slice(8))}日</td><td>${rooms.length}部屋</td><td>最大 ${Math.max(...sizes)}人</td></tr>`;
+  });
+  $('rooms').innerHTML = roomRows.length
+    ? `<table><tr><th>日付</th><th>作られた部屋</th><th>いちばん多い部屋の人数</th></tr>${roomRows.join('')}</table>`
+    : '<p class="empty">まだ部屋は使われていません。</p>';
+
+  const versionOf = {};
+  days7.forEach((day) => Object.entries(data[day] || {}).forEach(([id, rec]) => { if (rec.v) versionOf[id] = rec.v; }));
+  const versionCounts = {};
+  Object.values(versionOf).forEach((v) => { versionCounts[v] = (versionCounts[v] || 0) + 1; });
+  const vRows = Object.entries(versionCounts).sort((a, b) => (a[0] < b[0] ? 1 : -1));
+  $('versions').innerHTML = vRows.length
+    ? `<table><tr><th>版</th><th>台数</th></tr>${vRows.map(([v, c]) => `<tr><td>${esc(v)}</td><td>${c}台</td></tr>`).join('')}</table>`
+    : '<p class="empty">まだ記録がありません。</p>';
+
+  const now = new Date();
+  $('updated').textContent = `${now.getMonth() + 1}月${now.getDate()}日 ${pad(now.getHours())}:${pad(now.getMinutes())} 時点。1台を1日1回として数えています。`;
+}
+
+load().catch(() => { $('updated').textContent = '読み込めませんでした。インターネットにつながっているか確認してください。'; });
+</script>
+</body>
+</html>
