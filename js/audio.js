@@ -20,11 +20,9 @@ async function openMicrophone() {
   setAudioSessionForMic(true);
   try {
     // 楽器の音をそのまま拾うため、通話用の自動補正は切る
-    const stream = await navigator.mediaDevices.getUserMedia({
+    return await navigator.mediaDevices.getUserMedia({
       audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
     });
-    window.dispatchEvent(new Event('microphonechange')); // iPhone で画面の表示範囲が変わることがあるため知らせる
-    return stream;
   } catch (e) {
     setAudioSessionForMic(false);
     throw e;
@@ -46,7 +44,6 @@ function rmsToLevel(rms) {
 function closeMicrophone(stream) {
   stream.getTracks().forEach((track) => track.stop());
   setAudioSessionForMic(false);
-  window.dispatchEvent(new Event('microphonechange'));
 }
 
 function getAudioContext() {

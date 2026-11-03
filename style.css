@@ -670,7 +670,7 @@ button, .tab, .chip, .key-btn {
   100% { transform: scale(1); }
 }
 
-/* iPhone のホーム画面アプリでは、マイクを使ったあとなどに表示範囲が短く計算され、
+/* iPhone のホーム画面アプリでは、中身が短い画面で表示範囲が短く計算され、
    下のタブの下にすき間ができることがある。タブの背景を下に伸ばして、すき間を隠す */
 .tab-bar::after {
   content: "";
@@ -864,3 +864,8 @@ input.switch:checked::before { transform: translateX(20px); }
   to { opacity: 1; transform: none; }
 }
 main { overflow-x: clip; } /* 入ってくる途中の画面で、横にはみ出さないように */
+
+/* iPhone のホーム画面アプリでは、中身が画面より短い画面（録音など）で、
+   下のタブが上の時計・電波表示の高さ分だけ浮く不具合がある。
+   ページの高さを、常に画面よりその分だけ長くして防ぐ */
+html { min-height: calc(100% + env(safe-area-inset-top)); }
