@@ -270,6 +270,9 @@
       </div>
 
       <button class="btn primary big full-width" id="scaleStartStop">再生</button>
+      <button class="btn big full-width rec-along" id="scaleRecord"></button>
+      <p class="note small-note">スピーカーで鳴らした音階と自分の演奏を、マイクでまとめて録音します。音階が終わると録音も止まり、「録音」の画面に保存されます。</p>
+      <p class="error" id="scaleRecError" hidden></p>
     </section>
 
     <!-- 録音 -->
@@ -315,6 +318,8 @@
           </div>
         </div>
         <p class="note" id="loopInfo">始めたい位置で「A」、終わりたい位置で「B」を押すと、その間をくり返します。</p>
+        <button class="btn full-width rec-along" id="playerOverdub"></button>
+        <p class="note small-note">この録音を頭からスピーカーで鳴らし、合わせて吹いた音とまとめて録音します。最後まで鳴ると録音も止まります。</p>
         <p class="error" id="playerError" hidden></p>
       </div>
 

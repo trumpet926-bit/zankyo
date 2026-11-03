@@ -751,3 +751,10 @@ button, .tab, .chip, .key-btn {
 .note-length-head { font-size: 14px; font-weight: 700; margin: 16px 0 6px; }
 .note-lengths { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
 .note-lengths .rhythm-name { font-size: 12px; }
+
+/* 録音しながら鳴らすボタン */
+.rec-along { margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; }
+.rec-dot { width: 12px; height: 12px; border-radius: 50%; background: #dc2626; flex-shrink: 0; }
+.rec-along.recording { border-color: #dc2626; color: #dc2626; }
+.rec-along.recording .rec-dot { border-radius: 2px; animation: rec-blink 1s ease-in-out infinite; }
+@keyframes rec-blink { 50% { opacity: 0.3; } }

@@ -362,13 +362,18 @@ scalePlayer.onEnd = () => {
   $('scaleStartStop').textContent = '再生';
   document.querySelectorAll('#noteChips .chip').forEach((chip) => chip.classList.remove('playing'));
   keepScreenOn(false);
+  if (recordingMode === 'scale') finishRecordingSoon(); // 音階を録音していたら、録音も止める
 };
 
-$('scaleStartStop').addEventListener('click', async () => {
+$('scaleStartStop').addEventListener('click', () => {
   if (scalePlayer.isRunning) {
     scalePlayer.stop();
     return;
   }
+  startScale();
+});
+
+async function startScale() {
   stopMetronome();
   const scale = currentScale();
   await scalePlayer.start({
@@ -381,7 +386,7 @@ $('scaleStartStop').addEventListener('click', async () => {
   });
   $('scaleStartStop').textContent = '停止';
   keepScreenOn(true);
-});
+}
 
 // ---------- チューナー ----------
 let recentFreqs = [];
@@ -852,22 +857,28 @@ function showRecError(message) {
   $('recError').hidden = false;
 }
 
-async function startRecording() {
+// 録音しながら何かを鳴らしているとき：'scale'（音階）、'overdub'（録音に合わせて）
+let recordingMode = null;
+let recordingName = null; // 録り終えたときに付ける名前
+
+// 戻り値：録音を始められたら true
+async function startRecording({ withMetronome = settings.recWithMetronome, onError = showRecError } = {}) {
   $('recError').hidden = true;
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) {
-    showRecError('このブラウザ（またはこの開き方）では録音できません。');
-    return;
+    onError('このブラウザ（またはこの開き方）では録音できません。');
+    return false;
   }
   stopTuner();
+  stopDrone();
   player.pause(); // 再生中の音が録音に入らないようにする
   try {
     await recorder.start();
   } catch (e) {
-    showRecError(micErrorMessage(e));
-    return;
+    onError(micErrorMessage(e));
+    return false;
   }
   // 部屋に入っているときは、部屋のメトロノームに合わせて録音する（勝手に鳴らし始めない）
-  if (settings.recWithMetronome && !metronome.isRunning && !syncHooks.active()) {
+  if (withMetronome && !metronome.isRunning && !syncHooks.active()) {
     await startMetronome();
     metronomeStartedByRecorder = true;
   }
@@ -875,9 +886,20 @@ async function startRecording() {
   $('recStatus').textContent = '録音中…もう一度押すと止まります';
   document.querySelector('.tab[data-panel="recorder"]').classList.add('recording');
   keepScreenOn(true);
+  return true;
 }
 
 async function stopRecording() {
+  if (!recorder.isRecording) return;
+  // 一緒に鳴らしていた音階や録音も止める
+  const mode = recordingMode;
+  const name = recordingName;
+  recordingMode = null;
+  recordingName = null;
+  if (mode === 'scale') scalePlayer.stop();
+  if (mode === 'overdub') player.pause();
+  renderRecordingModes();
+
   const { blob, duration } = await recorder.stop();
   if (metronomeStartedByRecorder) {
     stopMetronome();
@@ -891,11 +913,89 @@ async function stopRecording() {
   keepScreenOn(false);
 
   const rec = { id: `rec-${Date.now()}`, createdAt: Date.now(), duration, blob };
+  if (name) rec.name = name.slice(0, 40);
   recordings.unshift(rec);
   await storeRecording(rec);
   renderRecordings();
   openInPlayer(rec, false); // 録り終えたらすぐ聞き返せるように、プレーヤーで開いておく
 }
+
+// 鳴らし終わったあと、スピーカーの音の余韻まで録ってから止める
+function finishRecordingSoon() {
+  const mode = recordingMode;
+  if (!mode || mode === 'finishing') return;
+  recordingMode = 'finishing';
+  // 途中で止めたときは、鳴らしていた音階や録音をすぐ止める
+  if (mode === 'scale') scalePlayer.stop();
+  if (mode === 'overdub') player.pause();
+  renderRecordingModes();
+  setTimeout(() => stopRecording(), 600);
+}
+
+function renderRecordingModes() {
+  const scaleRec = recordingMode === 'scale';
+  const overdub = recordingMode === 'overdub';
+  $('scaleRecord').innerHTML = `<span class="rec-dot"></span>${scaleRec ? '録音を止める' : '録音しながら再生'}`;
+  $('scaleRecord').classList.toggle('recording', scaleRec);
+  $('playerOverdub').innerHTML = `<span class="rec-dot"></span>${overdub ? '録音を止める' : '合わせて録音'}`;
+  $('playerOverdub').classList.toggle('recording', overdub);
+}
+
+// ① 音階を鳴らしながら録音する（スピーカーの音階と自分の演奏を、マイクでまとめて録る）
+$('scaleRecord').addEventListener('click', async () => {
+  if (recordingMode === 'scale') {
+    finishRecordingSoon();
+    return;
+  }
+  if (recorder.isRecording) return; // ほかの録音の最中
+  $('scaleRecError').hidden = true;
+  scalePlayer.stop();
+  const started = await startRecording({
+    withMetronome: false,
+    onError: (message) => {
+      $('scaleRecError').textContent = message;
+      $('scaleRecError').hidden = false;
+    },
+  });
+  if (!started) return;
+  const scale = currentScale();
+  const type = SCALE_TYPES.find((t) => t.id === settings.scaleType);
+  recordingMode = 'scale';
+  recordingName = `${scale.up[0].name} ${type.name}（録音）`;
+  renderRecordingModes();
+  await startScale();
+});
+
+// ② 録音に合わせて録音する（スピーカーで元の録音を鳴らし、自分の演奏とまとめて録る）
+$('playerOverdub').addEventListener('click', async () => {
+  if (recordingMode === 'overdub') {
+    finishRecordingSoon();
+    return;
+  }
+  if (recorder.isRecording) return;
+  const base = recordings.find((r) => r.id === selectedId);
+  if (!base) return;
+  $('playerError').hidden = true;
+  const started = await startRecording({
+    withMetronome: false,
+    onError: (message) => {
+      $('playerError').textContent = message;
+      $('playerError').hidden = false;
+    },
+  });
+  if (!started) return;
+  recordingMode = 'overdub';
+  recordingName = `${displayName(base)} に合わせて`;
+  renderRecordingModes();
+  player.clearLoop();
+  player.seek(0);
+  player.toggle();
+});
+
+// 元の録音が最後まで鳴ったら、録音も止める
+player.audio.addEventListener('ended', () => {
+  if (recordingMode === 'overdub') finishRecordingSoon();
+});
 
 $('recButton').addEventListener('click', () => {
   if (recorder.isRecording) {
@@ -912,6 +1012,7 @@ $('recWithMetronome').addEventListener('change', (e) => {
 });
 
 // ---------- 初期表示 ----------
+renderRecordingModes();
 setA4(settings.a4);
 setTunerSensitivity(settings.tunerSensitivity);
 loadRecordings();
