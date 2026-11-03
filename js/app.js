@@ -260,7 +260,12 @@ function renderScale() {
     btn.addEventListener('click', () => setScaleOption('scaleKey', i));
     grid.appendChild(btn);
   });
-  $('scaleOctave').value = settings.scaleOctave;
+  document.querySelectorAll('#scaleTypes button').forEach((b) => {
+    b.classList.toggle('selected', b.dataset.type === settings.scaleType);
+  });
+  document.querySelectorAll('#scaleOctaves button').forEach((b) => {
+    b.classList.toggle('selected', Number(b.dataset.octave) === settings.scaleOctave);
+  });
 
   const scale = currentScale();
   const first = scale.up[0];
@@ -298,15 +303,18 @@ function setScaleOption(key, value) {
   renderScale();
 }
 
+// 音階の種類と始める高さは、押して選ぶボタンにする
 SCALE_TYPES.forEach((t) => {
-  const option = document.createElement('option');
-  option.value = t.id;
-  option.textContent = t.name;
-  $('scaleTypeSelect').appendChild(option);
+  const btn = document.createElement('button');
+  btn.className = 'chip-btn';
+  btn.dataset.type = t.id;
+  btn.textContent = t.name.replace('（', '\n（'); // 「3度音階（長調）」は（の前で改行する
+  btn.addEventListener('click', () => setScaleOption('scaleType', t.id));
+  $('scaleTypes').appendChild(btn);
 });
-
-$('scaleTypeSelect').addEventListener('change', (e) => setScaleOption('scaleType', e.target.value));
-$('scaleOctave').addEventListener('change', (e) => setScaleOption('scaleOctave', Number(e.target.value)));
+document.querySelectorAll('#scaleOctaves button').forEach((b) => {
+  b.addEventListener('click', () => setScaleOption('scaleOctave', Number(b.dataset.octave)));
+});
 
 function setScaleBpm(value) {
   const bpm = Math.min(200, Math.max(30, Math.round(value)));
@@ -1028,6 +1036,5 @@ $('accentCheck').checked = settings.accent;
 setBpm(settings.bpm);
 renderBeatDots();
 
-$('scaleTypeSelect').value = settings.scaleType;
 setScaleBpm(settings.scaleBpm);
 renderScale();

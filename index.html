@@ -47,20 +47,56 @@
 
     <!-- メトロノーム -->
     <section class="panel active" id="panel-metronome">
-      <div class="bpm-display">
-        <button class="round-btn" id="bpmDown" aria-label="テンポを下げる">−</button>
-        <div>
-          <div class="bpm-value" id="bpmValue">100</div>
-          <div class="bpm-label">BPM</div>
+      <!-- テンポ -->
+      <div class="tool-section">
+        <div class="section-head">
+          <span class="section-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M7.5 20.5 10.3 4.2a1.2 1.2 0 0 1 1.2-1h1a1.2 1.2 0 0 1 1.2 1l2.8 16.3Z" class="line"/>
+              <path d="M6 20.5h12M12 16.5 16.8 6.5" class="line"/>
+              <circle cx="15.1" cy="10" r="1.7" class="dot"/>
+            </svg>
+          </span>
+          <h2>テンポ</h2>
         </div>
-        <button class="round-btn" id="bpmUp" aria-label="テンポを上げる">＋</button>
+        <div class="bpm-display">
+          <button class="round-btn" id="bpmDown" aria-label="テンポを下げる">−</button>
+          <div>
+            <div class="bpm-value" id="bpmValue">100</div>
+            <div class="bpm-label">BPM</div>
+          </div>
+          <button class="round-btn" id="bpmUp" aria-label="テンポを上げる">＋</button>
+        </div>
+        <input type="range" id="bpmSlider" min="30" max="240" value="100" class="bpm-slider">
+
+        <div class="beat-dots" id="beatDots"></div>
+
+        <div class="action-row">
+          <button class="btn primary big" id="startStop">スタート</button>
+          <button class="btn big" id="tapTempo">タップ</button>
+        </div>
+        <div class="action-row compact">
+          <button class="toggle" data-toggle="metroSound" aria-pressed="true">音</button>
+          <button class="toggle" data-toggle="metroLight" aria-pressed="true">光</button>
+          <button class="btn" id="openBigView">大きく表示</button>
+        </div>
       </div>
-      <input type="range" id="bpmSlider" min="30" max="240" value="100" class="bpm-slider">
 
-      <div class="beat-dots" id="beatDots"></div>
-
-      <div class="row">
-        <label>拍子
+      <!-- リズム -->
+      <div class="tool-section">
+        <div class="section-head">
+          <span class="section-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <ellipse cx="7" cy="18" rx="2.6" ry="1.9" transform="rotate(-20 7 18)" class="dot"/>
+              <ellipse cx="16.5" cy="16" rx="2.6" ry="1.9" transform="rotate(-20 16.5 16)" class="dot"/>
+              <path d="M9.4 17.3V5.8M18.9 15.3V3.8" class="line"/>
+              <path d="M9.4 5.8 18.9 3.8" class="beam"/>
+            </svg>
+          </span>
+          <h2>リズム</h2>
+        </div>
+        <div class="setting-row">
+          <span class="sub-label">拍子</span>
           <select id="beatsSelect">
             <option value="1">1拍</option>
             <option value="2">2拍</option>
@@ -70,26 +106,26 @@
             <option value="6">6拍</option>
             <option value="7">7拍</option>
           </select>
+        </div>
+        <label class="setting-row">
+          <span class="sub-label">1拍目を強調</span>
+          <input type="checkbox" id="accentCheck" class="switch" checked>
         </label>
-        <label class="checkbox"><input type="checkbox" id="accentCheck" checked> 1拍目を強調</label>
-      </div>
-
-      <div class="rhythm-grid" id="rhythmGrid"></div>
-
-      <div class="row">
-        <button class="btn primary big" id="startStop">スタート</button>
-        <button class="btn big" id="tapTempo">タップ</button>
-      </div>
-
-      <div class="row">
-        <button class="toggle" data-toggle="metroSound" aria-pressed="true">音</button>
-        <button class="toggle" data-toggle="metroLight" aria-pressed="true">光</button>
-        <button class="btn" id="openBigView">大きく表示</button>
+        <div class="rhythm-grid" id="rhythmGrid"></div>
       </div>
 
       <!-- みんなで合わせる -->
-      <div class="sync-card">
-        <h2>みんなで合わせる</h2>
+      <div class="tool-section">
+        <div class="section-head">
+          <span class="section-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="8.5" cy="8" r="3" class="line"/>
+              <circle cx="16.5" cy="9" r="2.5" class="line"/>
+              <path d="M3 19.5a5.5 5.5 0 0 1 11 0M13.8 15.2A4.5 4.5 0 0 1 21 19.5" class="line"/>
+            </svg>
+          </span>
+          <h2>みんなで合わせる</h2>
+        </div>
         <div id="syncOut">
           <p class="note" id="syncInvite">同じ部屋に入った人どうしで、メトロノームのテンポと拍がそろいます。インターネットにつながっている必要があります。</p>
           <button class="btn primary full-width" id="syncCreate">部屋を作る</button>
@@ -229,64 +265,115 @@
 
     <!-- 音階 -->
     <section class="panel" id="panel-scale">
-      <h2>調</h2>
-      <div class="key-grid" id="keyGrid"></div>
+      <!-- 調と種類 -->
+      <div class="tool-section">
+        <div class="section-head">
+          <span class="section-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M9 3.5 7.5 20.5M15.5 3.5 14 20.5M4.5 9.5l15-2.5M4 16l15-2.5" class="line"/>
+            </svg>
+          </span>
+          <h2>調と種類</h2>
+        </div>
+        <div class="sub-head">調</div>
+        <div class="key-grid" id="keyGrid"></div>
+        <div class="sub-head">種類</div>
+        <div class="chip-grid" id="scaleTypes"></div>
+        <div class="sub-head">始める高さ</div>
+        <div class="seg" id="scaleOctaves">
+          <button data-octave="-2">2つ下</button>
+          <button data-octave="-1">1つ下</button>
+          <button data-octave="0">標準</button>
+          <button data-octave="1">1つ上</button>
+        </div>
+      </div>
 
-      <h2>種類</h2>
-      <select id="scaleTypeSelect" class="full"></select>
+      <!-- 音階（音の並びと再生） -->
+      <div class="tool-section">
+        <div class="section-head">
+          <span class="section-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <ellipse cx="5.6" cy="18.3" rx="2.4" ry="1.8" transform="rotate(-20 5.6 18.3)" class="dot"/>
+              <ellipse cx="11.6" cy="14.6" rx="2.4" ry="1.8" transform="rotate(-20 11.6 14.6)" class="dot"/>
+              <ellipse cx="17.6" cy="10.9" rx="2.4" ry="1.8" transform="rotate(-20 17.6 10.9)" class="dot"/>
+              <path d="M7.8 17.6V8.8M13.8 13.9V5.6M19.8 10.2V2.9" class="line"/>
+              <path d="M7.8 8.8 19.8 2.9" class="beam"/>
+            </svg>
+          </span>
+          <div>
+            <h2 id="scaleTitle"></h2>
+            <div class="scale-start" id="scaleStart"></div>
+          </div>
+        </div>
+        <div class="note-chips" id="noteChips"></div>
+        <p class="note small-note">音名を押すと、その音が鳴ります。</p>
+        <button class="btn primary big full-width" id="scaleStartStop">再生</button>
+        <button class="btn big full-width rec-along" id="scaleRecord"></button>
+        <p class="note small-note">スピーカーで鳴らした音階と自分の演奏を、マイクでまとめて録音します。音階が終わると録音も止まり、「録音」の画面に保存されます。</p>
+        <p class="error" id="scaleRecError" hidden></p>
+      </div>
 
-      <div class="row">
-        <label>始める高さ
-          <select id="scaleOctave">
-            <option value="-2">2オクターブ下</option>
-            <option value="-1">1オクターブ下</option>
-            <option value="0">標準</option>
-            <option value="1">1オクターブ上</option>
-          </select>
+      <!-- 再生の設定 -->
+      <div class="tool-section">
+        <div class="section-head">
+          <span class="section-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 7h16M4 17h16" class="line"/>
+              <circle cx="9" cy="7" r="2.4" class="knob"/>
+              <circle cx="15" cy="17" r="2.4" class="knob"/>
+            </svg>
+          </span>
+          <h2>再生の設定</h2>
+        </div>
+        <div class="sub-head">テンポ</div>
+        <div class="tempo-row">
+          <button class="round-btn small" id="scaleBpmDown" aria-label="テンポを下げる">−</button>
+          <span class="tempo-value"><span id="scaleBpmValue">80</span> BPM</span>
+          <button class="round-btn small" id="scaleBpmUp" aria-label="テンポを上げる">＋</button>
+        </div>
+        <input type="range" id="scaleBpmSlider" min="30" max="200" value="80" class="bpm-slider">
+        <div class="sub-head">音の長さ</div>
+        <div class="note-lengths" id="noteLengths"></div>
+        <label class="setting-row">
+          <span class="sub-label">メトロノームも鳴らす</span>
+          <input type="checkbox" id="scaleClick" class="switch">
+        </label>
+        <label class="setting-row">
+          <span class="sub-label">始める前に4拍数える</span>
+          <input type="checkbox" id="countIn" class="switch">
+        </label>
+        <label class="setting-row">
+          <span class="sub-label">くり返す</span>
+          <input type="checkbox" id="scaleRepeat" class="switch">
         </label>
       </div>
-
-      <div class="scale-view">
-        <div class="scale-title" id="scaleTitle"></div>
-        <div class="scale-start" id="scaleStart"></div>
-        <div class="note-chips" id="noteChips"></div>
-        <p class="note">音名を押すと、その音が鳴ります。</p>
-      </div>
-
-      <h2>テンポ</h2>
-      <div class="tempo-row">
-        <button class="round-btn small" id="scaleBpmDown" aria-label="テンポを下げる">−</button>
-        <span class="tempo-value"><span id="scaleBpmValue">80</span> BPM</span>
-        <button class="round-btn small" id="scaleBpmUp" aria-label="テンポを上げる">＋</button>
-      </div>
-      <input type="range" id="scaleBpmSlider" min="30" max="200" value="80" class="bpm-slider">
-
-      <div class="note-length-head">音の長さ</div>
-      <div class="note-lengths" id="noteLengths"></div>
-      <div class="options">
-        <label class="checkbox"><input type="checkbox" id="scaleClick"> メトロノームも鳴らす</label>
-        <label class="checkbox"><input type="checkbox" id="countIn"> 始める前に4拍数える</label>
-        <label class="checkbox"><input type="checkbox" id="scaleRepeat"> くり返す</label>
-      </div>
-
-      <button class="btn primary big full-width" id="scaleStartStop">再生</button>
-      <button class="btn big full-width rec-along" id="scaleRecord"></button>
-      <p class="note small-note">スピーカーで鳴らした音階と自分の演奏を、マイクでまとめて録音します。音階が終わると録音も止まり、「録音」の画面に保存されます。</p>
-      <p class="error" id="scaleRecError" hidden></p>
     </section>
 
     <!-- 録音 -->
     <section class="panel" id="panel-recorder">
-      <div class="rec-panel">
-        <div class="rec-time" id="recTime">0:00</div>
-        <div class="level-meter"><div class="level-bar" id="levelBar"></div></div>
-        <button class="rec-button" id="recButton" aria-label="録音"><span class="rec-icon"></span></button>
-        <div class="rec-status" id="recStatus">押すと録音を始めます</div>
+      <div class="tool-section">
+        <div class="section-head">
+          <span class="section-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="9" y="2.8" width="6" height="11.2" rx="3" class="line"/>
+              <path d="M5.8 11a6.2 6.2 0 0 0 12.4 0M12 17.2v3.3M8.8 20.5h6.4" class="line"/>
+            </svg>
+          </span>
+          <h2>録音</h2>
+        </div>
+        <div class="rec-panel">
+          <div class="rec-time" id="recTime">0:00</div>
+          <div class="level-meter"><div class="level-bar" id="levelBar"></div></div>
+          <button class="rec-button" id="recButton" aria-label="録音"><span class="rec-icon"></span></button>
+          <div class="rec-status" id="recStatus">押すと録音を始めます</div>
+        </div>
+        <label class="setting-row">
+          <span class="sub-label">メトロノームを鳴らしながら録音</span>
+          <input type="checkbox" id="recWithMetronome" class="switch">
+        </label>
+        <p class="note small-note">テンポと拍子は「メトロノーム」画面の設定を使います。</p>
+        <p class="error" id="recError" hidden></p>
       </div>
-
-      <label class="checkbox"><input type="checkbox" id="recWithMetronome"> メトロノームを鳴らしながら録音</label>
-      <p class="note">テンポと拍子は「メトロノーム」画面の設定を使います。イヤホンで聞くと、メトロノームの音が録音に入りません。</p>
-      <p class="error" id="recError" hidden></p>
 
       <!-- 再生プレーヤー（一覧から選んだ録音を再生する） -->
       <div class="player" id="player" hidden>

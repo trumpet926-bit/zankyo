@@ -758,3 +758,96 @@ button, .tab, .chip, .key-btn {
 .rec-along.recording { border-color: #dc2626; color: #dc2626; }
 .rec-along.recording .rec-dot { border-radius: 2px; animation: rec-blink 1s ease-in-out infinite; }
 @keyframes rec-blink { 50% { opacity: 0.3; } }
+
+/* ===== 全体の見た目の調整（各画面をアイコン付きの枠でまとめる） ===== */
+.panel > .tool-section:first-child { margin-top: 0; }
+.section-icon .beam { fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; }
+.section-icon .knob { fill: var(--surface); stroke: currentColor; stroke-width: 1.8; }
+.section-head h2 { overflow-wrap: anywhere; }
+
+/* 枠の中の小見出し */
+.sub-head { font-size: 13px; font-weight: 700; color: var(--muted); margin: 16px 0 8px; }
+.section-head + .sub-head { margin-top: 4px; }
+
+/* 1行の設定（左に名前、右にスイッチや選択） */
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+  cursor: pointer;
+}
+.section-head + .setting-row { border-top: none; padding-top: 4px; }
+.setting-row .sub-label { font-weight: 600; white-space: normal; }
+.setting-row select { min-width: 96px; }
+
+/* オン・オフのスイッチ（チェックボックスを大きく押しやすく） */
+input.switch {
+  -webkit-appearance: none;
+  appearance: none;
+  position: relative;
+  flex-shrink: 0;
+  width: 50px;
+  height: 30px;
+  margin: 0;
+  border-radius: 15px;
+  background: var(--beat);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+input.switch::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s;
+}
+input.switch:checked { background: var(--accent); border-color: var(--accent); }
+input.switch:checked::before { transform: translateX(20px); }
+
+/* 押して選ぶボタン（音階の種類など） */
+.chip-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.chip-btn {
+  font: inherit;
+  font-size: 13px;
+  padding: 10px 4px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+.chip-btn.selected, .key-btn.selected { background: var(--accent); border-color: var(--accent); color: var(--accent-text); font-weight: 700; }
+
+/* ボタンの並び */
+.action-row { display: flex; gap: 10px; margin-top: 14px; }
+.action-row .btn.big { flex: 1; }
+.action-row.compact { align-items: center; }
+.action-row.compact .btn { flex: 1; }
+
+/* メトロノーム */
+.tool-section .bpm-display { margin: 0 0 8px; }
+.tool-section .beat-dots { margin: 16px 0 4px; }
+.tool-section .rhythm-grid { margin: 12px 0 0; }
+
+/* 音階 */
+.tool-section #scaleTitle { font-size: 18px; }
+.tool-section .scale-start { margin: 2px 0 0; }
+.tool-section .note-chips { margin: 4px 0 0; }
+.tool-section #scaleStartStop { margin-top: 14px; }
+.tool-section .note-lengths { margin-bottom: 4px; }
+
+/* 録音（枠の中に入れた録音ボタンは、枠を二重にしない） */
+.tool-section .rec-panel { margin: 0 0 4px; padding: 8px 0 12px; border: none; background: none; }
+.chip-btn { white-space: pre-line; line-height: 1.3; }
+/* 音名は1段に8つ並べる（上りと下りがそれぞれ1段に収まる） */
+.tool-section .chip-row { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; }
+.tool-section .chip { min-width: 0; padding: 8px 0; font-size: 14px; }
