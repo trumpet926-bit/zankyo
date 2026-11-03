@@ -305,6 +305,10 @@
             <div class="scale-start" id="scaleStart"></div>
           </div>
         </div>
+        <button class="guide-link" id="openGuide">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Zm0 15A2.5 2.5 0 0 0 6.5 23H20v-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+          <span id="openGuideLabel">この音階の解説</span>
+        </button>
         <div class="note-chips" id="noteChips"></div>
         <p class="note small-note">音名を押すと、その音が鳴ります。</p>
         <button class="btn primary big full-width" id="scaleStartStop">再生</button>
@@ -419,6 +423,18 @@
     </section>
   </main>
 
+  <!-- 音階の解説 -->
+  <div class="guide-view" id="guideView" hidden>
+    <div class="guide-top">
+      <div class="guide-top-row">
+        <h2>音階の解説</h2>
+        <button class="guide-close" id="closeGuide" aria-label="閉じる">×</button>
+      </div>
+      <div class="guide-tabs" id="guideTabs"></div>
+    </div>
+    <article class="guide-body" id="guideBody"></article>
+  </div>
+
   <!-- メトロノームの大きな表示（譜面台に置いても見えるように） -->
   <div class="big-view" id="bigView" hidden>
     <div class="big-flash" id="bigFlash"></div>
@@ -487,6 +503,7 @@
 
   <script src="js/version.js"></script>
   <script src="js/music.js"></script>
+  <script src="js/scale-guide.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/audio.js"></script>
   <script src="js/metronome.js"></script>

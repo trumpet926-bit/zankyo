@@ -320,6 +320,7 @@ function renderScale() {
   const first = scale.up[0];
   $('scaleTitle').textContent = `${first.name} ${type.name}`;
   $('scaleStart').textContent = `始めの音：${nameWithOctave(first.name, first.midi)}`;
+  $('openGuideLabel').textContent = `「${type.name}」の特徴と吹き方`;
   const chips = $('noteChips');
   chips.innerHTML = '';
   [scale.up, scale.down].forEach((notes) => {
@@ -408,6 +409,60 @@ function renderNoteLengths() {
   });
 }
 renderNoteLengths();
+
+// ---------- 音階の解説 ----------
+const GUIDE_ORDER = ['basics', ...SCALE_TYPES.map((t) => t.id)];
+
+function renderGuide(id) {
+  const guide = SCALE_GUIDE[id];
+  const tabs = $('guideTabs');
+  tabs.innerHTML = '';
+  GUIDE_ORDER.forEach((key) => {
+    const btn = document.createElement('button');
+    btn.className = 'chip-btn' + (key === id ? ' selected' : '');
+    btn.textContent = SCALE_GUIDE[key].title.replace('（長調）', '');
+    btn.addEventListener('click', () => renderGuide(key));
+    tabs.appendChild(btn);
+  });
+
+  const list = (items) => `<ul>${items.map((item) => `<li>${item}</li>`).join('')}</ul>`;
+  let html = `<h3>${guide.title}</h3><p class="guide-lead">${guide.summary}</p>`;
+  if (guide.sections) {
+    guide.sections.forEach((s) => { html += `<h4>${s.heading}</h4>${list(s.items)}`; });
+  } else {
+    html += `
+      <dl class="guide-facts">
+        <dt>しくみ</dt><dd>${guide.structure}</dd>
+        <dt>響きの特徴</dt><dd>${guide.character}</dd>
+      </dl>
+      <h4>吹くときのポイント</h4>${list(guide.points)}
+      <h4>このアプリでの練習</h4><p>${guide.practice}</p>
+      <button class="btn primary full-width" id="guidePractice">この音階を練習する</button>`;
+  }
+  $('guideBody').innerHTML = html;
+  $('guideView').scrollTop = 0;
+  const practice = $('guidePractice');
+  if (practice) {
+    practice.addEventListener('click', () => {
+      setScaleOption('scaleType', id);
+      closeGuide();
+    });
+  }
+}
+
+function openGuide() {
+  renderGuide(settings.scaleType);
+  $('guideView').hidden = false;
+  document.body.style.overflow = 'hidden'; // 後ろの画面がスクロールしないようにする
+}
+
+function closeGuide() {
+  $('guideView').hidden = true;
+  document.body.style.overflow = '';
+}
+
+$('openGuide').addEventListener('click', openGuide);
+$('closeGuide').addEventListener('click', closeGuide);
 
 scalePlayer.onNote = (index) => {
   document.querySelectorAll('#noteChips .chip').forEach((chip, i) => {

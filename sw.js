@@ -11,6 +11,7 @@ const FILES = [
   'manifest.webmanifest',
   'js/version.js',
   'js/music.js',
+  'js/scale-guide.js',
   'js/storage.js',
   'js/audio.js',
   'js/metronome.js',
