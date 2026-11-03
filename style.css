@@ -870,3 +870,6 @@ main { overflow-x: clip; } /* 入ってくる途中の画面で、横にはみ�
    ページ全体の背景をタブと同じ色にして、タブが下まで続いて見えるようにする（各画面の背景は body の色） */
 html { background-color: var(--surface); overscroll-behavior-y: none; }
 body { min-height: 100vh; }
+
+/* 上のロゴの部分（ヘッダー）を、スクロールしても画面の上に固定する */
+.app-header { position: sticky; top: 0; z-index: 4; }
