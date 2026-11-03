@@ -7,23 +7,41 @@ function setReferencePitch(hz) {
   referencePitch = hz;
 }
 
-// iPhone（Safari 17以降）での音の扱い方を切り替える
-// 普段は消音スイッチがオンでも鳴る「再生専用」、マイクを使うあいだは「再生と録音」にする
+// iPhone・iPad（Safari 17以降）での音の扱い方を切り替える
+// 普段は消音スイッチがオンでも鳴る「再生専用」。マイクを使うあいだは、まず「おまかせ」にする
+// （「再生と録音」とはっきり伝えると、iPad などが通話のように音を小さく抑えることがあるため）
+let micSessionType = 'auto';
+
 function setAudioSessionForMic(useMic) {
   if (navigator.audioSession) {
-    navigator.audioSession.type = useMic ? 'play-and-record' : 'playback';
+    navigator.audioSession.type = useMic ? micSessionType : 'playback';
   }
+}
+
+function requestMicrophone() {
+  // 楽器の音をそのまま拾うため、通話用の自動補正は切る
+  return navigator.mediaDevices.getUserMedia({
+    audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+  });
 }
 
 // マイクを使い始める（失敗したら音の扱い方を元に戻す）
 async function openMicrophone() {
   setAudioSessionForMic(true);
   try {
-    // 楽器の音をそのまま拾うため、通話用の自動補正は切る
-    return await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
-    });
+    return await requestMicrophone();
   } catch (e) {
+    // 「おまかせ」でマイクを使えなかったときは、以前の「再生と録音」に切り替えてもう一度試す
+    if (navigator.audioSession && micSessionType === 'auto' && e.name !== 'NotAllowedError') {
+      micSessionType = 'play-and-record';
+      setAudioSessionForMic(true);
+      try {
+        return await requestMicrophone();
+      } catch (retryError) {
+        setAudioSessionForMic(false);
+        throw retryError;
+      }
+    }
     setAudioSessionForMic(false);
     throw e;
   }
