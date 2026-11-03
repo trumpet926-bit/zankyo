@@ -111,6 +111,41 @@ function showBpm(bpm) {
   $('bpmValue').textContent = bpm;
   $('bpmSlider').value = bpm;
   $('bigBpm').textContent = bpm;
+  $('miniBpm').textContent = bpm;
+}
+
+// テンポの数字を押すと、その場で数字を入力できる
+// （標準の入力ダイアログは iPhone で閉じたあと画面がずれることがあるため使わない）
+function makeTempoEditable(button, getValue, setValue) {
+  button.addEventListener('click', () => {
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.inputMode = 'numeric';
+    input.pattern = '[0-9]*';
+    input.maxLength = 3;
+    input.enterKeyHint = 'done';
+    input.className = 'tempo-input ' + button.className.replace('tempo-edit', '');
+    input.value = getValue();
+    button.hidden = true;
+    button.after(input);
+    input.focus();
+    input.select();
+    let done = false;
+    const finish = (apply) => {
+      if (done) return;
+      done = true;
+      const value = parseInt(input.value, 10);
+      if (apply && Number.isFinite(value)) setValue(value); // 範囲外の数字は、使える範囲に収める
+      input.remove();
+      button.hidden = false;
+      window.scrollTo(window.scrollX, window.scrollY);
+    };
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') input.blur();
+      if (e.key === 'Escape') finish(false);
+    });
+    input.addEventListener('blur', () => finish(true));
+  });
 }
 
 function setBpm(value) {
@@ -146,6 +181,14 @@ metronome.onBeat = (beat) => {
     });
   }
   if (!$('bigView').hidden) showBigBeat(beat, strong);
+  // 上の小さなボタンの点も、拍に合わせて光らせる
+  if (settings.metroLight) {
+    const dot = $('miniDot');
+    dot.classList.remove('on', 'strong');
+    void dot.offsetWidth;
+    dot.classList.add('on');
+    dot.classList.toggle('strong', strong);
+  }
 };
 
 // ---------- 大きな表示 ----------
@@ -237,9 +280,15 @@ function renderRhythms() {
   });
 }
 
+const MINI_PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>';
+const MINI_STOP = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/></svg>';
+
 function showMetronomeRunning(running) {
   $('startStop').textContent = running ? 'ストップ' : 'スタート';
   $('bigStartStop').textContent = running ? 'ストップ' : 'スタート';
+  $('miniIcon').innerHTML = running ? MINI_STOP : MINI_PLAY;
+  $('miniMetro').classList.toggle('running', running);
+  if (!running) $('miniDot').classList.remove('on', 'strong');
   if (running) {
     keepScreenOn(true);
   } else {
@@ -274,6 +323,8 @@ function toggleMetronomeByUser() {
 }
 
 $('startStop').addEventListener('click', () => toggleMetronomeByUser());
+$('miniMetro').addEventListener('click', () => toggleMetronomeByUser());
+makeTempoEditable($('bpmValue'), () => settings.bpm, setBpm);
 
 // タップした間隔からテンポを決める（指が触れた瞬間に反応させて、間隔を正確にとる）
 let tapTimes = [];
@@ -376,6 +427,7 @@ function setScaleBpm(value) {
 $('scaleBpmDown').addEventListener('click', () => setScaleBpm(settings.scaleBpm - 1));
 $('scaleBpmUp').addEventListener('click', () => setScaleBpm(settings.scaleBpm + 1));
 $('scaleBpmSlider').addEventListener('input', (e) => setScaleBpm(Number(e.target.value)));
+makeTempoEditable($('scaleBpmValue'), () => settings.scaleBpm, setScaleBpm);
 
 [['scaleClick', 'checked'], ['countIn', 'checked'], ['scaleRepeat', 'checked']]
   .forEach(([id, prop]) => {
@@ -1139,6 +1191,7 @@ metronome.setRhythm(settings.rhythm);
 metronome.sound = settings.metroSound;
 renderRhythms();
 renderToggles();
+$('miniIcon').innerHTML = MINI_PLAY;
 $('beatsSelect').value = settings.beats;
 $('accentCheck').checked = settings.accent;
 setBpm(settings.bpm);

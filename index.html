@@ -30,6 +30,12 @@
       <img src="icons/logo.png" alt="残響" class="brand-logo">
       <span class="brand-sub">PracticeTool</span>
     </h1>
+    <!-- どの画面からでも押せる、小さなメトロノームのボタン -->
+    <button class="mini-metro" id="miniMetro" aria-label="メトロノームのスタート／ストップ">
+      <span class="mini-dot" id="miniDot"></span>
+      <span class="mini-icon" id="miniIcon"></span>
+      <span class="mini-bpm"><span id="miniBpm">100</span><small>BPM</small></span>
+    </button>
   </header>
 
   <!-- 新しい版のお知らせ -->
@@ -62,7 +68,7 @@
         <div class="bpm-display">
           <button class="round-btn" id="bpmDown" aria-label="テンポを下げる">−</button>
           <div>
-            <div class="bpm-value" id="bpmValue">100</div>
+            <button class="bpm-value tempo-edit" id="bpmValue" aria-label="テンポを数字で入力">100</button>
             <div class="bpm-label">BPM</div>
           </div>
           <button class="round-btn" id="bpmUp" aria-label="テンポを上げる">＋</button>
@@ -73,7 +79,13 @@
 
         <div class="action-row">
           <button class="btn primary big" id="startStop">スタート</button>
-          <button class="btn big" id="tapTempo">タップ</button>
+          <button class="tap-btn" id="tapTempo" aria-label="タップしてテンポを決める">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="3" fill="currentColor"/>
+              <path d="M7.1 7.1a7 7 0 0 0 0 9.8M16.9 7.1a7 7 0 0 1 0 9.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            <span>タップ</span>
+          </button>
         </div>
         <div class="action-row compact">
           <button class="toggle" data-toggle="metroSound" aria-pressed="true">音</button>
@@ -332,7 +344,7 @@
         <div class="sub-head">テンポ</div>
         <div class="tempo-row">
           <button class="round-btn small" id="scaleBpmDown" aria-label="テンポを下げる">−</button>
-          <span class="tempo-value"><span id="scaleBpmValue">80</span> BPM</span>
+          <span class="tempo-value"><button class="tempo-edit" id="scaleBpmValue" aria-label="テンポを数字で入力">80</button> BPM</span>
           <button class="round-btn small" id="scaleBpmUp" aria-label="テンポを上げる">＋</button>
         </div>
         <input type="range" id="scaleBpmSlider" min="30" max="200" value="80" class="bpm-slider">

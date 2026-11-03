@@ -967,3 +967,90 @@ body { min-height: 100vh; }
 .guide-terms dd { margin: 0 0 8px; }
 .guide-terms dd:last-child { margin-bottom: 0; }
 .guide-foot { margin-top: 16px; }
+
+/* 上の小さなメトロノームのボタン（どの画面からでも押せる） */
+.mini-metro {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px 5px 6px;
+  border-radius: 999px;
+  border: 1px solid rgba(251, 191, 36, 0.55);
+  background: rgba(255, 255, 255, 0.07);
+  color: #fef3c7;
+  font: inherit;
+  cursor: pointer;
+}
+.mini-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #f59e0b;
+  color: #1c1917;
+}
+.mini-icon svg { width: 16px; height: 16px; }
+.mini-bpm { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; }
+.mini-bpm small { font-size: 9px; font-weight: 600; margin-left: 2px; opacity: 0.7; }
+.mini-dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(254, 243, 199, 0.25); order: 3; }
+.mini-dot.on { animation: mini-flash 0.25s ease-out; }
+.mini-dot.on.strong { animation-name: mini-flash-strong; }
+@keyframes mini-flash { from { background: #fef3c7; transform: scale(1.5); } }
+@keyframes mini-flash-strong { from { background: #f59e0b; transform: scale(1.8); } }
+.mini-metro.running { background: rgba(245, 158, 11, 0.2); border-color: #f59e0b; }
+
+/* テンポの数字を押して入力 */
+.tempo-edit {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline dotted;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 6px;
+  text-decoration-color: var(--border);
+}
+.tempo-input {
+  font: inherit;
+  width: 3.4ch;
+  padding: 0;
+  text-align: center;
+  color: var(--text);
+  background: var(--surface);
+  border: 2px solid var(--accent);
+  border-radius: 12px;
+  outline: none;
+}
+.tempo-value .tempo-input { font-size: 28px; font-weight: 700; } /* 16px 以上なので iPhone が自動で拡大しない */
+
+/* タップボタン：スタートと押し間違えないよう、小さめの丸い点線のボタンにする */
+.action-row { align-items: center; }
+.tap-btn {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2px dashed var(--accent);
+  background: var(--surface);
+  color: var(--accent);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.tap-btn svg { width: 22px; height: 22px; }
+.tap-btn:active { transform: scale(0.92); background: var(--accent-soft); }
+/* 押して入力できるようにした大きなテンポの数字は、元の大きさのまま */
+.bpm-value.tempo-edit, .bpm-value.tempo-input { font-size: 72px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.bpm-value.tempo-input { width: 3.2ch; }
