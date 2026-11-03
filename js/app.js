@@ -24,18 +24,67 @@ function micErrorMessage(e) {
 }
 
 // ---------- タブ ----------
+const PANEL_ORDER = ['metronome', 'tuner', 'scale', 'recorder'];
+
+function currentPanel() {
+  return document.querySelector('.tab.active').dataset.panel;
+}
+
+// direction：右隣へ移るとき 1、左隣へ移るとき -1（画面が入ってくる向きに使う）
+function showPanel(name, direction = 0) {
+  if (name === currentPanel()) return;
+  if (name !== 'tuner') {
+    stopTuner(); // 他の画面ではマイクを使わない
+    stopDrone();
+  }
+  document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t.dataset.panel === name));
+  document.querySelectorAll('.panel').forEach((p) => {
+    const active = p.id === `panel-${name}`;
+    p.classList.toggle('active', active);
+    p.classList.remove('enter-right', 'enter-left');
+    if (active && direction) {
+      void p.offsetWidth; // 入ってくる動きを、毎回はじめから再生する
+      p.classList.add(direction > 0 ? 'enter-right' : 'enter-left');
+    }
+  });
+  window.scrollTo(0, 0);
+}
+
 document.querySelectorAll('.tab').forEach((tab) => {
   tab.addEventListener('click', () => {
-    if (tab.dataset.panel !== 'tuner') {
-      stopTuner(); // 他の画面ではマイクを使わない
-      stopDrone();
-    }
-    document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t === tab));
-    document.querySelectorAll('.panel').forEach((p) => {
-      p.classList.toggle('active', p.id === `panel-${tab.dataset.panel}`);
-    });
+    const from = PANEL_ORDER.indexOf(currentPanel());
+    const to = PANEL_ORDER.indexOf(tab.dataset.panel);
+    showPanel(tab.dataset.panel, Math.sign(to - from));
   });
 });
+
+// 横にスワイプして、隣の画面へ移る
+(function () {
+  let start = null;
+  document.querySelector('main').addEventListener('touchstart', (e) => {
+    const target = e.target;
+    // スライダーや入力欄を動かしているときは、画面を切り替えない
+    if (e.touches.length !== 1 || target.closest('input, select, textarea')) {
+      start = null;
+      return;
+    }
+    start = { x: e.touches[0].clientX, y: e.touches[0].clientY, time: Date.now() };
+  }, { passive: true });
+
+  document.querySelector('main').addEventListener('touchend', (e) => {
+    if (!start) return;
+    const dx = e.changedTouches[0].clientX - start.x;
+    const dy = e.changedTouches[0].clientY - start.y;
+    const quick = Date.now() - start.time < 600;
+    start = null;
+    // はっきり横に、ある程度の長さを、すばやく動かしたときだけ
+    if (!quick || Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 2) return;
+    const index = PANEL_ORDER.indexOf(currentPanel());
+    const next = index + (dx < 0 ? 1 : -1); // 左へ払うと右隣へ
+    if (next < 0 || next >= PANEL_ORDER.length) return;
+    showPanel(PANEL_ORDER[next], dx < 0 ? 1 : -1);
+  }, { passive: true });
+})();
 
 // 再生中は画面が消えないようにする（対応している端末のみ）
 let wakeLock = null;

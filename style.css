@@ -851,3 +851,16 @@ input.switch:checked::before { transform: translateX(20px); }
 /* 音名は1段に8つ並べる（上りと下りがそれぞれ1段に収まる） */
 .tool-section .chip-row { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; }
 .tool-section .chip { min-width: 0; padding: 8px 0; font-size: 14px; }
+
+/* 画面を切り替えたとき、横からすっと入ってくる */
+.panel.enter-right { animation: panel-in-right 0.25s ease-out; }
+.panel.enter-left { animation: panel-in-left 0.25s ease-out; }
+@keyframes panel-in-right {
+  from { opacity: 0.3; transform: translateX(40px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes panel-in-left {
+  from { opacity: 0.3; transform: translateX(-40px); }
+  to { opacity: 1; transform: none; }
+}
+main { overflow-x: clip; } /* 入ってくる途中の画面で、横にはみ出さないように */
