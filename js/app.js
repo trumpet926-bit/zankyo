@@ -427,18 +427,22 @@ function renderGuide(id) {
 
   const list = (items) => `<ul>${items.map((item) => `<li>${item}</li>`).join('')}</ul>`;
   let html = `<h3>${guide.title}</h3><p class="guide-lead">${guide.summary}</p>`;
-  if (guide.sections) {
-    guide.sections.forEach((s) => { html += `<h4>${s.heading}</h4>${list(s.items)}`; });
-  } else {
-    html += `
-      <dl class="guide-facts">
-        <dt>しくみ</dt><dd>${guide.structure}</dd>
-        <dt>響きの特徴</dt><dd>${guide.character}</dd>
-      </dl>
-      <h4>吹くときのポイント</h4>${list(guide.points)}
-      <h4>このアプリでの練習</h4><p>${guide.practice}</p>
-      <button class="btn primary full-width" id="guidePractice">この音階を練習する</button>`;
+  if (guide.facts) {
+    html += `<dl class="guide-facts">${guide.facts.map((f) => `<dt>${f.label}</dt><dd>${f.text}</dd>`).join('')}</dl>`;
   }
+  guide.sections.forEach((s) => {
+    // 「世界の音楽院・名教師」の話は、地球のマーク付きの囲みにする
+    html += s.style === 'world'
+      ? `<section class="guide-world"><h4><span aria-hidden="true">🌍</span>${s.heading}</h4>${list(s.items)}</section>`
+      : `<h4>${s.heading}</h4>${list(s.items)}`;
+  });
+  if (guide.practice) html += `<h4>このアプリでの練習</h4><p>${guide.practice}</p>`;
+  if (guide.terms) {
+    html += `<div class="guide-terms"><div class="guide-terms-head">用語メモ</div><dl>${
+      guide.terms.map((t) => `<dt>${t.term}</dt><dd>${t.desc}</dd>`).join('')}</dl></div>`;
+  }
+  if (id !== 'basics') html += '<button class="btn primary full-width" id="guidePractice">この音階を練習する</button>';
+  html += '<p class="note small-note guide-foot">指導の方法は先生や流派によって違うこともあります。迷ったときは、ふだん習っている先生の方針を優先してください。</p>';
   $('guideBody').innerHTML = html;
   $('guideView').scrollTop = 0;
   const practice = $('guidePractice');

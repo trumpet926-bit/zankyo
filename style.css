@@ -944,3 +944,26 @@ body { min-height: 100vh; }
 .guide-facts dd { margin: 2px 0 10px; }
 .guide-facts dd:last-child { margin-bottom: 0; }
 .guide-body #guidePractice { margin-top: 20px; }
+
+/* 解説：世界の音楽院・名教師の囲み、用語メモ */
+.guide-world {
+  margin: 22px 0 0;
+  padding: 2px 14px 6px;
+  border-radius: 14px;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+}
+.guide-world h4 { border-left: none; padding-left: 0; display: flex; align-items: center; gap: 6px; margin-top: 14px; }
+.guide-terms {
+  margin-top: 22px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px dashed var(--border);
+  font-size: 14px;
+}
+.guide-terms-head { font-weight: 700; margin-bottom: 6px; }
+.guide-terms dl { margin: 0; }
+.guide-terms dt { font-weight: 700; color: var(--accent); }
+.guide-terms dd { margin: 0 0 8px; }
+.guide-terms dd:last-child { margin-bottom: 0; }
+.guide-foot { margin-top: 16px; }
