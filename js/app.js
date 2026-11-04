@@ -1071,13 +1071,22 @@ $('trimSave').addEventListener('click', async () => {
   try {
     player.pause();
     const buffer = await getAudioContext().decodeAudioData(await rec.blob.arrayBuffer());
-    const blob = encodeWavRange(buffer, t.start, t.end);
+    let blob;
+    try {
+      // 小さくするため MP3 にする。変換のプログラムを読み込めないとき（電波がないなど）は WAV で保存する
+      blob = await encodeMp3Range(buffer, t.start, t.end, (ratio) => {
+        $('trimSave').textContent = `保存しています… ${Math.round(ratio * 100)}%`;
+      });
+    } catch (mp3Error) {
+      blob = encodeWavRange(buffer, t.start, t.end);
+    }
     closeTrim();
     await addRecordingFromBlob(blob, `${displayName(rec)}（切り取り）`.slice(0, 60));
   } catch (e) {
     $('trimError').textContent = 'この録音は切り取れませんでした。';
     $('trimError').hidden = false;
   }
+  $('trimSave').textContent = 'この範囲を保存';
   $('trimSave').disabled = false;
 });
 

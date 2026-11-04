@@ -221,3 +221,33 @@ function encodeWavRange(buffer, start, end) {
   }
   return new Blob([out], { type: 'audio/wav' });
 }
+
+// 録音の start〜end 秒を MP3 にする（WAV の 5〜6 分の 1 の大きさ）。変換のプログラムは使うときにだけ読み込む
+const LAME_LIB = 'https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js';
+
+async function encodeMp3Range(buffer, start, end, onProgress) {
+  if (!window.lamejs) await loadScript(LAME_LIB);
+  const channels = Math.min(2, buffer.numberOfChannels);
+  const encoder = new lamejs.Mp3Encoder(channels, buffer.sampleRate, channels === 2 ? 192 : 128);
+  const from = Math.max(0, Math.floor(start * buffer.sampleRate));
+  const to = Math.min(buffer.length, Math.ceil(end * buffer.sampleRate));
+  const toInt16 = (data, a, b) => {
+    const out = new Int16Array(b - a);
+    for (let i = a; i < b; i++) out[i - a] = Math.max(-1, Math.min(1, data[i])) * 0x7fff;
+    return out;
+  };
+  const data = Array.from({ length: channels }, (_, c) => buffer.getChannelData(c));
+  const parts = [];
+  const block = 1152 * 40; // 少しずつ変換して、そのたびに画面を動かす（固まらないように）
+  for (let i = from; i < to; i += block) {
+    const b = Math.min(to, i + block);
+    const left = toInt16(data[0], i, b);
+    const mp3 = channels === 2 ? encoder.encodeBuffer(left, toInt16(data[1], i, b)) : encoder.encodeBuffer(left);
+    if (mp3.length) parts.push(new Uint8Array(mp3));
+    if (onProgress) onProgress((b - from) / (to - from));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+  const last = encoder.flush();
+  if (last.length) parts.push(new Uint8Array(last));
+  return new Blob(parts, { type: 'audio/mpeg' });
+}
