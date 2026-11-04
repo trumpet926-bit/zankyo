@@ -521,6 +521,11 @@
               </select>
               <button class="ens-btn gold" id="ensStart">スタート</button>
             </div>
+            <div class="ens-metro-row">
+              <button class="ens-btn gold ens-cue-btn" id="ensCue">合図を出す</button>
+              <button class="ens-btn outline" id="ensBig">大きく表示</button>
+            </div>
+            <p class="ens-small center">合図：次の小節で、全員の画面に拍の数字（1・2・3・4）が出ます。</p>
           </div>
 
           <div class="ens-record">
@@ -532,10 +537,8 @@
 
           <div class="ens-actions">
             <button class="ens-chip" id="ensMute">マイクを切る</button>
-            <button class="ens-chip" id="ensCalib">タイミング調整</button>
             <button class="ens-chip danger" id="ensLeave">退出</button>
           </div>
-          <p class="ens-small center" id="ensNotice" hidden></p>
           <label class="ens-option">
             <input type="checkbox" id="metroViaElement" class="switch">
             <span>メトロノームが聞こえないとき：相手の声と同じ出口から鳴らす</span>
@@ -589,6 +592,13 @@
     </div>
   </div>
 
+  <!-- オンライン合奏の合図（全員の画面に、拍の数字を大きく出す） -->
+  <div class="cue-view" id="cueView" hidden>
+    <p class="cue-by" id="cueBy"></p>
+    <div class="cue-num" id="cueNum"></div>
+    <div class="cue-dots" id="cueDots"></div>
+  </div>
+
   <!-- 隠しページ（上のロゴを5回たたくと開く） -->
   <div class="zk-view" id="zankyoView" hidden>
     <button class="zk-close" id="closeZankyo" aria-label="閉じる">×</button>
@@ -617,6 +627,7 @@
       <button class="big-start" id="bigStartStop">スタート</button>
       <button class="big-round" id="bigBpmUp" aria-label="テンポを上げる">＋</button>
     </div>
+    <button class="big-cue" id="bigCue" hidden>合図を出す</button>
     <div class="big-toggles">
       <button class="toggle" data-toggle="metroSound" aria-pressed="true">音</button>
       <button class="toggle" data-toggle="metroLight" aria-pressed="true">光</button>

@@ -1383,3 +1383,47 @@ body { min-height: 100vh; }
 .staff-hit { fill: transparent; cursor: pointer; }
 .staff-note.playing .staff-head { fill: var(--beat-on); stroke: var(--beat-on); }
 .staff-note.playing .staff-acc, .staff-note.playing .staff-name { fill: var(--beat-on); }
+
+/* オンライン合奏の合図 */
+.ens-cue-btn { min-width: 150px; }
+.big-cue {
+  margin-top: 18px;
+  padding: 12px 30px;
+  border-radius: 999px;
+  border: 1px solid #d6b25e;
+  background: linear-gradient(180deg, #f5dc95 0%, #c99a3c 100%);
+  color: #1d1606;
+  font: inherit;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+}
+.cue-view {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(80% 60% at 50% 45%, rgba(29, 36, 82, 0.92), rgba(5, 7, 15, 0.96));
+  color: #f4ecd8;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+.cue-by { position: absolute; top: calc(24px + env(safe-area-inset-top)); margin: 0; font-size: 14px; letter-spacing: 0.1em; color: #d6b25e; }
+.cue-num {
+  min-height: 1em;
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", serif;
+  font-size: min(62vw, 340px);
+  line-height: 1;
+  color: #f1d48a;
+  text-shadow: 0 0 40px rgba(241, 212, 138, 0.45);
+  font-variant-numeric: tabular-nums;
+}
+.cue-num.first { color: #fff3c9; text-shadow: 0 0 60px rgba(255, 243, 201, 0.7); }
+.cue-num.pop { animation: cue-pop 0.35s ease-out; }
+@keyframes cue-pop { from { transform: scale(1.25); opacity: 0.4; } to { transform: scale(1); opacity: 1; } }
+.cue-dots { display: flex; gap: 14px; margin-top: 28px; }
+.cue-dots span { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid #d6b25e; }
+.cue-dots span.on { background: #f1d48a; box-shadow: 0 0 12px rgba(241, 212, 138, 0.8); }

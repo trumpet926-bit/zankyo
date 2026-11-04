@@ -100,6 +100,8 @@
     $('ensSession').hidden = !inRoom;
     $('ensTakes').hidden = !open;
     $('labHide').hidden = !open;
+    $('bigCue').hidden = !inRoom;
+    watchCue();
     if (inRoom) {
       $('ensRoomCode').textContent = room.code;
       $('ensConnect').hidden = !!sid || starting;
@@ -535,18 +537,79 @@
   });
   $('ensStart').addEventListener('click', () => toggleMetronomeByUser());
 
-  $('ensCalib').addEventListener('click', () => {
-    if (syncHooks.isReference()) {
-      showText('ensNotice', 'この台が基準です。ほかの人が「タイミング調整」を押すと、この台からも音が鳴ります。');
+  $('ensBig').addEventListener('click', () => $('openBigView').click());
+
+  // ---------- 合図（次の小節で、全員の画面に 1・2・3・4 と拍の数字を出す） ----------
+  let cueWatch = null; // { ref, code }
+  let cueTimers = [];
+
+  // 部屋に入っている間だけ、合図を受け取る
+  function watchCue() {
+    const code = unlocked() && room.code ? room.code : null;
+    if (cueWatch && cueWatch.code === code) return;
+    if (cueWatch) cueWatch.ref.off();
+    cueWatch = null;
+    if (!code) {
+      hideCue();
       return;
     }
-    if (!syncHooks.hasReference()) {
-      showText('ensNotice', '基準の台が見つかりません。');
-      return;
+    const ref = room.roomRef.child('cue');
+    ref.on('value', (snap) => showCue(snap.val()));
+    cueWatch = { ref, code };
+  }
+
+  async function sendCue() {
+    if (!room.code) return;
+    getAudioContext().resume(); // 画面を触ったときでないと音を出せないため、ここで準備する
+    let s = room.state;
+    if (!s || !s.running) {
+      const result = await room.toggleRunning(); // 止まっていたら、全員のメトロノームを動かしてから数える
+      s = result.snapshot.val();
     }
-    syncHooks.calibrate();
-  });
-  syncHooks.onCalibStatus = (text) => showText('ensNotice', text);
+    const barMs = (60000 / s.bpm) * s.beats;
+    const after = room.serverNow() + 700; // 全員に届く余裕を見る
+    const at = s.anchorAt + Math.max(0, Math.ceil((after - s.anchorAt) / barMs)) * barMs;
+    room.roomRef.child('cue').set({ at, beats: s.beats, bpm: s.bpm, by: room.name });
+  }
+
+  function hideCue() {
+    cueTimers.forEach(clearTimeout);
+    cueTimers = [];
+    $('cueView').hidden = true;
+  }
+
+  function showCueBeat(n, beats) {
+    const num = $('cueNum');
+    num.textContent = n;
+    num.classList.toggle('first', n === 1);
+    num.classList.remove('pop');
+    void num.offsetWidth; // 拍ごとに動きをはじめから
+    num.classList.add('pop');
+    $('cueDots').querySelectorAll('span').forEach((dot, i) => dot.classList.toggle('on', i < n));
+    if (n === beats) num.classList.add('last');
+  }
+
+  function showCue(c) {
+    hideCue();
+    if (!c) return;
+    const beatMs = 60000 / c.bpm;
+    // 自分のメトロノームの音（タイミング補正の分も）と同じ瞬間に数字を出す
+    const now = room.serverNow() - settings.syncOffsetMs;
+    if (c.at + c.beats * beatMs < now) return; // 終わった合図
+    $('cueBy').textContent = `${c.by}さんの合図`;
+    $('cueNum').textContent = '';
+    $('cueNum').className = 'cue-num';
+    $('cueDots').innerHTML = '<span></span>'.repeat(c.beats);
+    $('cueView').hidden = false;
+    for (let i = 0; i < c.beats; i++) {
+      cueTimers.push(setTimeout(() => showCueBeat(i + 1, c.beats), Math.max(0, c.at + i * beatMs - now)));
+    }
+    cueTimers.push(setTimeout(hideCue, Math.max(0, c.at + c.beats * beatMs - now))); // 次の小節の頭（吹き始め）で消す
+  }
+
+  $('ensCue').addEventListener('click', sendCue);
+  $('bigCue').addEventListener('click', sendCue);
+  $('cueView').addEventListener('click', hideCue);
 
   // ---------- 合奏録音 ----------
   // 各自が自分の音だけを録り、Google Drive（受け取り口）に集めて、部屋の時刻でそろえて重ねる。

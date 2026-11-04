@@ -127,6 +127,25 @@
           "$other": {
             ".validate": false
           }
+        },
+        "cue": {
+          ".write": "$code.matches(/^[0-9]{6}$/)",
+          ".validate": "newData.hasChildren(['at', 'beats', 'bpm', 'by'])",
+          "at": {
+            ".validate": "newData.isNumber()"
+          },
+          "beats": {
+            ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 7"
+          },
+          "bpm": {
+            ".validate": "newData.isNumber() && newData.val() >= 30 && newData.val() <= 240"
+          },
+          "by": {
+            ".validate": "newData.isString() && newData.val().length <= 20"
+          },
+          "$other": {
+            ".validate": false
+          }
         }
       }
     },
