@@ -30,6 +30,16 @@
       <img src="icons/logo.png" alt="残響" class="brand-logo" draggable="false">
       <span class="brand-sub">PracticeTool</span>
     </h1>
+    <!-- アプリを人に紹介する（QRコードを見せる） -->
+    <button class="header-share" id="openShare" aria-label="このアプリを紹介する">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.2"/>
+        <rect x="14" y="3.5" width="6.5" height="6.5" rx="1.2"/>
+        <rect x="3.5" y="14" width="6.5" height="6.5" rx="1.2"/>
+        <path d="M14 14h2.6v2.6H14zM17.9 17.9h2.6v2.6h-2.6zM14 19.2h2.6M19.2 14h1.3"/>
+      </svg>
+      <span>紹介</span>
+    </button>
     <!-- どの画面からでも押せる、小さなメトロノームのボタン -->
     <button class="mini-metro" id="miniMetro" aria-label="メトロノームのスタート／ストップ">
       <span class="mini-dot" id="miniDot"></span>
@@ -530,7 +540,7 @@
           <div class="ens-take-list" id="ensTakeList"></div>
           <p class="ens-small" id="mixStatus" hidden></p>
         </div>
-        <button class="ens-link" id="labHide" hidden>退出</button>
+        <button class="ens-btn outline ens-exit" id="labHide" hidden>退出</button>
       </div>
     </section>
   </main>
@@ -545,6 +555,30 @@
       <div class="guide-tabs" id="guideTabs"></div>
     </div>
     <article class="guide-body" id="guideBody"></article>
+  </div>
+
+  <!-- アプリの紹介（QRコードを見せて、使う人を増やす） -->
+  <div class="share-view" id="shareView" hidden>
+    <button class="zk-close" id="closeShare" aria-label="閉じる">×</button>
+    <div class="share-inner">
+      <img src="icons/logo.png" alt="残響" class="share-logo">
+      <p class="zk-eyebrow">PRACTICE TOOL</p>
+      <h2 class="share-title">残響 PracticeTool</h2>
+      <p class="share-lead">管楽器奏者のための練習アプリ<br>無料・登録不要・ブラウザですぐ使えます</p>
+      <div class="share-qr"><img src="icons/app-qr.svg" alt="アプリのQRコード"></div>
+      <p class="share-note">スマホのカメラで読み取ると開きます</p>
+      <p class="share-url">trumpet926-bit.github.io/zankyo</p>
+      <div class="share-actions">
+        <button class="ens-btn gold" id="shareSend">リンクを送る</button>
+        <button class="ens-btn outline" id="shareCopy">コピー</button>
+      </div>
+      <ul class="share-points">
+        <li>メトロノーム（仲間とぴったりそろう）</li>
+        <li>チューナー・基準音</li>
+        <li>音階と管楽器向けの解説</li>
+        <li>録音・聞き返し</li>
+      </ul>
+    </div>
   </div>
 
   <!-- 隠しページ（上のロゴを5回たたくと開く） -->
@@ -660,6 +694,7 @@
   <script src="js/sync-ui.js"></script>
   <script src="js/ensemble.js"></script>
   <script src="js/zankyo.js"></script>
+  <script src="js/share.js"></script>
   <script src="js/install.js"></script>
   <script src="js/update.js"></script>
 </body>

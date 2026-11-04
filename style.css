@@ -1325,3 +1325,48 @@ body { min-height: 100vh; }
 .zk-program { margin: 6px 0 0; font-size: 12.5px; line-height: 1.8; color: #a8a28f; }
 .zk-foot { margin: 40px 0 0; text-align: center; font-size: 11px; color: rgba(168, 162, 143, 0.7); }
 .brand-logo { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+
+/* 上の「紹介」ボタン */
+.header-share {
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 4px 6px;
+  border: 0;
+  background: none;
+  color: #fef3c7;
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+}
+.header-share svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linejoin: round; }
+.header-share + .mini-metro { margin-left: 10px; }
+
+/* アプリの紹介（QRコード） */
+.share-view {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  background: radial-gradient(120% 60% at 50% 0%, #1d2452 0%, #0b0f27 60%, #05070f 100%);
+  color: #f4ecd8;
+  animation: zk-in 0.3s ease-out;
+}
+.share-inner { max-width: 420px; margin: 0 auto; padding: calc(40px + env(safe-area-inset-top)) 20px calc(36px + env(safe-area-inset-bottom)); text-align: center; }
+.share-logo { width: 96px; height: auto; filter: drop-shadow(0 6px 20px rgba(214, 178, 94, 0.4)); }
+.share-view .zk-eyebrow { margin-top: 10px; }
+.share-title { margin: 4px 0 0; font-family: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", serif; font-size: 26px; font-weight: 600; letter-spacing: 0.1em; }
+.share-lead { margin: 10px 0 0; font-size: 14px; line-height: 1.8; color: #a8a28f; }
+.share-qr { display: inline-block; margin: 22px 0 0; padding: 12px; border-radius: 20px; background: #fff; line-height: 0; box-shadow: 0 0 0 1px rgba(214, 178, 94, 0.5), 0 12px 36px rgba(0, 0, 0, 0.5); }
+.share-qr img { width: min(64vw, 250px); height: auto; image-rendering: pixelated; }
+.share-note { margin: 14px 0 0; font-size: 13px; color: #a8a28f; }
+.share-url { margin: 2px 0 0; font-size: 14px; letter-spacing: 0.03em; color: #f1d48a; word-break: break-all; }
+.share-actions { display: flex; justify-content: center; gap: 10px; margin-top: 20px; }
+.share-points { display: inline-block; margin: 26px 0 0; padding: 16px 20px 16px 36px; text-align: left; border: 1px solid rgba(214, 178, 94, 0.28); border-radius: 16px; font-size: 13.5px; line-height: 2; color: #f4ecd8; }
+.share-points li::marker { color: #d6b25e; }
+
+/* オンライン合奏の下の「退出」 */
+.ens-btn.ens-exit { display: block; width: 100%; margin-top: 24px; color: #f3a6a6; border-color: rgba(243, 166, 166, 0.5); }
