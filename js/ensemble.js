@@ -2,9 +2,10 @@
 // 相手探しのやりとりは Firebase の部屋を使う。音そのものは端末どうしで直接送る
 
 (function () {
-  const LAB_KEY = 'practice-app-lab';
-  // 入り口のパスワード（そのものは置かず、SHA-256 の値だけを置く）
-  const PASSWORD_HASH = '6a55102bc62d2b162a1bceb975a1baeb460df43ade0ecf4e9ac28ebec89d1f0b';
+  // パスワードも合言葉もプログラムには置かない。入力されたパスワードから合言葉を作り、
+  // Google Drive の受け取り口に問い合わせて正しければ、この端末に合言葉を覚えておく
+  const LAB_KEY = 'practice-app-lab-key';
+  const DRIVE_URL = 'https://script.google.com/macros/s/AKfycbyBRsbow4IEWd_5cUlqTn5QV6GqzOmiVE6MX3zUJQ7sWn3z1AoUiGW4zNcYd01yuFTznA/exec';
   const ICE_SERVERS = [{ urls: 'stun:stun.l.google.com:19302' }];
 
   const room = syncHooks.room;
@@ -21,12 +22,16 @@
   }
 
   // ---------- 隠れた入り口とパスワード ----------
+  let driveKey = null;
+  try {
+    driveKey = localStorage.getItem(LAB_KEY);
+    localStorage.removeItem('practice-app-lab'); // 前の版の印は使わない（パスワードを入れ直してもらう）
+  } catch (e) {
+    driveKey = null;
+  }
+
   function unlocked() {
-    try {
-      return localStorage.getItem(LAB_KEY) === '1';
-    } catch (e) {
-      return false;
-    }
+    return !!driveKey;
   }
 
   function renderLab() {
@@ -52,12 +57,25 @@
 
   $('labUnlock').addEventListener('submit', async (e) => {
     e.preventDefault();
-    if ((await sha256($('labPassword').value.trim())) !== PASSWORD_HASH) {
+    const key = await sha256(`zankyo-drive:${$('labPassword').value.trim()}`);
+    $('labError').hidden = true;
+    let ok = false;
+    try {
+      const res = await fetch(`${DRIVE_URL}?action=ping&key=${key}`);
+      ok = (await res.json()).ok === true;
+    } catch (err) {
+      $('labError').textContent = '確かめられませんでした。インターネットにつながっているか確認してください。';
       $('labError').hidden = false;
       return;
     }
+    if (!ok) {
+      $('labError').textContent = 'パスワードが違います。';
+      $('labError').hidden = false;
+      return;
+    }
+    driveKey = key;
     try {
-      localStorage.setItem(LAB_KEY, '1');
+      localStorage.setItem(LAB_KEY, key);
     } catch (err) {
       // 保存できない開き方でも、今回は使えるようにする
     }
@@ -75,6 +93,7 @@
 
   $('labHide').addEventListener('click', () => {
     leaveVoice();
+    driveKey = null;
     try {
       localStorage.removeItem(LAB_KEY);
     } catch (e) {
@@ -203,6 +222,7 @@
     }
     $('ensembleJoin').disabled = true;
     getAudioContext().resume();
+    if (settings.metroViaElement) applyMetroRoute(); // 画面を触ったときでないと鳴らせないため、ここで用意する
     try {
       stream = await openMicrophone();
     } catch (e) {
@@ -224,6 +244,8 @@
     await voiceRef.child(room.memberId).set({ name: room.name, sid });
     voiceRef.on('value', (snap) => onVoiceMembers(snap.val() || {}));
     statsTimer = setInterval(updateLatency, 2000);
+    takeRef = room.roomRef.child('take');
+    takeRef.on('value', (snap) => onTake(snap.val()));
     $('ensembleJoin').disabled = false;
     usage.track('ensemble');
     renderVoice();
@@ -232,6 +254,9 @@
   function leaveVoice() {
     if (!sid) return;
     clearInterval(statsTimer);
+    if (takeRef) takeRef.off();
+    takeRef = null;
+    if (take) stopTake();
     Object.keys(peers).forEach(closePeer);
     if (voiceRef) {
       voiceRef.off();
@@ -291,6 +316,7 @@
     $('ensembleMute').hidden = !on;
     $('ensembleMute').textContent = '自分のマイクを切る';
     renderPeers();
+    renderTake();
   }
 
   function renderPeers() {
@@ -330,6 +356,293 @@
     const track = stream.getAudioTracks()[0];
     track.enabled = !track.enabled;
     $('ensembleMute').textContent = track.enabled ? '自分のマイクを切る' : '自分のマイクを入れる';
+  });
+
+  // ---------- 合奏録音 ----------
+  // 各自が自分の音だけを録り、Google Drive（受け取り口）に集めて、部屋の時刻でそろえて重ねる。
+  // 録音の頭に、部屋の時刻が分かっている短い音（目印）を録音の中だけに入れておき、重ねるときはそれを手がかりにそろえる
+  const MARKER_HZ = 3000;
+  let takeRef = null;
+  let take = null; // 今録音している回
+  let takeStatus = '';
+  let failedUpload = null; // 送れなかった録音（もう一度送るため）
+  const handledTakes = new Set();
+
+  // AudioContext の時刻を、部屋の時刻（ミリ秒）に直す（sync-ui の toCtxTime の逆）
+  function ctxToServerMs(ctxTime) {
+    const ctx = getAudioContext();
+    return room.serverNow() - settings.syncOffsetMs + (ctxTime - ctx.currentTime) * 1000;
+  }
+
+  function newTakeId() {
+    const d = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}-${randomId().slice(0, 4)}`;
+  }
+
+  function takeLabel(id) {
+    const m = /^(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/.exec(id);
+    return m ? `${Number(m[2])}/${Number(m[3])} ${m[4]}:${m[5]}` : id;
+  }
+
+  // 誰かが録音を始めたら、メトロノームの次の小節（少し余裕を見て）から全員で録る
+  function startTakeByUser() {
+    const s = room.state;
+    const now = room.serverNow();
+    let startAt = now + 1500;
+    if (s && s.running) {
+      const barMs = (60000 / s.bpm) * s.beats;
+      startAt = s.anchorAt + Math.max(0, Math.ceil((now + 1500 - s.anchorAt) / barMs)) * barMs;
+    }
+    room.roomRef.child('take').set({ id: newTakeId(), by: room.name, startAt, recording: true, at: now });
+  }
+
+  function stopTakeByUser() {
+    room.roomRef.child('take').update({ recording: false, at: room.serverNow() });
+  }
+
+  function onTake(t) {
+    const fresh = !!t && t.recording && room.serverNow() - t.at < 30 * 60 * 1000;
+    if (take && (!fresh || t.id !== take.id)) stopTake();
+    if (fresh && !take && !handledTakes.has(t.id)) startTake(t);
+    renderTake();
+  }
+
+  function startTake(t) {
+    handledTakes.add(t.id);
+    const ctx = getAudioContext();
+    const source = ctx.createMediaStreamSource(stream);
+    const dest = ctx.createMediaStreamDestination();
+    source.connect(dest);
+    const mime = ['audio/webm;codecs=opus', 'audio/mp4', 'audio/webm'].find((m) => MediaRecorder.isTypeSupported(m)) || '';
+    const rec = new MediaRecorder(dest.stream, mime ? { mimeType: mime } : undefined);
+    const chunks = [];
+    rec.ondataavailable = (e) => {
+      if (e.data.size) chunks.push(e.data);
+    };
+    rec.start(1000);
+    const markerAt = ctx.currentTime + 0.4;
+    playCalibBeep(ctx, dest, MARKER_HZ, markerAt); // 録音の中だけに入る目印（スピーカーには出さない）
+    take = { id: t.id, rec, chunks, source, mime: rec.mimeType || mime, markerServerMs: ctxToServerMs(markerAt), startAt: t.startAt };
+    takeStatus = `● 録音中（${t.by}さんが開始）`;
+    usage.track('take');
+  }
+
+  async function stopTake() {
+    const current = take;
+    take = null;
+    renderTake();
+    await new Promise((resolve) => {
+      current.rec.onstop = resolve;
+      current.rec.stop();
+    });
+    current.source.disconnect();
+    const blob = new Blob(current.chunks, { type: (current.mime || 'audio/webm').split(';')[0] });
+    await upload(current, blob);
+  }
+
+  function blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result).split(',')[1] || '');
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  async function upload(current, blob) {
+    takeStatus = '録音を Google Drive に送っています…';
+    renderTake();
+    try {
+      const res = await fetch(DRIVE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' }, // 余計な事前確認をさせないため
+        body: JSON.stringify({
+          key: driveKey,
+          take: current.id,
+          fileName: `${room.name || '録音'}.${blob.type.includes('mp4') ? 'm4a' : 'webm'}`,
+          mime: blob.type,
+          data: await blobToBase64(blob),
+          meta: { name: room.name, member: room.memberId, markerServerMs: current.markerServerMs, startAt: current.startAt },
+        }),
+      });
+      const result = await res.json();
+      if (!result.ok) throw new Error(result.error);
+      failedUpload = null;
+      takeStatus = `録音を送りました（${takeLabel(current.id)}）。全員が送り終わったら「録音を重ねて聞く」を押してください。`;
+    } catch (e) {
+      failedUpload = { current, blob };
+      takeStatus = '録音を送れませんでした。インターネットにつながっているか確認して、「もう一度送る」を押してください。';
+    }
+    renderTake();
+  }
+
+  function renderTake() {
+    const recording = !!take;
+    $('ensembleTake').hidden = !sid && !takeStatus;
+    $('takeToggle').hidden = !sid;
+    $('takeToggle').textContent = recording ? '■ 録音を止める（全員）' : '● 合奏を録音する（全員）';
+    $('takeToggle').className = recording ? 'btn danger full-width' : 'btn full-width';
+    $('takeStatus').textContent = takeStatus;
+    $('takeStatus').hidden = !takeStatus;
+    $('takeRetry').hidden = !failedUpload;
+  }
+
+  $('takeToggle').addEventListener('click', () => (take ? stopTakeByUser() : startTakeByUser()));
+  $('takeRetry').addEventListener('click', () => {
+    if (failedUpload) upload(failedUpload.current, failedUpload.blob);
+  });
+
+  // ---------- 録音を重ねる ----------
+  async function driveGet(params) {
+    const query = new URLSearchParams({ ...params, key: driveKey });
+    const res = await fetch(`${DRIVE_URL}?${query}`);
+    const result = await res.json();
+    if (!result.ok) throw new Error(result.error);
+    return result;
+  }
+
+  function showMixStatus(text, kind = '') {
+    $('mixStatus').textContent = text;
+    $('mixStatus').className = `note ${kind}`;
+    $('mixStatus').hidden = !text;
+  }
+
+  $('mixOpen').addEventListener('click', async () => {
+    const box = $('mixList');
+    if (box.childElementCount) {
+      box.innerHTML = '';
+      showMixStatus('');
+      return;
+    }
+    showMixStatus('Google Drive の録音を調べています…');
+    try {
+      const { takes } = await driveGet({ action: 'takes' });
+      const list = takes.filter(({ take: id }, i) => /^\d{8}-\d{4}-/.test(id) && takes.findIndex((t) => t.take === id) === i);
+      showMixStatus(list.length ? '重ねたい回を選んでください。' : 'まだ合奏録音はありません。');
+      list.slice(0, 8).forEach(({ take: id }) => {
+        const btn = document.createElement('button');
+        btn.className = 'btn small';
+        btn.textContent = takeLabel(id);
+        btn.addEventListener('click', () => mixTake(id));
+        box.appendChild(btn);
+      });
+    } catch (e) {
+      showMixStatus('Google Drive につながりませんでした。', 'fail');
+    }
+  });
+
+  function base64ToArrayBuffer(data) {
+    const bin = atob(data);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return bytes.buffer;
+  }
+
+  // 録音の頭の目印の位置（秒）
+  function findMarker(buffer) {
+    const sr = buffer.sampleRate;
+    const x = buffer.getChannelData(0).subarray(0, Math.min(buffer.length, sr * 4));
+    const env = calibBandEnvelope(x, sr, MARKER_HZ);
+    const max = env.reduce((a, b) => Math.max(a, b), 0);
+    if (!max) return null;
+    const first = env.findIndex((v) => v >= max * 0.5);
+    let peak = first;
+    const end = Math.min(env.length, first + Math.round((60 * sr) / CALIB_HOP / 1000));
+    for (let j = first; j < end; j++) if (env[j] > env[peak]) peak = j;
+    return (calibOnsetBefore(env, peak, Math.max(0, first - 20)) * CALIB_HOP) / sr;
+  }
+
+  // 16bit の WAV ファイルにする
+  function encodeWav(buffer) {
+    const data = buffer.getChannelData(0);
+    const out = new DataView(new ArrayBuffer(44 + data.length * 2));
+    const text = (pos, s) => [...s].forEach((c, i) => out.setUint8(pos + i, c.charCodeAt(0)));
+    text(0, 'RIFF');
+    out.setUint32(4, 36 + data.length * 2, true);
+    text(8, 'WAVE');
+    text(12, 'fmt ');
+    out.setUint32(16, 16, true);
+    out.setUint16(20, 1, true);
+    out.setUint16(22, 1, true);
+    out.setUint32(24, buffer.sampleRate, true);
+    out.setUint32(28, buffer.sampleRate * 2, true);
+    out.setUint16(32, 2, true);
+    out.setUint16(34, 16, true);
+    text(36, 'data');
+    out.setUint32(40, data.length * 2, true);
+    for (let i = 0; i < data.length; i++) out.setInt16(44 + i * 2, Math.max(-1, Math.min(1, data[i])) * 0x7fff, true);
+    return new Blob([out], { type: 'audio/wav' });
+  }
+
+  async function mixTake(id) {
+    $('mixList').innerHTML = '';
+    try {
+      showMixStatus('録音を集めています…');
+      const { files } = await driveGet({ action: 'list', take: id });
+      const ctx = getAudioContext();
+      const tracks = [];
+      const skipped = [];
+      for (const [i, f] of files.entries()) {
+        showMixStatus(`録音を集めています…（${i + 1}／${files.length}）`);
+        const { data } = await driveGet({ action: 'get', id: f.id });
+        const buffer = await ctx.decodeAudioData(base64ToArrayBuffer(data));
+        const markerSec = findMarker(buffer);
+        if (markerSec == null || typeof f.meta.markerServerMs !== 'number') {
+          skipped.push(f.meta.name || f.name);
+          continue;
+        }
+        tracks.push({ buffer, markerSec, markerServerMs: f.meta.markerServerMs, startAt: f.meta.startAt });
+      }
+      if (!tracks.length) throw new Error('none');
+
+      // 録音の中の位置 x（秒）と部屋の時刻の関係：部屋の時刻 = 目印の部屋の時刻 + (x − 目印の位置)
+      // 重ねた録音の 0 秒を、録音を始めた小節の頭にする
+      showMixStatus('時刻をそろえて重ねています…');
+      const origin = tracks[0].startAt;
+      const sr = ctx.sampleRate;
+      let length = 0;
+      tracks.forEach((t) => {
+        t.shift = t.markerSec + (origin - t.markerServerMs) / 1000; // 重ねた録音の 0 秒にあたる、この録音の位置
+        t.skip = Math.max(t.shift, t.markerSec + 0.15); // 目印は入れない
+        length = Math.max(length, t.buffer.duration - t.shift);
+      });
+      if (length <= 0) throw new Error('empty');
+      const off = new OfflineAudioContext(1, Math.ceil(length * sr), sr);
+      tracks.forEach((t) => {
+        if (t.skip >= t.buffer.duration) return;
+        const src = off.createBufferSource();
+        src.buffer = t.buffer;
+        src.connect(off.destination);
+        src.start(t.skip - t.shift, t.skip);
+      });
+      const mixed = await off.startRendering();
+      // 音割れしないよう、いちばん大きいところを 0.9 にそろえる
+      const ch = mixed.getChannelData(0);
+      let peak = 0;
+      for (let i = 0; i < ch.length; i++) peak = Math.max(peak, Math.abs(ch[i]));
+      if (peak > 0) {
+        const gain = Math.min(4, 0.9 / peak);
+        for (let i = 0; i < ch.length; i++) ch[i] *= gain;
+      }
+      await addRecordingFromBlob(encodeWav(mixed), `合奏 ${takeLabel(id)}（${tracks.length}人）`);
+      showMixStatus(`${tracks.length}人分を重ねて、録音の一覧に入れました。${skipped.length ? `（${skipped.join('、')}さんの録音はそろえられなかったので除きました）` : ''}`, 'ok');
+    } catch (e) {
+      showMixStatus('重ねられませんでした。全員の録音が送り終わっているか確認して、もう一度お試しください。', 'fail');
+    }
+  }
+
+  // ---------- メトロノームの音の出口 ----------
+  function applyMetroRoute() {
+    setElementRoute(settings.metroViaElement);
+    metronome.reroute();
+  }
+  $('metroViaElement').checked = settings.metroViaElement;
+  $('metroViaElement').addEventListener('change', (e) => {
+    getAudioContext().resume();
+    settings.metroViaElement = e.target.checked;
+    saveSettings(settings);
+    applyMetroRoute();
   });
 
   // 部屋を出たら、音声も切る

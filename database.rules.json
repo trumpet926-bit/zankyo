@@ -105,6 +105,28 @@
               }
             }
           }
+        },
+        "take": {
+          ".write": "$code.matches(/^[0-9]{6}$/)",
+          ".validate": "newData.hasChildren(['id', 'by', 'startAt', 'recording', 'at'])",
+          "id": {
+            ".validate": "newData.isString() && newData.val().matches(/^[0-9a-z-]{1,40}$/)"
+          },
+          "by": {
+            ".validate": "newData.isString() && newData.val().length <= 20"
+          },
+          "startAt": {
+            ".validate": "newData.isNumber()"
+          },
+          "recording": {
+            ".validate": "newData.isBoolean()"
+          },
+          "at": {
+            ".validate": "newData.isNumber()"
+          },
+          "$other": {
+            ".validate": false
+          }
         }
       }
     },

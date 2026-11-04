@@ -64,6 +64,29 @@ function closeMicrophone(stream) {
   setAudioSessionForMic(false);
 }
 
+// メトロノームの音の出口。ふつうはそのままスピーカーへ出す。
+// オンライン合奏中にメトロノームだけ聞こえないパソコンがあったため、相手の声と同じ <audio> の部品を通して鳴らすこともできる
+let elementRoute = null;
+
+function audioOutput(ctx) {
+  return elementRoute ? elementRoute.node : ctx.destination;
+}
+
+function setElementRoute(on) {
+  if (on && !elementRoute) {
+    const node = getAudioContext().createMediaStreamDestination();
+    const audio = new Audio();
+    audio.srcObject = node.stream;
+    audio.play().catch(() => {});
+    elementRoute = { node, audio };
+  } else if (on) {
+    elementRoute.audio.play().catch(() => {});
+  } else if (!on && elementRoute) {
+    elementRoute.audio.srcObject = null;
+    elementRoute = null;
+  }
+}
+
 function getAudioContext() {
   if (!sharedAudioContext) {
     sharedAudioContext = new (window.AudioContext || window.webkitAudioContext)();

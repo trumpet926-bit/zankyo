@@ -177,9 +177,21 @@
             <p class="note">同じ部屋で「音声をつなぐ」を押した人どうしの音が聞こえます。<b>有線イヤホン</b>を使ってください（スピーカーだとハウリングします）。</p>
             <button class="btn primary full-width" id="ensembleJoin">音声をつなぐ</button>
             <button class="btn small" id="ensembleMute" hidden>自分のマイクを切る</button>
+            <label class="setting-row">
+              <span class="sub-label">メトロノームが聞こえないとき：相手の声と同じ出口から鳴らす</span>
+              <input type="checkbox" id="metroViaElement" class="switch">
+            </label>
             <div class="ensemble-peers" id="ensemblePeers"></div>
             <p class="note">「通信の遅れ」はネットと受け取りの分です。マイクやイヤホンを通る分（スマホでは数十 ms）は含みません。</p>
             <p class="error" id="ensembleError" hidden></p>
+            <div class="ensemble-take" id="ensembleTake" hidden>
+              <button class="btn full-width" id="takeToggle">● 合奏を録音する（全員）</button>
+              <p class="note" id="takeStatus" hidden></p>
+              <button class="btn small" id="takeRetry" hidden>もう一度送る</button>
+            </div>
+            <button class="btn full-width mix-open" id="mixOpen">録音を重ねて聞く</button>
+            <div class="mix-list" id="mixList"></div>
+            <p class="note" id="mixStatus" hidden></p>
             <button class="link-btn" id="labHide">試作機能を隠す</button>
           </div>
           <button class="btn danger small" id="syncLeave">部屋を出る</button>

@@ -818,6 +818,23 @@ async function loadRecordings() {
   renderRecordings();
 }
 
+// ほかの機能で作った録音（合奏録音など）を一覧に加えて、録音の画面で開く
+async function addRecordingFromBlob(blob, name) {
+  const rec = {
+    id: `rec-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    createdAt: Date.now(),
+    duration: await audioDuration(blob),
+    blob,
+    name,
+  };
+  recordings.unshift(rec);
+  await storeRecording(rec);
+  renderRecordings();
+  showPanel('recorder');
+  openInPlayer(rec, false);
+  return rec;
+}
+
 async function storeRecording(rec) {
   if (!canSaveRecordings) return;
   try {

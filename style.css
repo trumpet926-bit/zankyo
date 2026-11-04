@@ -542,6 +542,12 @@ button, .tab, .chip, .key-btn {
 .ensemble-peers { display: grid; gap: 6px; margin-top: 10px; }
 .ensemble-peer { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: 10px; background: var(--beat); }
 .ensemble-peer .note { margin: 0; }
+.ensemble-take { margin-top: 12px; }
+.mix-open { margin-top: 12px; }
+.mix-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.mix-list:empty { display: none; }
+#mixStatus.ok { color: var(--text); font-weight: 600; }
+#mixStatus.fail { color: var(--danger); font-weight: 600; }
 .link-btn { margin-top: 10px; padding: 0; border: 0; background: none; color: var(--muted); font: inherit; font-size: 13px; text-decoration: underline; cursor: pointer; }
 #syncCalibResult.fail { color: var(--danger); font-weight: 600; }
 

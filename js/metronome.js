@@ -40,8 +40,15 @@ class Metronome {
     await this.ctx.resume();
     if (!this.isRunning) {
       this.output = this.ctx.createGain();
-      this.output.connect(this.ctx.destination);
+      this.output.connect(audioOutput(this.ctx));
     }
+  }
+
+  // 音の出口を切り替えたとき、鳴らしている途中でもつなぎ直す
+  reroute() {
+    if (!this.output) return;
+    this.output.disconnect();
+    this.output.connect(audioOutput(this.ctx));
   }
 
   async start() {

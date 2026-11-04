@@ -27,6 +27,7 @@ const DEFAULT_SETTINGS = {
   droneTimbre: 'fork', // 基準音の音色
   droneVolume: 0.6, // 基準音の音量
   recWithMetronome: false,
+  metroViaElement: false, // メトロノームを相手の声と同じ部品から鳴らす（オンライン合奏で聞こえないパソコン向け）
 };
 
 function loadSettings() {
