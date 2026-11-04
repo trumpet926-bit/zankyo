@@ -418,6 +418,7 @@
       <!-- 再生プレーヤー（一覧から選んだ録音を再生する） -->
       <div class="player" id="player" hidden>
         <div class="player-title" id="playerTitle"></div>
+        <canvas class="waveform" id="waveform" aria-label="波形。押すとその位置から再生します"></canvas>
         <div class="seek-wrap">
           <div class="loop-region" id="loopRegion" hidden></div>
           <input type="range" id="playerSeek" min="0" max="1000" value="0" class="bpm-slider player-seek" aria-label="再生位置">
@@ -704,6 +705,7 @@
   <script src="js/recordings-db.js"></script>
   <script src="js/recorder.js"></script>
   <script src="js/player.js"></script>
+  <script src="js/waveform.js"></script>
   <script src="js/app.js"></script>
   <script src="js/calib.js"></script>
   <script src="js/sync.js"></script>

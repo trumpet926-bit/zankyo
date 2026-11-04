@@ -1357,3 +1357,6 @@ body { min-height: 100vh; }
 .staff-hit { fill: transparent; cursor: pointer; }
 .staff-note.playing .staff-head { fill: var(--beat-on); stroke: var(--beat-on); }
 .staff-note.playing .staff-acc, .staff-note.playing .staff-name { fill: var(--beat-on); }
+
+/* 録音の波形 */
+.waveform { display: block; width: 100%; height: 72px; margin: 10px 0 4px; border-radius: 10px; background: var(--bg); cursor: pointer; touch-action: none; }

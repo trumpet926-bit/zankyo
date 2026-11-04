@@ -25,6 +25,7 @@ const FILES = [
   'js/recordings-db.js',
   'js/recorder.js',
   'js/player.js',
+  'js/waveform.js',
   'js/app.js',
   'js/calib.js',
   'js/sync.js',

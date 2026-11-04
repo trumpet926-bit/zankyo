@@ -945,6 +945,7 @@ function openInPlayer(rec, autoplay) {
   if (rec.id !== selectedId) {
     selectedId = rec.id;
     player.load(rec.blob, rec.duration);
+    waveform.load(rec.blob, rec.id);
     $('playerTitle').textContent = displayName(rec);
     $('playerError').hidden = true;
     $('player').hidden = false;
@@ -957,6 +958,8 @@ function openInPlayer(rec, autoplay) {
 const PLAY_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>';
 const PAUSE_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h4v14H6zM14 5h4v14h-4z" fill="currentColor"/></svg>';
 let seeking = false; // 位置のバーを指で動かしている最中
+const waveform = new Waveform($('waveform'));
+waveform.onSeek = (seconds) => player.seek(seconds);
 
 player.onUpdate = () => {
   const dur = player.duration;
@@ -964,6 +967,7 @@ player.onUpdate = () => {
   $('playerPos').textContent = formatTime(pos);
   $('playerDur').textContent = formatTime(dur);
   if (!seeking && dur > 0) $('playerSeek').value = Math.round((pos / dur) * 1000);
+  waveform.update({ pos, dur, loopA: player.loopA, loopB: player.loopB });
   $('playerPlay').innerHTML = player.playing ? PAUSE_ICON : PLAY_ICON;
   $('playerPlay').setAttribute('aria-label', player.playing ? '一時停止' : '再生');
   document.querySelectorAll('#playerRates button').forEach((b) => {
