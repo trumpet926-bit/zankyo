@@ -345,6 +345,21 @@ $('tapTempo').addEventListener('pointerdown', (e) => {
 });
 
 // ---------- 音階 ----------
+// 移調楽器を選んだときは、調のボタン・見出し・楽譜・音名をすべて楽器の読み方で表し、鳴らす音だけ実音にする
+const TRANSPOSITION_NOTES = {
+  0: '楽譜も音名も実音です（フルート・オーボエ・トロンボーンなど）。',
+  2: 'B♭管（トランペット・クラリネットなど）の読み方で表します。鳴る音は実音です。',
+  9: 'E♭管（アルトサックスなど）の読み方で表します。鳴る音は実音です。',
+  7: 'F管（ホルンなど）の読み方で表します。鳴る音は実音です。',
+};
+const TRANSPOSITION_NAMES = { 2: 'B♭管', 9: 'E♭管', 7: 'F管' };
+
+// 楽器の読み方の音（MIDI 番号）を、実際に鳴らす音にする
+function soundingMidi(midi) {
+  return midi - settings.scaleTransposition;
+}
+
+// 楽器の読み方で作った音階（鳴らすときは soundingMidi で実音にする）
 function currentScale() {
   const names = keyNamesFor(settings.scaleType);
   const tonicMidi = 60 + settings.scaleKey + settings.scaleOctave * 12;
@@ -373,13 +388,21 @@ function renderScale() {
     b.classList.toggle('selected', Number(b.dataset.octave) === settings.scaleOctave);
   });
 
+  const t = settings.scaleTransposition;
+  document.querySelectorAll('#scaleTranspositions button').forEach((b) => {
+    b.classList.toggle('selected', Number(b.dataset.transposition) === t);
+  });
+  $('transpositionNote').textContent = TRANSPOSITION_NOTES[t];
+
   const scale = currentScale();
   const first = scale.up[0];
-  $('scaleTitle').textContent = `${first.name} ${type.name}`;
-  $('scaleStart').textContent = `始めの音：${nameWithOctave(first.name, first.midi)}`;
+  $('scaleTitle').textContent = `${first.name} ${type.name}${t ? `（${TRANSPOSITION_NAMES[t]}）` : ''}`;
+  const concertName = names[(settings.scaleKey - t + 12) % 12];
+  $('scaleStart').textContent = `始めの音：${nameWithOctave(first.name, first.midi)}` +
+    (t ? ` ・ 実音：${concertName} ${type.name}` : '');
   $('openGuideLabel').textContent = `「${type.name}」の特徴と吹き方`;
   // 上の段が上行、下の段が下行の五線譜
-  scaleNoteEls = renderScaleStaff($('noteChips'), [scale.up, scale.down], (note, el) => playSingleNote(note.midi, el));
+  scaleNoteEls = renderScaleStaff($('noteChips'), [scale.up, scale.down], (note, el) => playSingleNote(soundingMidi(note.midi), el));
 }
 
 // 音符を押したときに、その音を1つだけ鳴らす
@@ -406,6 +429,9 @@ SCALE_TYPES.forEach((t) => {
   btn.textContent = t.name.replace('（', '\n（'); // 「3度音階（長調）」は（の前で改行する
   btn.addEventListener('click', () => setScaleOption('scaleType', t.id));
   $('scaleTypes').appendChild(btn);
+});
+document.querySelectorAll('#scaleTranspositions button').forEach((b) => {
+  b.addEventListener('click', () => setScaleOption('scaleTransposition', Number(b.dataset.transposition)));
 });
 document.querySelectorAll('#scaleOctaves button').forEach((b) => {
   b.addEventListener('click', () => setScaleOption('scaleOctave', Number(b.dataset.octave)));
@@ -538,7 +564,7 @@ async function startScale() {
   stopMetronome();
   const scale = currentScale();
   await scalePlayer.start({
-    segments: [scale.up, scale.down].map((notes) => notes.map((n) => n.midi)),
+    segments: [scale.up, scale.down].map((notes) => notes.map((n) => soundingMidi(n.midi))),
     bpm: settings.scaleBpm,
     notesPerBeat: settings.notesPerBeat,
     click: settings.scaleClick,
@@ -1143,7 +1169,8 @@ $('scaleRecord').addEventListener('click', async () => {
   const scale = currentScale();
   const type = SCALE_TYPES.find((t) => t.id === settings.scaleType);
   recordingMode = 'scale';
-  recordingName = `${scale.up[0].name} ${type.name}（録音）`;
+  const t = settings.scaleTransposition;
+  recordingName = `${scale.up[0].name} ${type.name}${t ? `・${TRANSPOSITION_NAMES[t]}` : ''}（録音）`;
   renderRecordingModes();
   await startScale();
 });

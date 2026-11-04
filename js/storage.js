@@ -15,6 +15,7 @@ const DEFAULT_SETTINGS = {
   scaleKey: 0, // 0=C 〜 11=B
   scaleType: 'major',
   scaleOctave: 0,
+  scaleTransposition: 0, // 移調楽器：楽譜の音が実音より何半音高いか（0=C、2=B♭管、9=E♭管、7=F管）
   scaleBpm: 80,
   notesPerBeat: 0.5, // 音階の音の長さ（0.5=2分音符、1=4分音符、2=8分音符）
   halfNoteDefault: true, // 音階を2分音符を基本にした版に切り替え済みか
