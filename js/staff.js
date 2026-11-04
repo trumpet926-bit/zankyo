@@ -84,7 +84,7 @@ function drawStaffLine(notes, clef) {
     const acc = note.name.slice(1);
     if (acc) g.appendChild(svgEl('text', { x: x - 10, y: y + 4.5, class: 'staff-acc', 'text-anchor': 'end' }, acc));
     g.appendChild(svgEl('ellipse', { cx: x, cy: y, rx: 6, ry: 4.3, transform: `rotate(-20 ${x} ${y})`, class: 'staff-head' }));
-    g.appendChild(svgEl('text', { x, y: height - 6, class: 'staff-name', 'text-anchor': 'middle' }, note.name));
+    g.appendChild(svgEl('text', { x, y: height - 6, class: 'staff-name', 'text-anchor': 'middle' }, note.label || note.name));
     // 押しやすいよう、縦長の透明な当たり判定をつける
     g.appendChild(svgEl('rect', { x: x - step / 2, y: 0, width: step, height, class: 'staff-hit' }));
     return g;

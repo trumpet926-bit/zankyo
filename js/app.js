@@ -345,25 +345,31 @@ $('tapTempo').addEventListener('pointerdown', (e) => {
 });
 
 // ---------- 音階 ----------
-// 移調楽器を選んだときは、調のボタン・見出し・楽譜・音名をすべて楽器の読み方で表し、鳴らす音だけ実音にする
+// 移調楽器を選んだときは、調のボタン・見出し・音名・鳴る音は実音のまま、五線譜だけ楽器の読み方で書く
 const TRANSPOSITION_NOTES = {
   0: '楽譜も音名も実音です（フルート・オーボエ・トロンボーンなど）。',
-  2: 'B♭管（トランペット・クラリネットなど）の読み方で表します。鳴る音は実音です。',
-  9: 'E♭管（アルトサックスなど）の読み方で表します。鳴る音は実音です。',
-  7: 'F管（ホルンなど）の読み方で表します。鳴る音は実音です。',
+  2: '五線譜を B♭管（トランペット・クラリネットなど）の読み方で書きます。調・音名・鳴る音は実音です。',
+  9: '五線譜を E♭管（アルトサックスなど）の読み方で書きます。調・音名・鳴る音は実音です。',
+  7: '五線譜を F管（ホルンなど）の読み方で書きます。調・音名・鳴る音は実音です。',
 };
 const TRANSPOSITION_NAMES = { 2: 'B♭管', 9: 'E♭管', 7: 'F管' };
 
-// 楽器の読み方の音（MIDI 番号）を、実際に鳴らす音にする
-function soundingMidi(midi) {
-  return midi - settings.scaleTransposition;
+// 楽器の読み方での調（例：B♭管で実音 B♭ なら C）
+function writtenKey() {
+  return (settings.scaleKey + settings.scaleTransposition) % 12;
 }
 
-// 楽器の読み方で作った音階（鳴らすときは soundingMidi で実音にする）
+// 実音の音階。始める高さは、楽器の楽譜が読みやすい高さ（標準なら楽譜の C4〜B4 から始まる）に合わせる
 function currentScale() {
   const names = keyNamesFor(settings.scaleType);
-  const tonicMidi = 60 + settings.scaleKey + settings.scaleOctave * 12;
-  return buildScale(settings.scaleType, names[settings.scaleKey], tonicMidi);
+  const writtenTonic = 60 + writtenKey() + settings.scaleOctave * 12;
+  return buildScale(settings.scaleType, names[settings.scaleKey], writtenTonic - settings.scaleTransposition);
+}
+
+// 楽器の読み方で書いた音階（五線譜用）
+function writtenScale() {
+  const names = keyNamesFor(settings.scaleType);
+  return buildScale(settings.scaleType, names[writtenKey()], 60 + writtenKey() + settings.scaleOctave * 12);
 }
 
 let scaleNoteEls = []; // 五線譜の音符（再生中の音を光らせるため、上行・下行の順）
@@ -395,14 +401,20 @@ function renderScale() {
   $('transpositionNote').textContent = TRANSPOSITION_NOTES[t];
 
   const scale = currentScale();
+  const written = writtenScale();
   const first = scale.up[0];
-  $('scaleTitle').textContent = `${first.name} ${type.name}${t ? `（${TRANSPOSITION_NAMES[t]}）` : ''}`;
-  const concertName = names[(settings.scaleKey - t + 12) % 12];
+  $('scaleTitle').textContent = `${first.name} ${type.name}`;
   $('scaleStart').textContent = `始めの音：${nameWithOctave(first.name, first.midi)}` +
-    (t ? ` ・ 実音：${concertName} ${type.name}` : '');
+    (t ? ` ・ ${TRANSPOSITION_NAMES[t]}の楽譜では ${written.up[0].name} ${type.name}` : '');
   $('openGuideLabel').textContent = `「${type.name}」の特徴と吹き方`;
   // 上の段が上行、下の段が下行の五線譜
-  scaleNoteEls = renderScaleStaff($('noteChips'), [scale.up, scale.down], (note, el) => playSingleNote(soundingMidi(note.midi), el));
+  // 五線譜は楽器の読み方、下の小さな音名と鳴る音は実音
+  const segments = ['up', 'down'].map((dir) => written[dir].map((note, i) => ({
+    ...note,
+    label: scale[dir][i].name,
+    sound: scale[dir][i].midi,
+  })));
+  scaleNoteEls = renderScaleStaff($('noteChips'), segments, (note, el) => playSingleNote(note.sound, el));
 }
 
 // 音符を押したときに、その音を1つだけ鳴らす
@@ -564,7 +576,7 @@ async function startScale() {
   stopMetronome();
   const scale = currentScale();
   await scalePlayer.start({
-    segments: [scale.up, scale.down].map((notes) => notes.map((n) => soundingMidi(n.midi))),
+    segments: [scale.up, scale.down].map((notes) => notes.map((n) => n.midi)),
     bpm: settings.scaleBpm,
     notesPerBeat: settings.notesPerBeat,
     click: settings.scaleClick,
@@ -1169,8 +1181,7 @@ $('scaleRecord').addEventListener('click', async () => {
   const scale = currentScale();
   const type = SCALE_TYPES.find((t) => t.id === settings.scaleType);
   recordingMode = 'scale';
-  const t = settings.scaleTransposition;
-  recordingName = `${scale.up[0].name} ${type.name}${t ? `・${TRANSPOSITION_NAMES[t]}` : ''}（録音）`;
+  recordingName = `${scale.up[0].name} ${type.name}（録音）`;
   renderRecordingModes();
   await startScale();
 });
