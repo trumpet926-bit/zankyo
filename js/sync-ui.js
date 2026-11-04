@@ -165,6 +165,7 @@
     $('syncCode').textContent = room.code;
     $('syncMe').textContent = room.name;
     $('bigRoom').hidden = false;
+    if (syncHooks.onRoomChange) syncHooks.onRoomChange();
     // 端末の時計はわずかに進み方が違うので、ときどき合わせ直す
     realignTimer = setInterval(() => {
       if (following && metronome.isRunning && room.state && room.state.running) {
@@ -206,6 +207,7 @@
     $('syncIn').hidden = true;
     $('syncOut').hidden = false;
     $('syncQr').hidden = true;
+    if (syncHooks.onRoomChange) syncHooks.onRoomChange();
     $('syncCalibLive').hidden = true;
     $('syncCalibResult').hidden = true;
     $('bigRoom').hidden = true;

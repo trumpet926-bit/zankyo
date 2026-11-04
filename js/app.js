@@ -24,7 +24,7 @@ function micErrorMessage(e) {
 }
 
 // ---------- タブ ----------
-const PANEL_ORDER = ['metronome', 'tuner', 'scale', 'recorder'];
+const PANEL_ORDER = ['metronome', 'tuner', 'scale', 'recorder', 'ensemble'];
 
 function currentPanel() {
   return document.querySelector('.tab.active').dataset.panel;
@@ -105,7 +105,7 @@ async function keepScreenOn(on) {
 // ---------- メトロノーム ----------
 // 部屋（みんなで合わせる）に入っている間は、テンポ・拍子・スタート／ストップを部屋に送る
 // 中身は sync-ui.js が差し込む
-const syncHooks = { active: () => false, toggle: null, bpm: null, beats: null, room: null, onLeave: null };
+const syncHooks = { active: () => false, toggle: null, bpm: null, beats: null, room: null, onLeave: null, onRoomChange: null };
 
 function showBpm(bpm) {
   $('bpmValue').textContent = bpm;

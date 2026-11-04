@@ -1,4 +1,4 @@
-// オンライン合奏（試作）：同じ部屋で「音声をつなぐ」を押した人どうしを、音声で直接つなぐ（WebRTC）
+// オンライン合奏：同じ部屋で「音声をつなぐ」を押した人どうしを、音声で直接つなぐ（WebRTC）
 // 相手探しのやりとりは Firebase の部屋を使う。音そのものは端末どうしで直接送る
 
 (function () {
@@ -35,39 +35,45 @@
   }
 
   function renderLab() {
-    $('ensembleCard').hidden = !unlocked();
+    $('ensembleLock').hidden = unlocked();
+    $('ensembleMain').hidden = !unlocked();
   }
+
+  // 部屋に入っているかどうかで、表示を切り替える
+  function renderRoom() {
+    const inRoom = !!room.code;
+    $('ensembleNoRoom').hidden = inRoom;
+    $('ensembleRoom').hidden = !inRoom;
+    $('ensembleRoomCode').textContent = room.code || '';
+    $('ensembleRoomMe').textContent = room.name || '';
+  }
+
+  $('ensembleGoRoom').addEventListener('click', () => {
+    showPanel('metronome', -1);
+    setTimeout(() => $('syncHeading').scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+  });
 
   async function sha256(text) {
     const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
     return Array.from(new Uint8Array(bytes), (b) => b.toString(16).padStart(2, '0')).join('');
   }
 
-  // 「みんなで合わせる」の見出しを 3 秒以内に 5 回たたくと、パスワードの入力欄が出る
-  let taps = [];
-  $('syncHeading').addEventListener('click', () => {
-    const now = Date.now();
-    taps = taps.filter((t) => now - t < 3000).concat(now);
-    if (taps.length < 5 || unlocked()) return;
-    taps = [];
-    $('labUnlock').hidden = false;
-    $('labPassword').value = '';
-    $('labPassword').focus();
-  });
-
   $('labUnlock').addEventListener('submit', async (e) => {
     e.preventDefault();
     const key = await sha256(`zankyo-drive:${$('labPassword').value.trim()}`);
     $('labError').hidden = true;
+    $('labSubmit').disabled = true;
     let ok = false;
     try {
       const res = await fetch(`${DRIVE_URL}?action=ping&key=${key}`);
       ok = (await res.json()).ok === true;
     } catch (err) {
+      $('labSubmit').disabled = false;
       $('labError').textContent = '確かめられませんでした。インターネットにつながっているか確認してください。';
       $('labError').hidden = false;
       return;
     }
+    $('labSubmit').disabled = false;
     if (!ok) {
       $('labError').textContent = 'パスワードが違います。';
       $('labError').hidden = false;
@@ -79,16 +85,10 @@
     } catch (err) {
       // 保存できない開き方でも、今回は使えるようにする
     }
+    $('labPassword').value = '';
     $('labPassword').blur();
-    $('labUnlock').hidden = true;
     $('labError').hidden = true;
-    $('ensembleCard').hidden = false;
-  });
-
-  $('labCancel').addEventListener('click', () => {
-    $('labPassword').blur();
-    $('labUnlock').hidden = true;
-    $('labError').hidden = true;
+    renderLab();
   });
 
   $('labHide').addEventListener('click', () => {
@@ -479,7 +479,7 @@
 
   function renderTake() {
     const recording = !!take;
-    $('ensembleTake').hidden = !sid && !takeStatus;
+    $('takeHint').hidden = !!sid;
     $('takeToggle').hidden = !sid;
     $('takeToggle').textContent = recording ? '■ 録音を止める（全員）' : '● 合奏を録音する（全員）';
     $('takeToggle').className = recording ? 'btn danger full-width' : 'btn full-width';
@@ -647,8 +647,10 @@
 
   // 部屋を出たら、音声も切る
   syncHooks.onLeave = leaveVoice;
+  syncHooks.onRoomChange = renderRoom;
   syncHooks.voiceActive = () => !!sid;
 
   renderLab();
+  renderRoom();
   renderVoice();
 })();

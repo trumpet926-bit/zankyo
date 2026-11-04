@@ -138,12 +138,6 @@
           </span>
           <h2 id="syncHeading">みんなで合わせる</h2>
         </div>
-        <form class="lab-unlock" id="labUnlock" hidden>
-          <input type="password" id="labPassword" placeholder="パスワード" autocomplete="off" class="code-input">
-          <button class="btn primary" type="submit">開く</button>
-          <button class="btn" type="button" id="labCancel">やめる</button>
-          <p class="error" id="labError" hidden>パスワードが違います。</p>
-        </form>
         <div id="syncOut">
           <p class="note" id="syncInvite">同じ部屋に入った人どうしで、メトロノームのテンポと拍がそろいます。インターネットにつながっている必要があります。</p>
           <button class="btn primary full-width" id="syncCreate">部屋を作る</button>
@@ -172,28 +166,6 @@
             <span class="note" id="syncOffsetValue">0 ms</span>
           </label>
           <p class="note">ほかの人より音が早く聞こえるときは右へ、遅いときは左へ動かします。リズム・音・光は自分だけの設定です。</p>
-          <div class="ensemble-card" id="ensembleCard" hidden>
-            <h3>オンライン合奏（試作）</h3>
-            <p class="note">同じ部屋で「音声をつなぐ」を押した人どうしの音が聞こえます。<b>有線イヤホン</b>を使ってください（スピーカーだとハウリングします）。</p>
-            <button class="btn primary full-width" id="ensembleJoin">音声をつなぐ</button>
-            <button class="btn small" id="ensembleMute" hidden>自分のマイクを切る</button>
-            <label class="setting-row">
-              <span class="sub-label">メトロノームが聞こえないとき：相手の声と同じ出口から鳴らす</span>
-              <input type="checkbox" id="metroViaElement" class="switch">
-            </label>
-            <div class="ensemble-peers" id="ensemblePeers"></div>
-            <p class="note">「通信の遅れ」はネットと受け取りの分です。マイクやイヤホンを通る分（スマホでは数十 ms）は含みません。</p>
-            <p class="error" id="ensembleError" hidden></p>
-            <div class="ensemble-take" id="ensembleTake" hidden>
-              <button class="btn full-width" id="takeToggle">● 合奏を録音する（全員）</button>
-              <p class="note" id="takeStatus" hidden></p>
-              <button class="btn small" id="takeRetry" hidden>もう一度送る</button>
-            </div>
-            <button class="btn full-width mix-open" id="mixOpen">録音を重ねて聞く</button>
-            <div class="mix-list" id="mixList"></div>
-            <p class="note" id="mixStatus" hidden></p>
-            <button class="link-btn" id="labHide">試作機能を隠す</button>
-          </div>
           <button class="btn danger small" id="syncLeave">部屋を出る</button>
         </div>
         <p class="note" id="syncStatus" hidden></p>
@@ -467,6 +439,85 @@
       </div>
       <div id="recList"></div>
     </section>
+    <section class="panel" id="panel-ensemble">
+      <!-- パスワードを入れるまでは、これだけを出す -->
+      <div class="tool-section" id="ensembleLock">
+        <div class="section-head">
+          <span class="section-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="5.8" cy="11" r="2.4" class="line"/>
+              <circle cx="18.2" cy="11" r="2.4" class="line"/>
+              <path d="M1.8 20a4 4 0 0 1 8 0M14.2 20a4 4 0 0 1 8 0" class="line"/>
+              <path d="M9.6 7.2a3.4 3.4 0 0 1 4.8 0M7.6 4.8a6.4 6.4 0 0 1 8.8 0" class="line"/>
+            </svg>
+          </span>
+          <h2>オンライン合奏</h2>
+        </div>
+        <p class="note">離れた場所にいる仲間と、音声をつないで一緒に吹ける機能です。パスワードを知っている人だけが使えます。</p>
+        <form class="lab-unlock" id="labUnlock">
+          <input type="password" id="labPassword" placeholder="パスワード" autocomplete="off" class="code-input">
+          <button class="btn primary" type="submit" id="labSubmit">開く</button>
+          <p class="error" id="labError" hidden>パスワードが違います。</p>
+        </form>
+      </div>
+
+      <div id="ensembleMain" hidden>
+        <div class="tool-section">
+          <div class="section-head">
+            <span class="section-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="5.8" cy="11" r="2.4" class="line"/>
+              <circle cx="18.2" cy="11" r="2.4" class="line"/>
+              <path d="M1.8 20a4 4 0 0 1 8 0M14.2 20a4 4 0 0 1 8 0" class="line"/>
+              <path d="M9.6 7.2a3.4 3.4 0 0 1 4.8 0M7.6 4.8a6.4 6.4 0 0 1 8.8 0" class="line"/>
+            </svg>
+            </span>
+            <h2>音声をつなぐ</h2>
+          </div>
+          <div id="ensembleNoRoom">
+            <p class="note">まず、メトロノーム画面の「みんなで合わせる」で部屋を作るか、仲間の部屋に入ってください。同じ部屋の人どうしで音声がつながります。</p>
+            <button class="btn primary full-width" id="ensembleGoRoom">部屋を作る・部屋に入る</button>
+          </div>
+          <div id="ensembleRoom" hidden>
+            <div class="ensemble-room">部屋 <b id="ensembleRoomCode"></b> ・ あなたは <b id="ensembleRoomMe"></b></div>
+            <p class="note">「音声をつなぐ」を押した人どうしの音が聞こえます。<b>有線イヤホン</b>を使ってください（スピーカーだとハウリングします）。</p>
+            <button class="btn primary full-width" id="ensembleJoin">音声をつなぐ</button>
+            <button class="btn small" id="ensembleMute" hidden>自分のマイクを切る</button>
+            <div class="ensemble-peers" id="ensemblePeers"></div>
+            <p class="note">「通信の遅れ」はネットと受け取りの分です。マイクやイヤホンを通る分（スマホでは数十 ms）は含みません。</p>
+            <p class="error" id="ensembleError" hidden></p>
+            <label class="setting-row">
+              <span class="sub-label">メトロノームが聞こえないとき：相手の声と同じ出口から鳴らす</span>
+              <input type="checkbox" id="metroViaElement" class="switch">
+            </label>
+          </div>
+        </div>
+
+        <div class="tool-section">
+          <div class="section-head">
+            <span class="section-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="9" y="2.8" width="6" height="11.2" rx="3" class="line"/>
+                <path d="M5.8 11a6.2 6.2 0 0 0 12.4 0M12 17.2v3.3M8.8 20.5h6.4" class="line"/>
+              </svg>
+            </span>
+            <h2>合奏録音</h2>
+          </div>
+          <p class="note">各自の音を録って Google Drive に集め、時刻をそろえて1つの合奏にします。</p>
+          <div class="ensemble-take" id="ensembleTake">
+            <p class="note" id="takeHint">音声をつないでいるときに、全員そろって録音できます。</p>
+            <button class="btn full-width" id="takeToggle" hidden>● 合奏を録音する（全員）</button>
+            <p class="note" id="takeStatus" hidden></p>
+            <button class="btn small" id="takeRetry" hidden>もう一度送る</button>
+          </div>
+          <button class="btn full-width mix-open" id="mixOpen">録音を重ねて聞く</button>
+          <div class="mix-list" id="mixList"></div>
+          <p class="note" id="mixStatus" hidden></p>
+        </div>
+
+        <button class="link-btn" id="labHide">この端末でロックする（次はパスワードが必要になります）</button>
+      </div>
+    </section>
   </main>
 
   <!-- 音階の解説 -->
@@ -544,6 +595,17 @@
         </svg>
       </span>
       <span class="tab-label">録音</span>
+    </button>
+    <button class="tab" data-panel="ensemble">
+      <span class="tab-icon">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="5.8" cy="11" r="2.4" class="line"/>
+          <circle cx="18.2" cy="11" r="2.4" class="line"/>
+          <path d="M1.8 20a4 4 0 0 1 8 0M14.2 20a4 4 0 0 1 8 0" class="line"/>
+          <path d="M9.6 7.2a3.4 3.4 0 0 1 4.8 0M7.6 4.8a6.4 6.4 0 0 1 8.8 0" class="line"/>
+        </svg>
+      </span>
+      <span class="tab-label">オンライン合奏</span>
     </button>
   </nav>
 

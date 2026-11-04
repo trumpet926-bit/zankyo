@@ -88,7 +88,7 @@ h2:first-child { margin-top: 0; }
 
 .row { display: flex; gap: 12px; align-items: center; margin: 16px 0; flex-wrap: wrap; }
 
-select, input[type="text"] {
+select, input[type="text"], input[type="password"] {
   font: inherit;
   padding: 8px 10px;
   border-radius: 8px;
@@ -534,7 +534,7 @@ button, .tab, .chip, .key-btn {
 .sync-calib-live { margin: 0 0 8px; padding: 8px 10px; border-radius: 10px; background: var(--beat); font-weight: 700; }
 #syncCalibResult.ok { color: var(--text); font-weight: 600; }
 .lab-unlock { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 12px; }
-.lab-unlock .code-input { flex: 1 1 140px; font-size: 16px; }
+.lab-unlock .code-input { flex: 1 1 140px; font-size: 16px; letter-spacing: normal; text-align: left; }
 .lab-unlock .error { flex-basis: 100%; margin: 0; }
 .ensemble-card { margin: 14px 0; padding: 14px; border: 1px dashed var(--accent); border-radius: 12px; }
 .ensemble-card h3 { margin: 0 0 6px; font-size: 16px; }
@@ -542,7 +542,10 @@ button, .tab, .chip, .key-btn {
 .ensemble-peers { display: grid; gap: 6px; margin-top: 10px; }
 .ensemble-peer { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: 10px; background: var(--beat); }
 .ensemble-peer .note { margin: 0; }
-.ensemble-take { margin-top: 12px; }
+.ensemble-take { margin-top: 4px; }
+.ensemble-room { margin: 0 0 6px; font-size: 15px; }
+#ensembleMain > .link-btn { display: block; margin: 4px auto 16px; }
+.tab-label { white-space: nowrap; }
 .mix-open { margin-top: 12px; }
 .mix-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .mix-list:empty { display: none; }
