@@ -79,8 +79,13 @@
     loadTakes();
   });
 
+  // 下の「退出」：合奏中なら部屋から出るだけ、合奏に入っていなければこの端末をロックする
   $('labHide').addEventListener('click', () => {
-    if (room.code) syncHooks.leaveRoom();
+    if (room.code) {
+      syncHooks.leaveRoom(); // 音声も切れる（syncHooks.onLeave）
+      render();
+      return;
+    }
     leaveVoice();
     driveKey = null;
     try {
@@ -99,7 +104,7 @@
     $('ensLobby').hidden = !open || inRoom;
     $('ensSession').hidden = !inRoom;
     $('ensTakes').hidden = !open;
-    $('labHide').hidden = !open || inRoom; // 合奏中は上の「退出」だけを出す
+    $('labHide').hidden = !open;
     $('bigCue').hidden = !inRoom;
     watchCue();
     if (inRoom) {
@@ -169,10 +174,6 @@
     render();
   });
 
-  $('ensLeave').addEventListener('click', () => {
-    syncHooks.leaveRoom(); // 音声も切れる（syncHooks.onLeave）
-    render();
-  });
 
   // ---------- 招待 ----------
   function inviteUrl() {
