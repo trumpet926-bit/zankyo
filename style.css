@@ -533,25 +533,7 @@ button, .tab, .chip, .key-btn {
 .sync-calib .note { margin: 6px 0 0; }
 .sync-calib-live { margin: 0 0 8px; padding: 8px 10px; border-radius: 10px; background: var(--beat); font-weight: 700; }
 #syncCalibResult.ok { color: var(--text); font-weight: 600; }
-.lab-unlock { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 12px; }
-.lab-unlock .code-input { flex: 1 1 140px; font-size: 16px; letter-spacing: normal; text-align: left; }
-.lab-unlock .error { flex-basis: 100%; margin: 0; }
-.ensemble-card { margin: 14px 0; padding: 14px; border: 1px dashed var(--accent); border-radius: 12px; }
-.ensemble-card h3 { margin: 0 0 6px; font-size: 16px; }
-.ensemble-card .btn.small { margin-top: 8px; }
-.ensemble-peers { display: grid; gap: 6px; margin-top: 10px; }
-.ensemble-peer { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: 10px; background: var(--beat); }
-.ensemble-peer .note { margin: 0; }
-.ensemble-take { margin-top: 4px; }
-.ensemble-room { margin: 0 0 6px; font-size: 15px; }
-#ensembleMain > .link-btn { display: block; margin: 4px auto 16px; }
 .tab-label { white-space: nowrap; }
-.mix-open { margin-top: 12px; }
-.mix-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-.mix-list:empty { display: none; }
-#mixStatus.ok { color: var(--text); font-weight: 600; }
-#mixStatus.fail { color: var(--danger); font-weight: 600; }
-.link-btn { margin-top: 10px; padding: 0; border: 0; background: none; color: var(--muted); font: inherit; font-size: 13px; text-decoration: underline; cursor: pointer; }
 #syncCalibResult.fail { color: var(--danger); font-weight: 600; }
 
 /* 大きな表示の部屋の情報 */
@@ -1080,3 +1062,214 @@ body { min-height: 100vh; }
 /* 押して入力できるようにした大きなテンポの数字は、元の大きさのまま */
 .bpm-value.tempo-edit, .bpm-value.tempo-input { font-size: 72px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
 .bpm-value.tempo-input { width: 3.2ch; }
+
+/* オンライン合奏（濃紺と金の、少し特別な画面） */
+.ens-stage {
+  --ens-gold: #d6b25e;
+  --ens-gold-light: #f1d48a;
+  --ens-ivory: #f4ecd8;
+  --ens-muted: #a8a28f;
+  --ens-line: rgba(214, 178, 94, 0.28);
+  --ens-mincho: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", "BIZ UDPMincho", serif;
+  position: relative;
+  overflow: hidden;
+  margin: 4px 0 16px;
+  padding: 28px 18px 22px;
+  border: 1px solid var(--ens-line);
+  border-radius: 22px;
+  background: radial-gradient(120% 70% at 50% 0%, #1d2452 0%, #0e1332 55%, #080b1d 100%);
+  color: var(--ens-ivory);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+.ens-stage::before {
+  /* 上の縁に、細い金の光 */
+  content: "";
+  position: absolute;
+  top: 0; left: 15%; right: 15%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--ens-gold-light), transparent);
+  opacity: 0.7;
+}
+.ens-eyebrow { margin: 0; text-align: center; font-size: 11px; letter-spacing: 0.32em; color: var(--ens-gold); }
+.ens-eyebrow.left { text-align: left; }
+.ens-title { margin: 6px 0 10px; text-align: center; font-family: var(--ens-mincho); font-size: 26px; font-weight: 600; letter-spacing: 0.14em; color: var(--ens-ivory); }
+.ens-subtitle { margin: 0 0 10px; font-family: var(--ens-mincho); font-size: 17px; font-weight: 600; letter-spacing: 0.08em; color: var(--ens-gold-light); }
+.ens-lead { margin: 0 0 20px; text-align: center; font-size: 14px; line-height: 1.8; color: var(--ens-muted); }
+.ens-small { margin: 8px 0 0; font-size: 12.5px; line-height: 1.7; color: var(--ens-muted); }
+.ens-small.center { text-align: center; }
+.ens-small.ok { color: var(--ens-gold-light); }
+.ens-small.fail, .ens-error { color: #f3a6a6; }
+.ens-error { margin: 10px 0 0; font-size: 13px; text-align: center; }
+
+.ens-btn {
+  font: inherit;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 12px 22px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.2s, opacity 0.2s;
+}
+.ens-btn:active { transform: scale(0.97); }
+.ens-btn:disabled { opacity: 0.5; cursor: default; }
+.ens-btn.gold { background: linear-gradient(180deg, #f5dc95 0%, #c99a3c 100%); color: #1d1606; box-shadow: 0 6px 18px rgba(201, 154, 60, 0.35); }
+.ens-btn.gold.running { background: linear-gradient(180deg, #3a3f63, #23284a); color: var(--ens-gold-light); border-color: var(--ens-gold); box-shadow: none; }
+.ens-btn.outline { background: transparent; color: var(--ens-gold-light); border-color: var(--ens-gold); }
+.ens-btn.small { padding: 7px 14px; font-size: 13px; }
+.ens-btn.large { display: block; width: 100%; padding: 17px 22px; font-size: 18px; font-family: var(--ens-mincho); letter-spacing: 0.2em; }
+.ens-btn.full { display: block; width: 100%; margin-top: 14px; }
+
+.ens-form { display: flex; gap: 8px; }
+.ens-input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: 16px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--ens-line);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--ens-ivory);
+}
+.ens-input::placeholder { color: rgba(244, 236, 216, 0.4); }
+.ens-input:focus { outline: none; border-color: var(--ens-gold); box-shadow: 0 0 0 3px rgba(214, 178, 94, 0.18); }
+.ens-input.code { letter-spacing: 0.2em; text-align: center; font-variant-numeric: tabular-nums; }
+
+/* パスワードの入口 */
+.ens-lock { padding: 8px 0 6px; }
+.ens-emblem { display: block; width: 76px; height: auto; margin: 0 auto 14px; filter: drop-shadow(0 4px 14px rgba(214, 178, 94, 0.35)); }
+
+.ens-divider { display: flex; align-items: center; gap: 12px; margin: 22px 0 16px; color: var(--ens-muted); font-size: 12px; }
+.ens-divider::before, .ens-divider::after { content: ""; flex: 1; height: 1px; background: var(--ens-line); }
+
+/* 合奏中 */
+.ens-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.ens-room-code { margin: 2px 0 0; font-family: var(--ens-mincho); font-size: 30px; letter-spacing: 0.18em; color: var(--ens-ivory); font-variant-numeric: tabular-nums; }
+.ens-qr { margin: 14px 0 0; text-align: center; }
+.ens-qr-image { display: inline-block; padding: 8px; border-radius: 12px; background: #fff; line-height: 0; }
+.ens-qr-image svg { width: 180px; height: 180px; }
+.ens-qr .ens-btn { margin-top: 10px; }
+
+.ens-members { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 14px 10px; margin: 22px 0 4px; }
+.ens-member { --level: 0; text-align: center; min-width: 0; }
+.ens-avatar {
+  position: relative;
+  width: 58px;
+  height: 58px;
+  margin: 0 auto 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1.5px solid var(--ens-gold);
+  background: radial-gradient(circle at 32% 28%, #2c3470, #121735 70%);
+  font-family: var(--ens-mincho);
+  font-size: 24px;
+  color: var(--ens-gold-light);
+  box-shadow: 0 0 calc(var(--level) * 26px) calc(var(--level) * 3px) rgba(241, 212, 138, calc(var(--level) * 0.85));
+  transition: box-shadow 0.08s linear;
+}
+.ens-member.me .ens-avatar { border-width: 2px; }
+.ens-member.off .ens-avatar { border-style: dashed; opacity: 0.45; }
+.ens-ref {
+  position: absolute;
+  bottom: -7px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--ens-gold);
+  color: #1d1606;
+  font-family: system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.ens-name { margin-top: 10px; font-size: 13px; color: var(--ens-ivory); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ens-state { font-size: 11px; color: var(--ens-muted); font-variant-numeric: tabular-nums; }
+.ens-member.live .ens-state { color: var(--ens-gold-light); }
+
+.ens-metro { margin: 22px 0 0; padding: 16px 0; border-top: 1px solid var(--ens-line); border-bottom: 1px solid var(--ens-line); }
+.ens-dots { display: flex; justify-content: center; gap: 10px; min-height: 12px; margin-bottom: 10px; }
+.ens-dots .beat-dot { width: 10px; height: 10px; background: rgba(244, 236, 216, 0.16); }
+.ens-dots .beat-dot.on { background: var(--ens-gold-light); box-shadow: 0 0 10px rgba(241, 212, 138, 0.8); }
+.ens-dots .beat-dot.on.strong { background: #fff3c9; }
+.ens-metro-row { display: flex; align-items: center; justify-content: center; gap: 14px; }
+.ens-metro-row + .ens-metro-row { margin-top: 12px; }
+.ens-bpm { min-width: 104px; text-align: center; font-family: var(--ens-mincho); font-size: 40px; line-height: 1; color: var(--ens-ivory); font-variant-numeric: tabular-nums; }
+.ens-bpm small { display: block; margin-top: 4px; font-family: system-ui, sans-serif; font-size: 10px; letter-spacing: 0.3em; color: var(--ens-gold); }
+.ens-round {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--ens-line);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ens-gold-light);
+  font-size: 22px;
+  cursor: pointer;
+}
+.ens-select {
+  font: inherit;
+  padding: 10px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--ens-line);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--ens-ivory);
+}
+.ens-select option { color: #111; }
+
+/* 録音ボタン */
+.ens-record { margin: 24px 0 6px; text-align: center; }
+.ens-rec {
+  position: relative;
+  width: 86px;
+  height: 86px;
+  border-radius: 50%;
+  border: 2px solid var(--ens-gold);
+  background: radial-gradient(circle at 50% 35%, #1f2654, #0b0f27);
+  cursor: pointer;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.4);
+}
+.ens-rec span {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #d9443c;
+  transition: border-radius 0.2s, width 0.2s, height 0.2s;
+}
+.ens-rec:disabled { opacity: 0.4; cursor: default; }
+.ens-rec.recording { border-color: #e2574e; animation: ens-pulse 1.6s ease-in-out infinite; }
+.ens-rec.recording span { width: 26px; height: 26px; border-radius: 6px; }
+@keyframes ens-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(226, 87, 78, 0.55); }
+  50% { box-shadow: 0 0 0 14px rgba(226, 87, 78, 0); }
+}
+.ens-rec-label { margin: 10px 0 0; font-family: var(--ens-mincho); font-size: 15px; letter-spacing: 0.06em; color: var(--ens-ivory); }
+.ens-record .ens-btn { margin-top: 8px; }
+
+.ens-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin: 22px 0 0; }
+.ens-chip {
+  font: inherit;
+  font-size: 13px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--ens-line);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ens-ivory);
+  cursor: pointer;
+}
+.ens-chip.active { border-color: var(--ens-gold); color: var(--ens-gold-light); }
+.ens-chip.danger { color: #f3a6a6; border-color: rgba(243, 166, 166, 0.35); }
+.ens-chip:disabled { opacity: 0.4; cursor: default; }
+.ens-option { display: flex; align-items: center; gap: 10px; margin: 18px 0 0; font-size: 12px; color: var(--ens-muted); line-height: 1.5; }
+.ens-option .switch { flex-shrink: 0; }
+
+/* これまでの合奏録音 */
+.ens-takes { margin: 26px 0 0; padding-top: 20px; border-top: 1px solid var(--ens-line); }
+.ens-take { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; border-bottom: 1px solid rgba(214, 178, 94, 0.12); font-family: var(--ens-mincho); font-size: 15px; }
+.ens-take:last-child { border-bottom: 0; }
+.ens-link { display: block; margin: 22px auto 0; padding: 0; border: 0; background: none; color: var(--ens-muted); font: inherit; font-size: 12px; text-decoration: underline; cursor: pointer; }

@@ -105,13 +105,14 @@ async function keepScreenOn(on) {
 // ---------- メトロノーム ----------
 // 部屋（みんなで合わせる）に入っている間は、テンポ・拍子・スタート／ストップを部屋に送る
 // 中身は sync-ui.js が差し込む
-const syncHooks = { active: () => false, toggle: null, bpm: null, beats: null, room: null, onLeave: null, onRoomChange: null };
+const syncHooks = { active: () => false, toggle: null, bpm: null, beats: null, room: null, onLeave: null, onRoomChange: null, onMembers: null, onCalibStatus: null };
 
 function showBpm(bpm) {
   $('bpmValue').textContent = bpm;
   $('bpmSlider').value = bpm;
   $('bigBpm').textContent = bpm;
   $('miniBpm').textContent = bpm;
+  $('ensBpm').textContent = bpm;
 }
 
 // テンポの数字を押すと、その場で数字を入力できる
@@ -161,7 +162,7 @@ function setBpm(value) {
 }
 
 function renderBeatDots(count = metronome.beats) {
-  [$('beatDots'), $('bigDots')].forEach((dots) => {
+  [$('beatDots'), $('bigDots'), $('ensDots')].forEach((dots) => {
     dots.innerHTML = '';
     for (let i = 0; i < count; i++) {
       const dot = document.createElement('div');
@@ -286,6 +287,8 @@ const MINI_STOP = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6"
 function showMetronomeRunning(running) {
   $('startStop').textContent = running ? 'ストップ' : 'スタート';
   $('bigStartStop').textContent = running ? 'ストップ' : 'スタート';
+  $('ensStart').textContent = running ? 'ストップ' : 'スタート';
+  $('ensStart').classList.toggle('running', running);
   $('miniIcon').innerHTML = running ? MINI_STOP : MINI_PLAY;
   $('miniMetro').classList.toggle('running', running);
   if (!running) $('miniDot').classList.remove('on', 'strong');
@@ -1216,6 +1219,7 @@ renderRhythms();
 renderToggles();
 $('miniIcon').innerHTML = MINI_PLAY;
 $('beatsSelect').value = settings.beats;
+$('ensBeats').value = settings.beats;
 $('accentCheck').checked = settings.accent;
 setBpm(settings.bpm);
 renderBeatDots();

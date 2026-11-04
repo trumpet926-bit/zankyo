@@ -1,4 +1,4 @@
-// オンライン合奏：同じ部屋で「音声をつなぐ」を押した人どうしを、音声で直接つなぐ（WebRTC）
+// オンライン合奏：同じ部屋で音声をつないだ人どうしを、音声で直接つなぐ（WebRTC）
 // 相手探しのやりとりは Firebase の部屋を使う。音そのものは端末どうしで直接送る
 
 (function () {
@@ -7,6 +7,7 @@
   const LAB_KEY = 'practice-app-lab-key';
   const DRIVE_URL = 'https://script.google.com/macros/s/AKfycbyBRsbow4IEWd_5cUlqTn5QV6GqzOmiVE6MX3zUJQ7sWn3z1AoUiGW4zNcYd01yuFTznA/exec';
   const ICE_SERVERS = [{ urls: 'stun:stun.l.google.com:19302' }];
+  const QR_LIB = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js';
 
   const room = syncHooks.room;
   let stream = null; // 自分のマイク
@@ -14,14 +15,22 @@
   let voiceRef = null;
   let inboxRef = null;
   let statsTimer = null;
-  const peers = {}; // 相手の端末の番号 → { pc, sid, name, audio, pendingIce, state, latency }
+  let voiceList = {}; // 音声をつないでいる人（部屋の番号 → { name, sid }）
+  let selfMeter = null;
+  let starting = false; // 「合奏をはじめる」「参加する」の途中
+  const peers = {}; // 相手の端末の番号 → { pc, sid, name, audio, meter, pendingIce, state, latency }
 
   function randomId() {
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
     return Array.from(crypto.getRandomValues(new Uint8Array(12)), (b) => chars[b % chars.length]).join('');
   }
 
-  // ---------- 隠れた入り口とパスワード ----------
+  function showText(id, text) {
+    $(id).textContent = text || '';
+    $(id).hidden = !text;
+  }
+
+  // ---------- パスワード ----------
   let driveKey = null;
   try {
     driveKey = localStorage.getItem(LAB_KEY);
@@ -34,25 +43,6 @@
     return !!driveKey;
   }
 
-  function renderLab() {
-    $('ensembleLock').hidden = unlocked();
-    $('ensembleMain').hidden = !unlocked();
-  }
-
-  // 部屋に入っているかどうかで、表示を切り替える
-  function renderRoom() {
-    const inRoom = !!room.code;
-    $('ensembleNoRoom').hidden = inRoom;
-    $('ensembleRoom').hidden = !inRoom;
-    $('ensembleRoomCode').textContent = room.code || '';
-    $('ensembleRoomMe').textContent = room.name || '';
-  }
-
-  $('ensembleGoRoom').addEventListener('click', () => {
-    showPanel('metronome', -1);
-    setTimeout(() => $('syncHeading').scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
-  });
-
   async function sha256(text) {
     const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
     return Array.from(new Uint8Array(bytes), (b) => b.toString(16).padStart(2, '0')).join('');
@@ -61,7 +51,7 @@
   $('labUnlock').addEventListener('submit', async (e) => {
     e.preventDefault();
     const key = await sha256(`zankyo-drive:${$('labPassword').value.trim()}`);
-    $('labError').hidden = true;
+    showText('labError', '');
     $('labSubmit').disabled = true;
     let ok = false;
     try {
@@ -69,14 +59,12 @@
       ok = (await res.json()).ok === true;
     } catch (err) {
       $('labSubmit').disabled = false;
-      $('labError').textContent = '確かめられませんでした。インターネットにつながっているか確認してください。';
-      $('labError').hidden = false;
+      showText('labError', '確かめられませんでした。インターネットにつながっているか確認してください。');
       return;
     }
     $('labSubmit').disabled = false;
     if (!ok) {
-      $('labError').textContent = 'パスワードが違います。';
-      $('labError').hidden = false;
+      showText('labError', 'パスワードが違います。');
       return;
     }
     driveKey = key;
@@ -87,11 +75,12 @@
     }
     $('labPassword').value = '';
     $('labPassword').blur();
-    $('labError').hidden = true;
-    renderLab();
+    render();
+    loadTakes();
   });
 
   $('labHide').addEventListener('click', () => {
+    if (room.code) syncHooks.leaveRoom();
     leaveVoice();
     driveKey = null;
     try {
@@ -99,7 +88,130 @@
     } catch (e) {
       // 何もしない
     }
-    renderLab();
+    render();
+  });
+
+  // ---------- 画面の切り替え（パスワード → 始める・参加する → 合奏中） ----------
+  function render() {
+    const open = unlocked();
+    const inRoom = open && !!room.code;
+    $('ensLock').hidden = open;
+    $('ensLobby').hidden = !open || inRoom;
+    $('ensSession').hidden = !inRoom;
+    $('ensTakes').hidden = !open;
+    $('labHide').hidden = !open;
+    if (inRoom) {
+      $('ensRoomCode').textContent = room.code;
+      $('ensConnect').hidden = !!sid || starting;
+      renderMembers();
+      renderControls();
+    } else {
+      $('ensQr').hidden = true;
+    }
+  }
+
+  // ---------- 始める・参加する（部屋と音声を一度に） ----------
+  async function startSession(code) {
+    if (starting) return;
+    showText('ensLobbyError', '');
+    if (!window.RTCPeerConnection) {
+      showText('ensLobbyError', 'このブラウザではオンライン合奏を使えません。');
+      return;
+    }
+    starting = true;
+    $('ensStartSession').disabled = true;
+    $('ensJoinBtn').disabled = true;
+    const label = code ? $('ensJoinBtn') : $('ensStartSession');
+    const original = label.textContent;
+    label.textContent = 'つないでいます…';
+    getAudioContext().resume(); // 画面を触ったときでないと音を出せないため、ここで準備する
+    if (settings.metroViaElement) applyMetroRoute();
+    let mic = null;
+    try {
+      mic = await openMicrophone();
+      const error = code ? await syncHooks.joinRoom(code) : await syncHooks.createRoom();
+      if (error) throw new Error(error);
+      await joinVoice(mic);
+      mic = null;
+    } catch (e) {
+      if (mic) closeMicrophone(mic);
+      showText('ensLobbyError', e.name === 'NotAllowedError' || e.name === 'NotFoundError'
+        ? 'マイクを使えませんでした。マイクの使用を許可してください。'
+        : e.message);
+    } finally {
+      starting = false;
+      $('ensStartSession').disabled = false;
+      $('ensJoinBtn').disabled = false;
+      label.textContent = original;
+      render();
+    }
+  }
+
+  $('ensStartSession').addEventListener('click', () => startSession(null));
+  $('ensJoinForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    $('ensCode').blur();
+    startSession($('ensCode').value.replace(/\D/g, ''));
+  });
+
+  // メトロノーム画面の「みんなで合わせる」から部屋に入っている人は、ここで音声だけつなぐ
+  $('ensConnect').addEventListener('click', async () => {
+    showText('ensError', '');
+    getAudioContext().resume();
+    if (settings.metroViaElement) applyMetroRoute();
+    try {
+      await joinVoice(await openMicrophone());
+    } catch (e) {
+      showText('ensError', 'マイクを使えませんでした。マイクの使用を許可してください。');
+    }
+    render();
+  });
+
+  $('ensLeave').addEventListener('click', () => {
+    syncHooks.leaveRoom(); // 音声も切れる（syncHooks.onLeave）
+    render();
+  });
+
+  // ---------- 招待 ----------
+  function inviteUrl() {
+    return `${location.origin}${location.pathname}?room=${room.code}&ensemble=1&openExternalBrowser=1`;
+  }
+
+  $('ensInvite').addEventListener('click', async () => {
+    const box = $('ensQr');
+    if (!box.hidden) {
+      box.hidden = true;
+      return;
+    }
+    box.innerHTML = '<p class="ens-small center">QRコードを準備しています…</p>';
+    box.hidden = false;
+    try {
+      if (!window.qrcode) await loadScript(QR_LIB);
+      const qr = qrcode(0, 'M');
+      qr.addData(inviteUrl());
+      qr.make();
+      box.innerHTML = `<div class="ens-qr-image">${qr.createSvgTag(5, 2)}</div>` +
+        '<p class="ens-small center">カメラで読み取ると、この合奏に参加できます（パスワードが必要です）。</p>';
+    } catch (e) {
+      box.innerHTML = '';
+    }
+    const share = document.createElement('button');
+    share.className = 'ens-btn outline small';
+    share.textContent = 'リンクを送る';
+    share.addEventListener('click', async () => {
+      const text = `残響 PracticeTool のオンライン合奏「${room.code}」に参加してください`;
+      if (navigator.share) {
+        navigator.share({ title: '残響 PracticeTool', text, url: inviteUrl() }).catch(() => {});
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(`${text}\n${inviteUrl()}`);
+        share.textContent = 'リンクをコピーしました';
+      } catch (e) {
+        share.textContent = 'コピーできませんでした';
+      }
+    });
+    box.appendChild(share);
   });
 
   // ---------- 音声をつなぐ ----------
@@ -115,10 +227,34 @@
     return { type: desc.type, sdp };
   }
 
+  // 音の大きさを測るもの（カードを光らせるため）
+  function createMeter(mediaStream) {
+    try {
+      const ctx = getAudioContext();
+      const source = ctx.createMediaStreamSource(mediaStream);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 512;
+      source.connect(analyser);
+      return { source, analyser, buf: new Float32Array(analyser.fftSize) };
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function closeMeter(meter) {
+    if (meter) meter.source.disconnect();
+  }
+
+  function meterLevel(meter) {
+    if (!meter) return 0;
+    meter.analyser.getFloatTimeDomainData(meter.buf);
+    return Math.max(0, (rmsToLevel(rmsOf(meter.buf)) - 0.35) / 0.65);
+  }
+
   function createPeer(peerId, peerSid, name) {
     closePeer(peerId);
     const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
-    const peer = { pc, sid: peerSid, name, pendingIce: [], state: 'つないでいます…', latency: null, audio: new Audio() };
+    const peer = { pc, sid: peerSid, name, pendingIce: [], state: 'つないでいます…', latency: null, audio: new Audio(), meter: null };
     peer.audio.autoplay = true;
     peer.audio.playsInline = true;
     peers[peerId] = peer;
@@ -139,15 +275,18 @@
       } catch (err) {
         // 対応していない端末
       }
-      peer.audio.srcObject = e.streams[0] || new MediaStream([e.track]);
+      const remote = e.streams[0] || new MediaStream([e.track]);
+      peer.audio.srcObject = remote;
       peer.audio.play().catch(() => {});
+      closeMeter(peer.meter);
+      peer.meter = createMeter(remote);
     };
     pc.onconnectionstatechange = () => {
       const s = pc.connectionState;
       peer.state = s === 'connected' ? 'つながりました' : s === 'failed' ? 'つながりません' : s === 'disconnected' ? '途切れています' : peer.state;
-      renderPeers();
+      renderMembers();
     };
-    renderPeers();
+    renderMembers();
     return peer;
   }
 
@@ -156,8 +295,9 @@
     if (!peer) return;
     peer.pc.close();
     peer.audio.srcObject = null;
+    closeMeter(peer.meter);
     delete peers[peerId];
-    renderPeers();
+    renderMembers();
   }
 
   async function call(peerId, peerSid, name) {
@@ -204,6 +344,7 @@
 
   // 音声をつないでいる人の一覧が変わったとき
   function onVoiceMembers(list) {
+    voiceList = list;
     Object.keys(peers).forEach((id) => {
       if (!list[id] || list[id].sid !== peers[id].sid) closePeer(id);
     });
@@ -212,25 +353,14 @@
       // 2人のうち、番号の小さい方から呼びかける（同時に呼びかけ合わないように）
       if (room.memberId < id) call(id, v.sid, v.name).catch(() => {});
     });
+    renderMembers();
   }
 
-  async function joinVoice() {
-    $('ensembleError').hidden = true;
-    if (!window.RTCPeerConnection) {
-      showError('このブラウザでは使えません。');
-      return;
-    }
-    $('ensembleJoin').disabled = true;
-    getAudioContext().resume();
-    if (settings.metroViaElement) applyMetroRoute(); // 画面を触ったときでないと鳴らせないため、ここで用意する
-    try {
-      stream = await openMicrophone();
-    } catch (e) {
-      $('ensembleJoin').disabled = false;
-      showError('マイクを使えませんでした。マイクの使用を許可してください。');
-      return;
-    }
+  // mic：開いておいたマイク（画面を触った直後に開くため、呼ぶ側で用意する）
+  async function joinVoice(mic) {
+    stream = mic;
     sid = randomId();
+    selfMeter = createMeter(stream);
     inboxRef = room.roomRef.child(`signal/${room.memberId}`);
     await inboxRef.remove().catch(() => {});
     inboxRef.onDisconnect().remove();
@@ -246,9 +376,9 @@
     statsTimer = setInterval(updateLatency, 2000);
     takeRef = room.roomRef.child('take');
     takeRef.on('value', (snap) => onTake(snap.val()));
-    $('ensembleJoin').disabled = false;
     usage.track('ensemble');
-    renderVoice();
+    startMeters();
+    render();
   }
 
   function leaveVoice() {
@@ -270,10 +400,13 @@
     }
     voiceRef = null;
     inboxRef = null;
+    voiceList = {};
     sid = null;
+    closeMeter(selfMeter);
+    selfMeter = null;
     if (stream) closeMicrophone(stream);
     stream = null;
-    renderVoice();
+    render();
   }
 
   // 相手の音が届くまでの遅れの目安：ネットの片道 ＋ 受け取った音をためている時間 ＋ 音を区切る時間
@@ -293,70 +426,127 @@
             peer.lastBuffer = now;
           }
         });
-        if (rtt != null) {
-          peer.latency = { net: (rtt / 2) * 1000, buffer: buffer != null ? buffer * 1000 : null };
-        }
+        if (rtt != null) peer.latency = (rtt / 2) * 1000 + (buffer != null ? buffer * 1000 : 0) + 20; // 20 = 音を区切って送る時間
       } catch (e) {
         // 測れないときは前の値のまま
       }
     }
-    renderPeers();
+    renderMembers();
   }
 
-  // ---------- 表示 ----------
-  function showError(text) {
-    $('ensembleError').textContent = text;
-    $('ensembleError').hidden = false;
+  // ---------- 参加者のカード ----------
+  function initialOf(name) {
+    const chars = [...(name || '？')];
+    return chars[0] === 'お' && chars.length > 1 ? chars[1] : chars[0];
   }
 
-  function renderVoice() {
-    const on = !!sid;
-    $('ensembleJoin').textContent = on ? '音声を切る' : '音声をつなぐ';
-    $('ensembleJoin').className = on ? 'btn danger full-width' : 'btn primary full-width';
-    $('ensembleMute').hidden = !on;
-    $('ensembleMute').textContent = '自分のマイクを切る';
-    renderPeers();
-    renderTake();
-  }
-
-  function renderPeers() {
-    const box = $('ensemblePeers');
-    if (!sid) {
-      box.innerHTML = '';
-      return;
-    }
-    const list = Object.values(peers);
-    if (!list.length) {
-      box.innerHTML = '<p class="note">ほかの人が「音声をつなぐ」を押すのを待っています…</p>';
-      return;
-    }
+  function renderMembers() {
+    if ($('ensSession').hidden) return;
+    const box = $('ensMembers');
+    const refId = room.referenceId();
+    const ids = Object.keys(room.members);
+    // 自分をいちばん前に
+    ids.sort((a, b) => (a === room.memberId ? -1 : b === room.memberId ? 1 : 0));
     box.innerHTML = '';
-    list.forEach((peer) => {
-      const row = document.createElement('div');
-      row.className = 'ensemble-peer';
-      let detail = peer.state;
-      if (peer.latency && peer.state === 'つながりました') {
-        const { net, buffer } = peer.latency;
-        const total = net + (buffer || 0) + 20; // 20 = 音を区切って送る時間の目安
-        detail = `通信の遅れ 約${Math.round(total)} ms（ネット ${Math.round(net)}${buffer != null ? ` ／ 受信待ち ${Math.round(buffer)}` : ''}）`;
+    ids.forEach((id) => {
+      const m = room.members[id];
+      const me = id === room.memberId;
+      const peer = peers[id];
+      let state;
+      let live = false;
+      if (me) {
+        state = sid ? (stream && !stream.getAudioTracks()[0].enabled ? 'マイク オフ' : 'あなた') : 'あなた（音声なし）';
+        live = !!sid;
+      } else if (peer) {
+        live = peer.state === 'つながりました';
+        state = live && peer.latency != null ? `${Math.round(peer.latency)} ms` : peer.state;
+      } else if (voiceList[id]) {
+        state = sid ? 'つないでいます…' : '音声あり';
+      } else {
+        state = '音声なし';
       }
-      const name = document.createElement('b');
-      name.textContent = peer.name || '（名前なし）';
-      const info = document.createElement('span');
-      info.className = 'note';
-      info.textContent = detail;
-      row.append(name, info);
-      box.appendChild(row);
+      const card = document.createElement('div');
+      card.className = `ens-member${me ? ' me' : ''}${live ? ' live' : ''}${!live && !voiceList[id] ? ' off' : ''}`;
+      card.dataset.id = id;
+      const avatar = document.createElement('div');
+      avatar.className = 'ens-avatar';
+      avatar.textContent = initialOf(m.name);
+      if (id === refId) {
+        const ref = document.createElement('span');
+        ref.className = 'ens-ref';
+        ref.textContent = '基準';
+        avatar.appendChild(ref);
+      }
+      const name = document.createElement('div');
+      name.className = 'ens-name';
+      name.textContent = m.name;
+      const info = document.createElement('div');
+      info.className = 'ens-state';
+      info.textContent = state;
+      card.append(avatar, name, info);
+      box.appendChild(card);
     });
   }
 
-  $('ensembleJoin').addEventListener('click', () => (sid ? leaveVoice() : joinVoice()));
-  $('ensembleMute').addEventListener('click', () => {
+  // 吹いている人のカードを光らせる
+  let meterFrame = null;
+  function startMeters() {
+    if (meterFrame) return;
+    const tick = () => {
+      if (!sid) {
+        meterFrame = null;
+        return;
+      }
+      if (!$('ensSession').hidden && document.visibilityState === 'visible') {
+        $('ensMembers').querySelectorAll('.ens-member').forEach((card) => {
+          const id = card.dataset.id;
+          const meter = id === room.memberId ? selfMeter : peers[id] && peers[id].meter;
+          card.style.setProperty('--level', meterLevel(meter).toFixed(2));
+        });
+      }
+      meterFrame = requestAnimationFrame(tick);
+    };
+    meterFrame = requestAnimationFrame(tick);
+  }
+
+  // ---------- この画面のボタン ----------
+  function renderControls() {
+    const on = !!sid;
+    const muted = on && stream && !stream.getAudioTracks()[0].enabled;
+    $('ensMute').textContent = muted ? 'マイクを入れる' : 'マイクを切る';
+    $('ensMute').disabled = !on;
+    $('ensMute').classList.toggle('active', !!muted);
+    renderTake();
+  }
+
+  $('ensMute').addEventListener('click', () => {
     if (!stream) return;
     const track = stream.getAudioTracks()[0];
     track.enabled = !track.enabled;
-    $('ensembleMute').textContent = track.enabled ? '自分のマイクを切る' : '自分のマイクを入れる';
+    renderControls();
+    renderMembers();
   });
+
+  $('ensBpmDown').addEventListener('click', () => setBpm(settings.bpm - 1));
+  $('ensBpmUp').addEventListener('click', () => setBpm(settings.bpm + 1));
+  $('ensBeats').addEventListener('change', (e) => {
+    $('beatsSelect').value = e.target.value;
+    $('beatsSelect').dispatchEvent(new Event('change'));
+  });
+  $('ensStart').addEventListener('click', () => toggleMetronomeByUser());
+
+  $('ensCalib').addEventListener('click', () => {
+    if (syncHooks.isReference()) {
+      showText('ensNotice', 'この台が基準です。ほかの人が「タイミング調整」を押すと、この台からも音が鳴ります。');
+      return;
+    }
+    if (!syncHooks.hasReference()) {
+      showText('ensNotice', '基準の台が見つかりません。');
+      return;
+    }
+    syncHooks.calibrate();
+  });
+  syncHooks.onCalibStatus = (text) => showText('ensNotice', text);
 
   // ---------- 合奏録音 ----------
   // 各自が自分の音だけを録り、Google Drive（受け取り口）に集めて、部屋の時刻でそろえて重ねる。
@@ -365,6 +555,7 @@
   let takeRef = null;
   let take = null; // 今録音している回
   let takeStatus = '';
+  let takeTimer = null;
   let failedUpload = null; // 送れなかった録音（もう一度送るため）
   const handledTakes = new Set();
 
@@ -382,7 +573,7 @@
 
   function takeLabel(id) {
     const m = /^(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/.exec(id);
-    return m ? `${Number(m[2])}/${Number(m[3])} ${m[4]}:${m[5]}` : id;
+    return m ? `${Number(m[2])}月${Number(m[3])}日 ${m[4]}:${m[5]}` : id;
   }
 
   // 誰かが録音を始めたら、メトロノームの次の小節（少し余裕を見て）から全員で録る
@@ -423,14 +614,16 @@
     rec.start(1000);
     const markerAt = ctx.currentTime + 0.4;
     playCalibBeep(ctx, dest, MARKER_HZ, markerAt); // 録音の中だけに入る目印（スピーカーには出さない）
-    take = { id: t.id, rec, chunks, source, mime: rec.mimeType || mime, markerServerMs: ctxToServerMs(markerAt), startAt: t.startAt };
-    takeStatus = `● 録音中（${t.by}さんが開始）`;
+    take = { id: t.id, by: t.by, rec, chunks, source, mime: rec.mimeType || mime, markerServerMs: ctxToServerMs(markerAt), startAt: t.startAt };
+    takeStatus = '';
+    takeTimer = setInterval(renderTake, 500);
     usage.track('take');
   }
 
   async function stopTake() {
     const current = take;
     take = null;
+    clearInterval(takeTimer);
     renderTake();
     await new Promise((resolve) => {
       current.rec.onstop = resolve;
@@ -469,7 +662,8 @@
       const result = await res.json();
       if (!result.ok) throw new Error(result.error);
       failedUpload = null;
-      takeStatus = `録音を送りました（${takeLabel(current.id)}）。全員が送り終わったら「録音を重ねて聞く」を押してください。`;
+      takeStatus = '録音を送りました。全員が送り終わったら、下の「これまでの合奏録音」から重ねて聞けます。';
+      setTimeout(loadTakes, 1500);
     } catch (e) {
       failedUpload = { current, blob };
       takeStatus = '録音を送れませんでした。インターネットにつながっているか確認して、「もう一度送る」を押してください。';
@@ -479,21 +673,26 @@
 
   function renderTake() {
     const recording = !!take;
-    $('takeHint').hidden = !!sid;
-    $('takeToggle').hidden = !sid;
-    $('takeToggle').textContent = recording ? '■ 録音を止める（全員）' : '● 合奏を録音する（全員）';
-    $('takeToggle').className = recording ? 'btn danger full-width' : 'btn full-width';
-    $('takeStatus').textContent = takeStatus;
-    $('takeStatus').hidden = !takeStatus;
-    $('takeRetry').hidden = !failedUpload;
+    $('ensRec').classList.toggle('recording', recording);
+    $('ensRec').disabled = !sid && !recording;
+    let label = sid ? '合奏を録音する' : '音声をつなぐと録音できます';
+    if (recording) {
+      const sec = Math.max(0, Math.floor((room.serverNow() - take.startAt) / 1000));
+      label = room.serverNow() < take.startAt
+        ? `次の小節から録音します（${take.by}さん）`
+        : `録音中 ${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')} ・ タップで全員止める`;
+    }
+    $('ensRecLabel').textContent = label;
+    showText('ensTakeStatus', recording ? '' : takeStatus);
+    $('ensTakeRetry').hidden = !failedUpload || recording;
   }
 
-  $('takeToggle').addEventListener('click', () => (take ? stopTakeByUser() : startTakeByUser()));
-  $('takeRetry').addEventListener('click', () => {
+  $('ensRec').addEventListener('click', () => (take ? stopTakeByUser() : startTakeByUser()));
+  $('ensTakeRetry').addEventListener('click', () => {
     if (failedUpload) upload(failedUpload.current, failedUpload.blob);
   });
 
-  // ---------- 録音を重ねる ----------
+  // ---------- これまでの合奏録音と、重ねて聞く ----------
   async function driveGet(params) {
     const query = new URLSearchParams({ ...params, key: driveKey });
     const res = await fetch(`${DRIVE_URL}?${query}`);
@@ -503,34 +702,37 @@
   }
 
   function showMixStatus(text, kind = '') {
-    $('mixStatus').textContent = text;
-    $('mixStatus').className = `note ${kind}`;
-    $('mixStatus').hidden = !text;
+    showText('mixStatus', text);
+    $('mixStatus').className = `ens-small ${kind}`;
   }
 
-  $('mixOpen').addEventListener('click', async () => {
-    const box = $('mixList');
-    if (box.childElementCount) {
-      box.innerHTML = '';
-      showMixStatus('');
-      return;
-    }
-    showMixStatus('Google Drive の録音を調べています…');
+  let takesLoading = false;
+  async function loadTakes() {
+    if (!unlocked() || takesLoading) return;
+    takesLoading = true;
+    const box = $('ensTakeList');
+    if (!box.childElementCount) box.innerHTML = '<p class="ens-small">読み込んでいます…</p>';
     try {
       const { takes } = await driveGet({ action: 'takes' });
       const list = takes.filter(({ take: id }, i) => /^\d{8}-\d{4}-/.test(id) && takes.findIndex((t) => t.take === id) === i);
-      showMixStatus(list.length ? '重ねたい回を選んでください。' : 'まだ合奏録音はありません。');
+      box.innerHTML = list.length ? '' : '<p class="ens-small">まだ合奏録音はありません。</p>';
       list.slice(0, 8).forEach(({ take: id }) => {
+        const row = document.createElement('div');
+        row.className = 'ens-take';
+        const label = document.createElement('span');
+        label.textContent = takeLabel(id);
         const btn = document.createElement('button');
-        btn.className = 'btn small';
-        btn.textContent = takeLabel(id);
-        btn.addEventListener('click', () => mixTake(id));
-        box.appendChild(btn);
+        btn.className = 'ens-btn outline small';
+        btn.textContent = '重ねて聞く';
+        btn.addEventListener('click', () => mixTake(id, btn));
+        row.append(label, btn);
+        box.appendChild(row);
       });
     } catch (e) {
-      showMixStatus('Google Drive につながりませんでした。', 'fail');
+      box.innerHTML = '<p class="ens-small">Google Drive につながりませんでした。</p>';
     }
-  });
+    takesLoading = false;
+  }
 
   function base64ToArrayBuffer(data) {
     const bin = atob(data);
@@ -575,8 +777,11 @@
     return new Blob([out], { type: 'audio/wav' });
   }
 
-  async function mixTake(id) {
-    $('mixList').innerHTML = '';
+  let mixing = false;
+  async function mixTake(id, button) {
+    if (mixing) return;
+    mixing = true;
+    button.disabled = true;
     try {
       showMixStatus('録音を集めています…');
       const { files } = await driveGet({ action: 'list', take: id });
@@ -625,11 +830,13 @@
         const gain = Math.min(4, 0.9 / peak);
         for (let i = 0; i < ch.length; i++) ch[i] *= gain;
       }
-      await addRecordingFromBlob(encodeWav(mixed), `合奏 ${takeLabel(id)}（${tracks.length}人）`);
       showMixStatus(`${tracks.length}人分を重ねて、録音の一覧に入れました。${skipped.length ? `（${skipped.join('、')}さんの録音はそろえられなかったので除きました）` : ''}`, 'ok');
+      await addRecordingFromBlob(encodeWav(mixed), `合奏 ${takeLabel(id)}（${tracks.length}人）`);
     } catch (e) {
       showMixStatus('重ねられませんでした。全員の録音が送り終わっているか確認して、もう一度お試しください。', 'fail');
     }
+    button.disabled = false;
+    mixing = false;
   }
 
   // ---------- メトロノームの音の出口 ----------
@@ -645,12 +852,25 @@
     applyMetroRoute();
   });
 
-  // 部屋を出たら、音声も切る
-  syncHooks.onLeave = leaveVoice;
-  syncHooks.onRoomChange = renderRoom;
+  // ---------- 部屋の変化 ----------
+  syncHooks.onLeave = leaveVoice; // 部屋を出たら、音声も切る
+  syncHooks.onRoomChange = render;
+  syncHooks.onMembers = renderMembers;
   syncHooks.voiceActive = () => !!sid;
 
-  renderLab();
-  renderRoom();
-  renderVoice();
+  // この画面を開いたら、合奏録音の一覧を新しくする
+  document.querySelector('.tab[data-panel="ensemble"]').addEventListener('click', loadTakes);
+
+  // 合奏の招待リンクから開いたときは、この画面を出して部屋の番号を入れておく
+  const params = new URLSearchParams(location.search);
+  const invited = params.get('room');
+  if (params.get('ensemble') === '1' && invited && /^\d{6}$/.test(invited)) {
+    $('ensCode').value = invited;
+    $('ensLobbyLead').textContent = `部屋「${invited}」に招待されています。有線イヤホンをつけて「参加する」を押してください。`;
+    showPanel('ensemble');
+  }
+
+  render();
+  if (unlocked() && !$('panel-ensemble').classList.contains('active')) return;
+  loadTakes();
 })();

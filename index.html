@@ -440,82 +440,97 @@
       <div id="recList"></div>
     </section>
     <section class="panel" id="panel-ensemble">
-      <!-- パスワードを入れるまでは、これだけを出す -->
-      <div class="tool-section" id="ensembleLock">
-        <div class="section-head">
-          <span class="section-icon">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="5.8" cy="11" r="2.4" class="line"/>
-              <circle cx="18.2" cy="11" r="2.4" class="line"/>
-              <path d="M1.8 20a4 4 0 0 1 8 0M14.2 20a4 4 0 0 1 8 0" class="line"/>
-              <path d="M9.6 7.2a3.4 3.4 0 0 1 4.8 0M7.6 4.8a6.4 6.4 0 0 1 8.8 0" class="line"/>
-            </svg>
-          </span>
-          <h2>オンライン合奏</h2>
-        </div>
-        <p class="note">離れた場所にいる仲間と、音声をつないで一緒に吹ける機能です。パスワードを知っている人だけが使えます。</p>
-        <form class="lab-unlock" id="labUnlock">
-          <input type="password" id="labPassword" placeholder="パスワード" autocomplete="off" class="code-input">
-          <button class="btn primary" type="submit" id="labSubmit">開く</button>
-          <p class="error" id="labError" hidden>パスワードが違います。</p>
-        </form>
-      </div>
-
-      <div id="ensembleMain" hidden>
-        <div class="tool-section">
-          <div class="section-head">
-            <span class="section-icon">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="5.8" cy="11" r="2.4" class="line"/>
-              <circle cx="18.2" cy="11" r="2.4" class="line"/>
-              <path d="M1.8 20a4 4 0 0 1 8 0M14.2 20a4 4 0 0 1 8 0" class="line"/>
-              <path d="M9.6 7.2a3.4 3.4 0 0 1 4.8 0M7.6 4.8a6.4 6.4 0 0 1 8.8 0" class="line"/>
-            </svg>
-            </span>
-            <h2>音声をつなぐ</h2>
-          </div>
-          <div id="ensembleNoRoom">
-            <p class="note">まず、メトロノーム画面の「みんなで合わせる」で部屋を作るか、仲間の部屋に入ってください。同じ部屋の人どうしで音声がつながります。</p>
-            <button class="btn primary full-width" id="ensembleGoRoom">部屋を作る・部屋に入る</button>
-          </div>
-          <div id="ensembleRoom" hidden>
-            <div class="ensemble-room">部屋 <b id="ensembleRoomCode"></b> ・ あなたは <b id="ensembleRoomMe"></b></div>
-            <p class="note">「音声をつなぐ」を押した人どうしの音が聞こえます。<b>有線イヤホン</b>を使ってください（スピーカーだとハウリングします）。</p>
-            <button class="btn primary full-width" id="ensembleJoin">音声をつなぐ</button>
-            <button class="btn small" id="ensembleMute" hidden>自分のマイクを切る</button>
-            <div class="ensemble-peers" id="ensemblePeers"></div>
-            <p class="note">「通信の遅れ」はネットと受け取りの分です。マイクやイヤホンを通る分（スマホでは数十 ms）は含みません。</p>
-            <p class="error" id="ensembleError" hidden></p>
-            <label class="setting-row">
-              <span class="sub-label">メトロノームが聞こえないとき：相手の声と同じ出口から鳴らす</span>
-              <input type="checkbox" id="metroViaElement" class="switch">
-            </label>
-          </div>
+      <div class="ens-stage">
+        <!-- パスワードを入れるまでは、これだけを出す -->
+        <div class="ens-lock" id="ensLock">
+          <img src="icons/logo.png" alt="" class="ens-emblem">
+          <p class="ens-eyebrow">MEMBERS ONLY</p>
+          <h2 class="ens-title">オンライン合奏</h2>
+          <p class="ens-lead">離れた場所の仲間と、音声をつないで一緒に吹く。<br>パスワードを知っている人だけの部屋です。</p>
+          <form class="ens-form" id="labUnlock">
+            <input type="password" id="labPassword" placeholder="パスワード" autocomplete="off" class="ens-input">
+            <button class="ens-btn gold" type="submit" id="labSubmit">入る</button>
+          </form>
+          <p class="ens-error" id="labError" hidden></p>
         </div>
 
-        <div class="tool-section">
-          <div class="section-head">
-            <span class="section-icon">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <rect x="9" y="2.8" width="6" height="11.2" rx="3" class="line"/>
-                <path d="M5.8 11a6.2 6.2 0 0 0 12.4 0M12 17.2v3.3M8.8 20.5h6.4" class="line"/>
-              </svg>
-            </span>
-            <h2>合奏録音</h2>
-          </div>
-          <p class="note">各自の音を録って Google Drive に集め、時刻をそろえて1つの合奏にします。</p>
-          <div class="ensemble-take" id="ensembleTake">
-            <p class="note" id="takeHint">音声をつないでいるときに、全員そろって録音できます。</p>
-            <button class="btn full-width" id="takeToggle" hidden>● 合奏を録音する（全員）</button>
-            <p class="note" id="takeStatus" hidden></p>
-            <button class="btn small" id="takeRetry" hidden>もう一度送る</button>
-          </div>
-          <button class="btn full-width mix-open" id="mixOpen">録音を重ねて聞く</button>
-          <div class="mix-list" id="mixList"></div>
-          <p class="note" id="mixStatus" hidden></p>
+        <!-- 合奏を始める・参加する -->
+        <div class="ens-lobby" id="ensLobby" hidden>
+          <p class="ens-eyebrow">ONLINE ENSEMBLE</p>
+          <h2 class="ens-title">オンライン合奏</h2>
+          <p class="ens-lead" id="ensLobbyLead">有線イヤホンをつけて、はじめましょう。</p>
+          <button class="ens-btn gold large" id="ensStartSession">合奏をはじめる</button>
+          <p class="ens-small center">部屋をつくると、すぐに音声がつながります。仲間はあとから招待できます。</p>
+          <div class="ens-divider"><span>または</span></div>
+          <form class="ens-form" id="ensJoinForm">
+            <input type="text" inputmode="numeric" maxlength="6" id="ensCode" placeholder="部屋の番号（6桁）" class="ens-input code" autocomplete="off">
+            <button class="ens-btn outline" type="submit" id="ensJoinBtn">参加する</button>
+          </form>
+          <p class="ens-error" id="ensLobbyError" hidden></p>
         </div>
 
-        <button class="link-btn" id="labHide">この端末でロックする（次はパスワードが必要になります）</button>
+        <!-- 合奏中 -->
+        <div class="ens-session" id="ensSession" hidden>
+          <div class="ens-head">
+            <div>
+              <p class="ens-eyebrow left">ROOM</p>
+              <p class="ens-room-code" id="ensRoomCode"></p>
+            </div>
+            <button class="ens-btn outline small" id="ensInvite">招待する</button>
+          </div>
+          <div class="ens-qr" id="ensQr" hidden></div>
+
+          <div class="ens-members" id="ensMembers"></div>
+          <button class="ens-btn gold full" id="ensConnect" hidden>音声をつなぐ</button>
+          <p class="ens-error" id="ensError" hidden></p>
+
+          <div class="ens-metro">
+            <div class="ens-dots" id="ensDots"></div>
+            <div class="ens-metro-row">
+              <button class="ens-round" id="ensBpmDown" aria-label="テンポを下げる">−</button>
+              <div class="ens-bpm"><span id="ensBpm">100</span><small>BPM</small></div>
+              <button class="ens-round" id="ensBpmUp" aria-label="テンポを上げる">＋</button>
+            </div>
+            <div class="ens-metro-row">
+              <select id="ensBeats" class="ens-select" aria-label="拍子">
+                <option value="1">1拍</option>
+                <option value="2">2拍</option>
+                <option value="3">3拍</option>
+                <option value="4" selected>4拍</option>
+                <option value="5">5拍</option>
+                <option value="6">6拍</option>
+                <option value="7">7拍</option>
+              </select>
+              <button class="ens-btn gold" id="ensStart">スタート</button>
+            </div>
+          </div>
+
+          <div class="ens-record">
+            <button class="ens-rec" id="ensRec" aria-label="合奏を録音する"><span></span></button>
+            <p class="ens-rec-label" id="ensRecLabel">合奏を録音する</p>
+            <p class="ens-small center" id="ensTakeStatus" hidden></p>
+            <button class="ens-btn outline small" id="ensTakeRetry" hidden>もう一度送る</button>
+          </div>
+
+          <div class="ens-actions">
+            <button class="ens-chip" id="ensMute">マイクを切る</button>
+            <button class="ens-chip" id="ensCalib">タイミング調整</button>
+            <button class="ens-chip danger" id="ensLeave">退出</button>
+          </div>
+          <p class="ens-small center" id="ensNotice" hidden></p>
+          <label class="ens-option">
+            <input type="checkbox" id="metroViaElement" class="switch">
+            <span>メトロノームが聞こえないとき：相手の声と同じ出口から鳴らす</span>
+          </label>
+        </div>
+
+        <!-- これまでの合奏録音 -->
+        <div class="ens-takes" id="ensTakes" hidden>
+          <h3 class="ens-subtitle">これまでの合奏録音</h3>
+          <div class="ens-take-list" id="ensTakeList"></div>
+          <p class="ens-small" id="mixStatus" hidden></p>
+        </div>
+        <button class="ens-link" id="labHide" hidden>この端末でロックする</button>
       </div>
     </section>
   </main>

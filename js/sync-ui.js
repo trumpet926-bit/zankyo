@@ -78,6 +78,7 @@
     saveSettings(settings);
     if (!bpmTimer) showBpm(s.bpm); // 自分がテンポを動かしている最中は、表示を戻さない
     $('beatsSelect').value = s.beats;
+    $('ensBeats').value = s.beats;
     renderMessage(s);
 
     if (!s.running) {
@@ -118,6 +119,7 @@
     });
     renderCalib();
     if (room.code) usage.room(room.code, Object.keys(members).length);
+    if (syncHooks.onMembers) syncHooks.onMembers();
   };
 
   function renderMessage(s) {
@@ -174,6 +176,37 @@
     }, 10000);
     clockTimer = setInterval(() => room.measureClock().catch(() => {}), 120000);
   }
+
+  // ---------- オンライン合奏の画面から使う ----------
+  class RoomError extends Error {}
+
+  // 戻り値：うまくいけば空の文字、だめなら画面に出す説明
+  async function roomTask(task) {
+    getAudioContext().resume();
+    try {
+      await task();
+      return '';
+    } catch (e) {
+      room.leave();
+      return e instanceof RoomError ? e.message : 'つながりませんでした。インターネットにつながっているか確認してください。';
+    }
+  }
+
+  syncHooks.createRoom = () => roomTask(async () => {
+    unfollow();
+    await room.create({ bpm: settings.bpm, beats: settings.beats, running: false });
+    entered();
+  });
+  syncHooks.joinRoom = (code) => roomTask(async () => {
+    if (!/^\d{6}$/.test(code)) throw new RoomError('6桁の番号を入力してください。');
+    unfollow();
+    if (!(await room.join(code))) throw new RoomError('その番号の部屋は見つかりませんでした。');
+    entered();
+  });
+  syncHooks.leaveRoom = () => $('syncLeave').click();
+  syncHooks.isReference = () => room.referenceId() === settings.syncId;
+  syncHooks.hasReference = () => !!room.referenceId();
+  syncHooks.calibrate = () => autoCalibrate();
 
   $('syncCreate').addEventListener('click', () => connect(async () => {
     unfollow();
@@ -259,6 +292,7 @@
   }
 
   function showCalibResult(text, kind = '') {
+    if (syncHooks.onCalibStatus) syncHooks.onCalibStatus(text, kind);
     const box = $('syncCalibResult');
     box.textContent = text;
     box.className = `note ${kind}`;

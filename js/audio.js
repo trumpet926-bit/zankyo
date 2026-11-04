@@ -25,26 +25,33 @@ function requestMicrophone() {
   });
 }
 
+// 今使っているマイクの数（オンライン合奏とタイミング調整など、同時に使うことがある）
+let openMics = 0;
+
 // マイクを使い始める（失敗したら音の扱い方を元に戻す）
 async function openMicrophone() {
   setAudioSessionForMic(true);
+  let stream;
   try {
-    return await requestMicrophone();
+    stream = await requestMicrophone();
   } catch (e) {
     // 「おまかせ」でマイクを使えなかったときは、以前の「再生と録音」に切り替えてもう一度試す
     if (navigator.audioSession && micSessionType === 'auto' && e.name !== 'NotAllowedError') {
       micSessionType = 'play-and-record';
       setAudioSessionForMic(true);
       try {
-        return await requestMicrophone();
+        stream = await requestMicrophone();
       } catch (retryError) {
-        setAudioSessionForMic(false);
+        if (!openMics) setAudioSessionForMic(false);
         throw retryError;
       }
+    } else {
+      if (!openMics) setAudioSessionForMic(false);
+      throw e;
     }
-    setAudioSessionForMic(false);
-    throw e;
   }
+  openMics++;
+  return stream;
 }
 
 // 波形データの音の大きさ（RMS）
@@ -61,7 +68,8 @@ function rmsToLevel(rms) {
 
 function closeMicrophone(stream) {
   stream.getTracks().forEach((track) => track.stop());
-  setAudioSessionForMic(false);
+  openMics = Math.max(0, openMics - 1);
+  if (!openMics) setAudioSessionForMic(false); // ほかでまだマイクを使っているときは、音の扱い方を変えない
 }
 
 // メトロノームの音の出口。ふつうはそのままスピーカーへ出す。
