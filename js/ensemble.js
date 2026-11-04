@@ -99,7 +99,7 @@
     $('ensLobby').hidden = !open || inRoom;
     $('ensSession').hidden = !inRoom;
     $('ensTakes').hidden = !open;
-    $('labHide').hidden = !open;
+    $('labHide').hidden = !open || inRoom; // 合奏中は上の「退出」だけを出す
     $('bigCue').hidden = !inRoom;
     watchCue();
     if (inRoom) {

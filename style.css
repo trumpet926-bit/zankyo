@@ -1063,62 +1063,42 @@ body { min-height: 100vh; }
 .bpm-value.tempo-edit, .bpm-value.tempo-input { font-size: 72px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
 .bpm-value.tempo-input { width: 3.2ch; }
 
-/* オンライン合奏（濃紺と金の、少し特別な画面） */
+/* オンライン合奏（ほかの画面と同じ見た目） */
 .ens-stage {
-  --ens-gold: #d6b25e;
-  --ens-gold-light: #f1d48a;
-  --ens-ivory: #f4ecd8;
-  --ens-muted: #a8a28f;
-  --ens-line: rgba(214, 178, 94, 0.28);
-  --ens-mincho: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", "BIZ UDPMincho", serif;
-  position: relative;
-  overflow: hidden;
-  margin: 4px 0 16px;
-  padding: 28px 18px 22px;
-  border: 1px solid var(--ens-line);
-  border-radius: 22px;
-  background: radial-gradient(120% 70% at 50% 0%, #1d2452 0%, #0e1332 55%, #080b1d 100%);
-  color: var(--ens-ivory);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  margin-bottom: 16px;
+  padding: 16px 14px;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
 }
-.ens-stage::before {
-  /* 上の縁に、細い金の光 */
-  content: "";
-  position: absolute;
-  top: 0; left: 15%; right: 15%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--ens-gold-light), transparent);
-  opacity: 0.7;
-}
-.ens-eyebrow { margin: 0; text-align: center; font-size: 11px; letter-spacing: 0.32em; color: var(--ens-gold); }
-.ens-eyebrow.left { text-align: left; }
-.ens-title { margin: 6px 0 10px; text-align: center; font-family: var(--ens-mincho); font-size: 26px; font-weight: 600; letter-spacing: 0.14em; color: var(--ens-ivory); }
-.ens-subtitle { margin: 0 0 10px; font-family: var(--ens-mincho); font-size: 17px; font-weight: 600; letter-spacing: 0.08em; color: var(--ens-gold-light); }
-.ens-lead { margin: 0 0 20px; text-align: center; font-size: 14px; line-height: 1.8; color: var(--ens-muted); }
-.ens-small { margin: 8px 0 0; font-size: 12.5px; line-height: 1.7; color: var(--ens-muted); }
+.ens-label { margin: 0; font-size: 12px; color: var(--muted); }
+.ens-title { margin: 0 0 8px; text-align: center; font-size: 20px; font-weight: 700; }
+.ens-subtitle { margin: 0 0 8px; font-size: 16px; font-weight: 700; }
+.ens-lead { margin: 0 0 16px; text-align: center; font-size: 14px; line-height: 1.7; color: var(--muted); }
+.ens-small { margin: 8px 0 0; font-size: 12.5px; line-height: 1.7; color: var(--muted); }
 .ens-small.center { text-align: center; }
-.ens-small.ok { color: var(--ens-gold-light); }
-.ens-small.fail, .ens-error { color: #f3a6a6; }
+.ens-small.ok { color: var(--text); font-weight: 600; }
+.ens-small.fail, .ens-error { color: var(--danger); }
 .ens-error { margin: 10px 0 0; font-size: 13px; text-align: center; }
 
 .ens-btn {
   font: inherit;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  padding: 12px 22px;
-  border-radius: 999px;
-  border: 1px solid transparent;
+  font-weight: 600;
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
   cursor: pointer;
-  transition: transform 0.1s, box-shadow 0.2s, opacity 0.2s;
 }
-.ens-btn:active { transform: scale(0.97); }
 .ens-btn:disabled { opacity: 0.5; cursor: default; }
-.ens-btn.gold { background: linear-gradient(180deg, #f5dc95 0%, #c99a3c 100%); color: #1d1606; box-shadow: 0 6px 18px rgba(201, 154, 60, 0.35); }
-.ens-btn.gold.running { background: linear-gradient(180deg, #3a3f63, #23284a); color: var(--ens-gold-light); border-color: var(--ens-gold); box-shadow: none; }
-.ens-btn.outline { background: transparent; color: var(--ens-gold-light); border-color: var(--ens-gold); }
-.ens-btn.small { padding: 7px 14px; font-size: 13px; }
-.ens-btn.large { display: block; width: 100%; padding: 17px 22px; font-size: 18px; font-family: var(--ens-mincho); letter-spacing: 0.2em; }
+.ens-btn.gold { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+.ens-btn.gold.running { background: var(--surface); color: var(--accent); }
+.ens-btn.small { padding: 6px 12px; font-size: 13px; }
+.ens-btn.large { display: block; width: 100%; padding: 16px; font-size: 18px; }
 .ens-btn.full { display: block; width: 100%; margin-top: 14px; }
+.ens-btn.ens-exit { display: block; width: 100%; margin-top: 20px; color: var(--danger); border-color: var(--danger); }
 
 .ens-form { display: flex; gap: 8px; }
 .ens-input {
@@ -1126,51 +1106,46 @@ body { min-height: 100vh; }
   min-width: 0;
   font: inherit;
   font-size: 16px;
-  padding: 12px 14px;
-  border-radius: 12px;
-  border: 1px solid var(--ens-line);
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--ens-ivory);
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
 }
-.ens-input::placeholder { color: rgba(244, 236, 216, 0.4); }
-.ens-input:focus { outline: none; border-color: var(--ens-gold); box-shadow: 0 0 0 3px rgba(214, 178, 94, 0.18); }
-.ens-input.code { letter-spacing: 0.2em; text-align: center; font-variant-numeric: tabular-nums; }
+.ens-input::placeholder { color: var(--muted); }
+.ens-input:focus { outline: none; border-color: var(--accent); }
+.ens-input.code { letter-spacing: 0.15em; text-align: center; font-variant-numeric: tabular-nums; }
 
-/* パスワードの入口 */
-.ens-lock { padding: 8px 0 6px; }
-.ens-emblem { display: block; width: 76px; height: auto; margin: 0 auto 14px; filter: drop-shadow(0 4px 14px rgba(214, 178, 94, 0.35)); }
-
-.ens-divider { display: flex; align-items: center; gap: 12px; margin: 22px 0 16px; color: var(--ens-muted); font-size: 12px; }
-.ens-divider::before, .ens-divider::after { content: ""; flex: 1; height: 1px; background: var(--ens-line); }
+.ens-divider { display: flex; align-items: center; gap: 12px; margin: 20px 0 14px; color: var(--muted); font-size: 12px; }
+.ens-divider::before, .ens-divider::after { content: ""; flex: 1; height: 1px; background: var(--border); }
 
 /* 合奏中 */
 .ens-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
-.ens-room-code { margin: 2px 0 0; font-family: var(--ens-mincho); font-size: 30px; letter-spacing: 0.18em; color: var(--ens-ivory); font-variant-numeric: tabular-nums; }
+.ens-room-code { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: 0.12em; font-variant-numeric: tabular-nums; }
 .ens-qr { margin: 14px 0 0; text-align: center; }
 .ens-qr-image { display: inline-block; padding: 8px; border-radius: 12px; background: #fff; line-height: 0; }
 .ens-qr-image svg { width: 180px; height: 180px; }
 .ens-qr .ens-btn { margin-top: 10px; }
 
-.ens-members { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 14px 10px; margin: 22px 0 4px; }
+.ens-members { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 14px 10px; margin: 18px 0 4px; }
 .ens-member { --level: 0; text-align: center; min-width: 0; }
 .ens-avatar {
   position: relative;
-  width: 58px;
-  height: 58px;
+  width: 56px;
+  height: 56px;
   margin: 0 auto 6px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  border: 1.5px solid var(--ens-gold);
-  background: radial-gradient(circle at 32% 28%, #2c3470, #121735 70%);
-  font-family: var(--ens-mincho);
-  font-size: 24px;
-  color: var(--ens-gold-light);
-  box-shadow: 0 0 calc(var(--level) * 26px) calc(var(--level) * 3px) rgba(241, 212, 138, calc(var(--level) * 0.85));
+  border: 2px solid var(--accent);
+  background: var(--accent-soft);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent);
+  box-shadow: 0 0 calc(var(--level) * 22px) calc(var(--level) * 3px) rgba(245, 158, 11, calc(var(--level) * 0.8));
   transition: box-shadow 0.08s linear;
 }
-.ens-member.me .ens-avatar { border-width: 2px; }
 .ens-member.off .ens-avatar { border-style: dashed; opacity: 0.45; }
 .ens-ref {
   position: absolute;
@@ -1179,100 +1154,101 @@ body { min-height: 100vh; }
   transform: translateX(-50%);
   padding: 1px 7px;
   border-radius: 999px;
-  background: var(--ens-gold);
-  color: #1d1606;
-  font-family: system-ui, sans-serif;
+  background: var(--accent);
+  color: var(--accent-text);
   font-size: 10px;
   font-weight: 700;
   white-space: nowrap;
 }
-.ens-name { margin-top: 10px; font-size: 13px; color: var(--ens-ivory); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ens-state { font-size: 11px; color: var(--ens-muted); font-variant-numeric: tabular-nums; }
-.ens-member.live .ens-state { color: var(--ens-gold-light); }
+.ens-name { margin-top: 10px; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ens-state { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ens-member.live .ens-state { color: var(--accent); }
 
-.ens-metro { margin: 22px 0 0; padding: 16px 0; border-top: 1px solid var(--ens-line); border-bottom: 1px solid var(--ens-line); }
-.ens-dots { display: flex; justify-content: center; gap: 10px; min-height: 12px; margin-bottom: 10px; }
-.ens-dots .beat-dot { width: 10px; height: 10px; background: rgba(244, 236, 216, 0.16); }
-.ens-dots .beat-dot.on { background: var(--ens-gold-light); box-shadow: 0 0 10px rgba(241, 212, 138, 0.8); }
-.ens-dots .beat-dot.on.strong { background: #fff3c9; }
+.ens-metro { margin: 18px 0 0; padding: 14px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.ens-dots { display: flex; justify-content: center; gap: 10px; min-height: 14px; margin-bottom: 10px; }
+.ens-dots .beat-dot { width: 14px; height: 14px; }
 .ens-metro-row { display: flex; align-items: center; justify-content: center; gap: 14px; }
 .ens-metro-row + .ens-metro-row { margin-top: 12px; }
-.ens-bpm { min-width: 104px; text-align: center; font-family: var(--ens-mincho); font-size: 40px; line-height: 1; color: var(--ens-ivory); font-variant-numeric: tabular-nums; }
-.ens-bpm small { display: block; margin-top: 4px; font-family: system-ui, sans-serif; font-size: 10px; letter-spacing: 0.3em; color: var(--ens-gold); }
+.ens-bpm { min-width: 100px; text-align: center; font-size: 40px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.ens-bpm small { display: block; margin-top: 4px; font-size: 11px; font-weight: 400; color: var(--muted); }
 .ens-round {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  border: 1px solid var(--ens-line);
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--ens-gold-light);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
   font-size: 22px;
   cursor: pointer;
 }
-.ens-select {
-  font: inherit;
-  padding: 10px 12px;
-  border-radius: 999px;
-  border: 1px solid var(--ens-line);
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--ens-ivory);
-}
-.ens-select option { color: #111; }
+.ens-select { font: inherit; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
+.ens-cue-btn { min-width: 150px; }
 
 /* 録音ボタン */
-.ens-record { margin: 24px 0 6px; text-align: center; }
+.ens-record { margin: 20px 0 4px; text-align: center; }
 .ens-rec {
   position: relative;
-  width: 86px;
-  height: 86px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
-  border: 2px solid var(--ens-gold);
-  background: radial-gradient(circle at 50% 35%, #1f2654, #0b0f27);
+  border: 2px solid var(--border);
+  background: var(--surface);
   cursor: pointer;
-  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.4);
 }
 .ens-rec span {
   position: absolute;
   inset: 0;
   margin: auto;
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background: #d9443c;
+  background: #dc2626;
   transition: border-radius 0.2s, width 0.2s, height 0.2s;
 }
 .ens-rec:disabled { opacity: 0.4; cursor: default; }
-.ens-rec.recording { border-color: #e2574e; animation: ens-pulse 1.6s ease-in-out infinite; }
+.ens-rec.recording { border-color: #dc2626; animation: ens-pulse 1.6s ease-in-out infinite; }
 .ens-rec.recording span { width: 26px; height: 26px; border-radius: 6px; }
 @keyframes ens-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(226, 87, 78, 0.55); }
-  50% { box-shadow: 0 0 0 14px rgba(226, 87, 78, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.5); }
+  50% { box-shadow: 0 0 0 12px rgba(220, 38, 38, 0); }
 }
-.ens-rec-label { margin: 10px 0 0; font-family: var(--ens-mincho); font-size: 15px; letter-spacing: 0.06em; color: var(--ens-ivory); }
+.ens-rec-label { margin: 8px 0 0; font-size: 15px; font-weight: 600; }
 .ens-record .ens-btn { margin-top: 8px; }
 
-.ens-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin: 22px 0 0; }
-.ens-chip {
-  font: inherit;
-  font-size: 13px;
-  padding: 8px 14px;
-  border-radius: 999px;
-  border: 1px solid var(--ens-line);
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--ens-ivory);
-  cursor: pointer;
-}
-.ens-chip.active { border-color: var(--ens-gold); color: var(--ens-gold-light); }
-.ens-chip.danger { color: #f3a6a6; border-color: rgba(243, 166, 166, 0.35); }
+.ens-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin: 20px 0 0; }
+.ens-chip { font: inherit; font-size: 13px; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; }
+.ens-chip.active { border-color: var(--accent); color: var(--accent); }
+.ens-chip.danger { color: var(--danger); border-color: var(--danger); }
 .ens-chip:disabled { opacity: 0.4; cursor: default; }
-.ens-option { display: flex; align-items: center; gap: 10px; margin: 18px 0 0; font-size: 12px; color: var(--ens-muted); line-height: 1.5; }
+.ens-option { display: flex; align-items: center; gap: 10px; margin: 16px 0 0; font-size: 12px; color: var(--muted); line-height: 1.5; }
 .ens-option .switch { flex-shrink: 0; }
 
 /* これまでの合奏録音 */
-.ens-takes { margin: 26px 0 0; padding-top: 20px; border-top: 1px solid var(--ens-line); }
-.ens-take { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; border-bottom: 1px solid rgba(214, 178, 94, 0.12); font-family: var(--ens-mincho); font-size: 15px; }
+.ens-takes { margin: 22px 0 0; padding-top: 16px; border-top: 1px solid var(--border); }
+.ens-take { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 15px; }
 .ens-take:last-child { border-bottom: 0; }
-.ens-link { display: block; margin: 22px auto 0; padding: 0; border: 0; background: none; color: var(--ens-muted); font: inherit; font-size: 12px; text-decoration: underline; cursor: pointer; }
+
+/* オンライン合奏の合図 */
+.big-cue { margin-top: 18px; padding: 12px 30px; border-radius: 10px; border: 0; background: var(--accent); color: var(--accent-text); font: inherit; font-weight: 700; cursor: pointer; }
+.cue-view {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  color: var(--text);
+}
+.cue-by { position: absolute; top: calc(24px + env(safe-area-inset-top)); margin: 0; font-size: 14px; color: var(--muted); }
+.cue-num { min-height: 1em; font-size: min(62vw, 340px); font-weight: 700; line-height: 1; color: var(--accent); font-variant-numeric: tabular-nums; }
+.cue-num.first { color: var(--beat-strong); }
+.cue-num.pop { animation: cue-pop 0.35s ease-out; }
+@keyframes cue-pop { from { transform: scale(1.2); opacity: 0.4; } to { transform: scale(1); opacity: 1; } }
+.cue-dots { display: flex; gap: 14px; margin-top: 28px; }
+.cue-dots span { width: 16px; height: 16px; border-radius: 50%; background: var(--beat); }
+.cue-dots span.on { background: var(--beat-on); }
 
 /* 隠しページ（残響の紹介） */
 .zk-view {
@@ -1368,8 +1344,6 @@ body { min-height: 100vh; }
 .share-points { display: inline-block; margin: 26px 0 0; padding: 16px 20px 16px 36px; text-align: left; border: 1px solid rgba(214, 178, 94, 0.28); border-radius: 16px; font-size: 13.5px; line-height: 2; color: #f4ecd8; }
 .share-points li::marker { color: #d6b25e; }
 
-/* オンライン合奏の下の「退出」 */
-.ens-btn.ens-exit { display: block; width: 100%; margin-top: 24px; color: #f3a6a6; border-color: rgba(243, 166, 166, 0.5); }
 
 /* 音階の五線譜 */
 #noteChips { display: grid; gap: 4px; }
@@ -1383,47 +1357,3 @@ body { min-height: 100vh; }
 .staff-hit { fill: transparent; cursor: pointer; }
 .staff-note.playing .staff-head { fill: var(--beat-on); stroke: var(--beat-on); }
 .staff-note.playing .staff-acc, .staff-note.playing .staff-name { fill: var(--beat-on); }
-
-/* オンライン合奏の合図 */
-.ens-cue-btn { min-width: 150px; }
-.big-cue {
-  margin-top: 18px;
-  padding: 12px 30px;
-  border-radius: 999px;
-  border: 1px solid #d6b25e;
-  background: linear-gradient(180deg, #f5dc95 0%, #c99a3c 100%);
-  color: #1d1606;
-  font: inherit;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  cursor: pointer;
-}
-.cue-view {
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: radial-gradient(80% 60% at 50% 45%, rgba(29, 36, 82, 0.92), rgba(5, 7, 15, 0.96));
-  color: #f4ecd8;
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
-}
-.cue-by { position: absolute; top: calc(24px + env(safe-area-inset-top)); margin: 0; font-size: 14px; letter-spacing: 0.1em; color: #d6b25e; }
-.cue-num {
-  min-height: 1em;
-  font-family: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", serif;
-  font-size: min(62vw, 340px);
-  line-height: 1;
-  color: #f1d48a;
-  text-shadow: 0 0 40px rgba(241, 212, 138, 0.45);
-  font-variant-numeric: tabular-nums;
-}
-.cue-num.first { color: #fff3c9; text-shadow: 0 0 60px rgba(255, 243, 201, 0.7); }
-.cue-num.pop { animation: cue-pop 0.35s ease-out; }
-@keyframes cue-pop { from { transform: scale(1.25); opacity: 0.4; } to { transform: scale(1); opacity: 1; } }
-.cue-dots { display: flex; gap: 14px; margin-top: 28px; }
-.cue-dots span { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid #d6b25e; }
-.cue-dots span.on { background: #f1d48a; box-shadow: 0 0 12px rgba(241, 212, 138, 0.8); }
