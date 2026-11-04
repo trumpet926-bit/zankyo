@@ -17,6 +17,7 @@ const FILES = [
   'js/audio.js',
   'js/metronome.js',
   'js/notation.js',
+  'js/staff.js',
   'js/scale-player.js',
   'js/pitch.js',
   'js/tuner.js',

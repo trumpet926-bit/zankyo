@@ -1370,3 +1370,16 @@ body { min-height: 100vh; }
 
 /* オンライン合奏の下の「退出」 */
 .ens-btn.ens-exit { display: block; width: 100%; margin-top: 24px; color: #f3a6a6; border-color: rgba(243, 166, 166, 0.5); }
+
+/* 音階の五線譜 */
+#noteChips { display: grid; gap: 4px; }
+.staff { display: block; width: 100%; height: auto; overflow: visible; color: var(--text); }
+.staff-line, .staff-ledger { stroke: currentColor; stroke-width: 1; opacity: 0.55; }
+.staff-ledger { opacity: 0.75; }
+.staff-clef { fill: currentColor; }
+.staff-acc { fill: currentColor; font-size: 15px; font-family: "Segoe UI Symbol", "Apple Symbols", "Noto Music", system-ui, sans-serif; }
+.staff-head { fill: none; stroke: currentColor; stroke-width: 2.2; }
+.staff-name { fill: var(--muted); font-size: 9.5px; }
+.staff-hit { fill: transparent; cursor: pointer; }
+.staff-note.playing .staff-head { fill: var(--beat-on); stroke: var(--beat-on); }
+.staff-note.playing .staff-acc, .staff-note.playing .staff-name { fill: var(--beat-on); }

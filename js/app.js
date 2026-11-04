@@ -351,6 +351,8 @@ function currentScale() {
   return buildScale(settings.scaleType, names[settings.scaleKey], tonicMidi);
 }
 
+let scaleNoteEls = []; // 五線譜の音符（再生中の音を光らせるため、上行・下行の順）
+
 function renderScale() {
   const names = keyNamesFor(settings.scaleType);
   const type = SCALE_TYPES.find((t) => t.id === settings.scaleType);
@@ -376,23 +378,11 @@ function renderScale() {
   $('scaleTitle').textContent = `${first.name} ${type.name}`;
   $('scaleStart').textContent = `始めの音：${nameWithOctave(first.name, first.midi)}`;
   $('openGuideLabel').textContent = `「${type.name}」の特徴と吹き方`;
-  const chips = $('noteChips');
-  chips.innerHTML = '';
-  [scale.up, scale.down].forEach((notes) => {
-    const row = document.createElement('div');
-    row.className = 'chip-row';
-    notes.forEach((note) => {
-      const chip = document.createElement('button');
-      chip.className = 'chip';
-      chip.textContent = note.name;
-      chip.addEventListener('click', () => playSingleNote(note.midi, chip));
-      row.appendChild(chip);
-    });
-    chips.appendChild(row);
-  });
+  // 上の段が上行、下の段が下行の五線譜
+  scaleNoteEls = renderScaleStaff($('noteChips'), [scale.up, scale.down], (note, el) => playSingleNote(note.midi, el));
 }
 
-// 音名ボタンを押したときに、その音を1つだけ鳴らす
+// 音符を押したときに、その音を1つだけ鳴らす
 async function playSingleNote(midi, chip) {
   const ctx = getAudioContext();
   await ctx.resume();
@@ -526,14 +516,12 @@ $('openGuide').addEventListener('click', openGuide);
 $('closeGuide').addEventListener('click', closeGuide);
 
 scalePlayer.onNote = (index) => {
-  document.querySelectorAll('#noteChips .chip').forEach((chip, i) => {
-    chip.classList.toggle('playing', i === index);
-  });
+  scaleNoteEls.forEach((el, i) => el.classList.toggle('playing', i === index));
 };
 
 scalePlayer.onEnd = () => {
   $('scaleStartStop').textContent = '再生';
-  document.querySelectorAll('#noteChips .chip').forEach((chip) => chip.classList.remove('playing'));
+  scaleNoteEls.forEach((el) => el.classList.remove('playing'));
   keepScreenOn(false);
   if (recordingMode === 'scale') finishRecordingSoon(); // 音階を録音していたら、録音も止める
 };
