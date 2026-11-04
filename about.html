@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>残響 PracticeTool</title>
+<meta name="description" content="管楽器奏者のための練習アプリ。メトロノーム、チューナー、音階、録音、みんなで合わせるメトロノーム。">
+<meta property="og:title" content="残響 PracticeTool">
+<meta property="og:description" content="管楽器奏者のための練習アプリ。無料・インストール不要。">
+<meta property="og:image" content="https://trumpet926-bit.github.io/zankyo/icons/og-image.png">
+<meta property="og:type" content="website">
+<link rel="icon" href="icons/icon-192.png">
+<style>
+  :root {
+    --gold: #d6b25e; --gold-light: #f1d48a; --ivory: #f4ecd8; --muted: #a8a28f; --line: rgba(214, 178, 94, 0.28);
+    --mincho: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", "BIZ UDPMincho", serif;
+  }
+  * { box-sizing: border-box; }
+  html { background: #05070f; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: radial-gradient(120% 50% at 50% 0%, #1d2452 0%, #0b0f27 55%, #05070f 100%) no-repeat;
+    color: var(--ivory);
+    font-family: system-ui, -apple-system, "Hiragino Sans", "Yu Gothic UI", sans-serif;
+    line-height: 1.8;
+  }
+  main { max-width: 680px; margin: 0 auto; padding: calc(40px + env(safe-area-inset-top)) 16px calc(48px + env(safe-area-inset-bottom)); }
+  .hero { text-align: center; }
+  .hero img { width: 140px; height: auto; filter: drop-shadow(0 6px 24px rgba(214, 178, 94, 0.4)); }
+  .eyebrow { margin: 14px 0 0; font-size: 12px; letter-spacing: 0.42em; color: var(--gold); }
+  h1 { margin: 6px 0 0; font-family: var(--mincho); font-size: 30px; font-weight: 600; letter-spacing: 0.12em; }
+  .lead { margin: 18px auto 0; max-width: 30em; font-size: 15px; color: var(--muted); }
+  .qr-card {
+    margin: 32px auto 0;
+    max-width: 360px;
+    padding: 22px 18px;
+    text-align: center;
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.03);
+  }
+  .qr { display: inline-block; padding: 10px; border-radius: 14px; background: #fff; line-height: 0; }
+  .qr svg { width: 200px; height: 200px; }
+  .qr-note { margin: 12px 0 0; font-size: 13px; color: var(--muted); }
+  .url { display: block; margin-top: 4px; font-size: 13px; color: var(--gold-light); word-break: break-all; }
+  .open {
+    display: inline-block;
+    margin-top: 18px;
+    padding: 13px 34px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #f5dc95 0%, #c99a3c 100%);
+    color: #1d1606;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-decoration: none;
+    box-shadow: 0 6px 18px rgba(201, 154, 60, 0.35);
+  }
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 48px 0 18px;
+    font-family: var(--mincho);
+    font-size: 19px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    color: var(--gold-light);
+  }
+  h2::before, h2::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+  .features { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+  .feature { padding: 16px; border: 1px solid var(--line); border-radius: 16px; background: rgba(255, 255, 255, 0.03); }
+  .feature h3 { margin: 0 0 4px; font-family: var(--mincho); font-size: 16px; font-weight: 600; letter-spacing: 0.06em; }
+  .feature p { margin: 0; font-size: 13.5px; color: var(--muted); }
+  .tag { display: inline-block; margin-left: 6px; padding: 0 8px; border-radius: 999px; background: var(--gold); color: #1d1606; font-family: system-ui, sans-serif; font-size: 10px; font-weight: 700; vertical-align: 2px; }
+  .steps { display: grid; gap: 12px; }
+  .step { padding: 16px; border-left: 2px solid var(--gold); background: rgba(255, 255, 255, 0.03); border-radius: 0 14px 14px 0; }
+  .step b { color: var(--gold-light); }
+  .step p { margin: 4px 0 0; font-size: 14px; color: var(--muted); }
+  footer { margin-top: 48px; text-align: center; font-size: 12px; color: rgba(168, 162, 143, 0.7); }
+</style>
+</head>
+<body>
+<main>
+  <section class="hero">
+    <img src="icons/logo.png" alt="残響">
+    <p class="eyebrow">PRACTICE TOOL</p>
+    <h1>残響 PracticeTool</h1>
+    <p class="lead">管楽器奏者のための、練習アプリです。<br>無料で、スマホのブラウザからすぐに使えます。インストールや登録はいりません。</p>
+  </section>
+
+  <section class="qr-card">
+    <div class="qr" id="qr" aria-label="アプリのQRコード"></div>
+    <p class="qr-note">スマホのカメラで読み取ると開きます
+      <a class="url" href="https://trumpet926-bit.github.io/zankyo/">https://trumpet926-bit.github.io/zankyo/</a>
+    </p>
+    <a class="open" href="./">アプリを開く</a>
+  </section>
+
+  <h2>できること</h2>
+  <div class="features">
+    <div class="feature">
+      <h3>メトロノーム</h3>
+      <p>テンポは数字でもタップでも。3連符・シャッフルなど8種類のリズム、譜面台に置いても見える大きな表示つき。</p>
+    </div>
+    <div class="feature">
+      <h3>みんなで合わせる</h3>
+      <p>同じ部屋に入った仲間のメトロノームが、ぴったりそろって鳴ります。マイクで聞いて、ずれを自動で補正。</p>
+    </div>
+    <div class="feature">
+      <h3>チューナー・基準音</h3>
+      <p>音程を針で確認。基準の A（442Hz など）を変えられ、ロングトーン用の基準音も4つの音色で鳴らせます。</p>
+    </div>
+    <div class="feature">
+      <h3>音階</h3>
+      <p>長音階・短音階・半音階などを、2分音符からゆったり再生。管楽器奏者向けの解説つき。</p>
+    </div>
+    <div class="feature">
+      <h3>録音</h3>
+      <p>音階やメトロノームを鳴らしながら録音。録音に合わせて吹いて重ねることも。速さを変えて聞き返せます。</p>
+    </div>
+    <div class="feature">
+      <h3>オンライン合奏<span class="tag">メンバー限定</span></h3>
+      <p>離れた場所の仲間と音声をつないで一緒に吹き、全員の録音を時刻でそろえて1つの合奏にします。</p>
+    </div>
+  </div>
+
+  <h2>ホーム画面に置く</h2>
+  <div class="steps">
+    <div class="step">
+      <b>iPhone・iPad（Safari）</b>
+      <p>下の共有ボタン（□に↑）→「ホーム画面に追加」。アプリのように開けて、新しい版にも自動で更新されます。</p>
+    </div>
+    <div class="step">
+      <b>Android（Chrome）</b>
+      <p>右上の「︙」→「ホーム画面に追加」または「アプリをインストール」。</p>
+    </div>
+    <div class="step">
+      <b>LINE から開いたとき</b>
+      <p>LINE の中のブラウザではなく、Safari や Chrome で開いてから追加してください。</p>
+    </div>
+  </div>
+
+  <footer>残響 PracticeTool</footer>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<script>
+  try {
+    const qr = qrcode(0, 'M');
+    qr.addData('https://trumpet926-bit.github.io/zankyo/');
+    qr.make();
+    document.getElementById('qr').innerHTML = qr.createSvgTag(6, 2);
+  } catch (e) {
+    document.getElementById('qr').hidden = true;
+  }
+</script>
+</body>
+</html>

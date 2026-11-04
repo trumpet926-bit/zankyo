@@ -27,7 +27,7 @@
 <body>
   <header class="app-header">
     <h1 class="brand">
-      <img src="icons/logo.png" alt="残響" class="brand-logo">
+      <img src="icons/logo.png" alt="残響" class="brand-logo" draggable="false">
       <span class="brand-sub">PracticeTool</span>
     </h1>
     <!-- どの画面からでも押せる、小さなメトロノームのボタン -->
@@ -530,7 +530,7 @@
           <div class="ens-take-list" id="ensTakeList"></div>
           <p class="ens-small" id="mixStatus" hidden></p>
         </div>
-        <button class="ens-link" id="labHide" hidden>この端末でロックする</button>
+        <button class="ens-link" id="labHide" hidden>退出</button>
       </div>
     </section>
   </main>
@@ -545,6 +545,21 @@
       <div class="guide-tabs" id="guideTabs"></div>
     </div>
     <article class="guide-body" id="guideBody"></article>
+  </div>
+
+  <!-- 隠しページ（上のロゴを5回たたくと開く） -->
+  <div class="zk-view" id="zankyoView" hidden>
+    <button class="zk-close" id="closeZankyo" aria-label="閉じる">×</button>
+    <div class="zk-inner">
+      <header class="zk-hero">
+        <img src="icons/logo.png" alt="残響" class="zk-logo">
+        <p class="zk-eyebrow">ZANKYO ENSEMBLE</p>
+        <p class="zk-lead">香川大学吹奏楽団の OB で結成した<br>アンサンブルです。</p>
+      </header>
+      <h2 class="zk-heading">これまでの演奏</h2>
+      <div class="zk-videos" id="zkVideos"></div>
+      <p class="zk-foot">このページは、ロゴを 5 回たたいた人だけが見られます。</p>
+    </div>
   </div>
 
   <!-- メトロノームの大きな表示（譜面台に置いても見えるように） -->
@@ -644,6 +659,7 @@
   <script src="js/sync.js"></script>
   <script src="js/sync-ui.js"></script>
   <script src="js/ensemble.js"></script>
+  <script src="js/zankyo.js"></script>
   <script src="js/install.js"></script>
   <script src="js/update.js"></script>
 </body>
