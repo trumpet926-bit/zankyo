@@ -944,6 +944,7 @@ async function deleteRecording(rec) {
 function openInPlayer(rec, autoplay) {
   if (rec.id !== selectedId) {
     selectedId = rec.id;
+    if (waveform.trim) closeTrim(); // 別の録音を開いたら、切り取りはやめる
     player.load(rec.blob, rec.duration);
     waveform.load(rec.blob, rec.id);
     $('playerTitle').textContent = displayName(rec);
@@ -1016,6 +1017,69 @@ document.querySelectorAll('#playerRates button').forEach((b) => {
 $('loopA').addEventListener('click', () => player.setA());
 $('loopB').addEventListener('click', () => player.setB());
 $('loopClear').addEventListener('click', () => player.clearLoop());
+
+// ---------- 切り取り（元の録音は残し、選んだ範囲を新しい録音として保存する） ----------
+function renderTrim(trim) {
+  $('trimRange').textContent = `${formatTimeFine(trim.start)} 〜 ${formatTimeFine(trim.end)}（${(trim.end - trim.start).toFixed(1)}秒）`;
+}
+
+function closeTrim() {
+  waveform.stopTrim();
+  $('trimPanel').hidden = true;
+  $('trimOpen').hidden = false;
+  $('trimError').hidden = true;
+  player.clearLoop();
+}
+
+waveform.onTrimChange = renderTrim;
+
+$('trimOpen').addEventListener('click', () => {
+  if (!waveform.peaks) return;
+  player.pause();
+  player.clearLoop();
+  renderTrim(waveform.startTrim());
+  $('trimOpen').hidden = true;
+  $('trimPanel').hidden = false;
+});
+$('trimCancel').addEventListener('click', closeTrim);
+$('trimSetStart').addEventListener('click', () => {
+  const t = waveform.trim;
+  t.start = Math.min(player.position, t.end - 0.1);
+  waveform.draw();
+  renderTrim(t);
+});
+$('trimSetEnd').addEventListener('click', () => {
+  const t = waveform.trim;
+  t.end = Math.max(player.position, t.start + 0.1);
+  waveform.draw();
+  renderTrim(t);
+});
+// 範囲を聞く：くり返しの仕組みを使って、範囲の頭から鳴らす
+$('trimPreview').addEventListener('click', () => {
+  const t = waveform.trim;
+  player.loopA = t.start;
+  player.loopB = t.end;
+  player.seek(t.start);
+  if (!player.playing) player.toggle();
+});
+$('trimSave').addEventListener('click', async () => {
+  const rec = recordings.find((r) => r.id === selectedId);
+  const t = waveform.trim;
+  if (!rec || !t) return;
+  $('trimSave').disabled = true;
+  $('trimError').hidden = true;
+  try {
+    player.pause();
+    const buffer = await getAudioContext().decodeAudioData(await rec.blob.arrayBuffer());
+    const blob = encodeWavRange(buffer, t.start, t.end);
+    closeTrim();
+    await addRecordingFromBlob(blob, `${displayName(rec)}（切り取り）`.slice(0, 60));
+  } catch (e) {
+    $('trimError').textContent = 'この録音は切り取れませんでした。';
+    $('trimError').hidden = false;
+  }
+  $('trimSave').disabled = false;
+});
 
 // ---------- ファイルの取り込み ----------
 // 長さを調べる（読めないときは 0）
