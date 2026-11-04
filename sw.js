@@ -28,6 +28,7 @@ const FILES = [
   'js/calib.js',
   'js/sync.js',
   'js/sync-ui.js',
+  'js/ensemble.js',
   'js/install.js',
   'js/update.js',
   'icons/logo.png',

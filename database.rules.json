@@ -64,6 +64,47 @@
               ".validate": false
             }
           }
+        },
+        "voice": {
+          "$memberId": {
+            ".write": "$code.matches(/^[0-9]{6}$/) && $memberId.matches(/^[a-z0-9]{12}$/)",
+            ".validate": "newData.hasChildren(['name', 'sid'])",
+            "name": {
+              ".validate": "newData.isString() && newData.val().length <= 20"
+            },
+            "sid": {
+              ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9]{12}$/)"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "signal": {
+          "$to": {
+            "$msg": {
+              ".write": "$code.matches(/^[0-9]{6}$/) && $to.matches(/^[a-z0-9]{12}$/)",
+              ".validate": "newData.hasChildren(['from', 'sid', 'to', 'type', 'data'])",
+              "from": {
+                ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9]{12}$/)"
+              },
+              "sid": {
+                ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9]{12}$/)"
+              },
+              "to": {
+                ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9]{12}$/)"
+              },
+              "type": {
+                ".validate": "newData.isString() && newData.val().matches(/^(offer|answer|ice)$/)"
+              },
+              "data": {
+                ".validate": "newData.isString() && newData.val().length <= 20000"
+              },
+              "$other": {
+                ".validate": false
+              }
+            }
+          }
         }
       }
     },

@@ -136,8 +136,14 @@
               <path d="M3 19.5a5.5 5.5 0 0 1 11 0M13.8 15.2A4.5 4.5 0 0 1 21 19.5" class="line"/>
             </svg>
           </span>
-          <h2>みんなで合わせる</h2>
+          <h2 id="syncHeading">みんなで合わせる</h2>
         </div>
+        <form class="lab-unlock" id="labUnlock" hidden>
+          <input type="password" id="labPassword" placeholder="パスワード" autocomplete="off" class="code-input">
+          <button class="btn primary" type="submit">開く</button>
+          <button class="btn" type="button" id="labCancel">やめる</button>
+          <p class="error" id="labError" hidden>パスワードが違います。</p>
+        </form>
         <div id="syncOut">
           <p class="note" id="syncInvite">同じ部屋に入った人どうしで、メトロノームのテンポと拍がそろいます。インターネットにつながっている必要があります。</p>
           <button class="btn primary full-width" id="syncCreate">部屋を作る</button>
@@ -166,6 +172,16 @@
             <span class="note" id="syncOffsetValue">0 ms</span>
           </label>
           <p class="note">ほかの人より音が早く聞こえるときは右へ、遅いときは左へ動かします。リズム・音・光は自分だけの設定です。</p>
+          <div class="ensemble-card" id="ensembleCard" hidden>
+            <h3>オンライン合奏（試作）</h3>
+            <p class="note">同じ部屋で「音声をつなぐ」を押した人どうしの音が聞こえます。<b>有線イヤホン</b>を使ってください（スピーカーだとハウリングします）。</p>
+            <button class="btn primary full-width" id="ensembleJoin">音声をつなぐ</button>
+            <button class="btn small" id="ensembleMute" hidden>自分のマイクを切る</button>
+            <div class="ensemble-peers" id="ensemblePeers"></div>
+            <p class="note">「通信の遅れ」はネットと受け取りの分です。マイクやイヤホンを通る分（スマホでは数十 ms）は含みません。</p>
+            <p class="error" id="ensembleError" hidden></p>
+            <button class="link-btn" id="labHide">試作機能を隠す</button>
+          </div>
           <button class="btn danger small" id="syncLeave">部屋を出る</button>
         </div>
         <p class="note" id="syncStatus" hidden></p>
@@ -538,6 +554,7 @@
   <script src="js/calib.js"></script>
   <script src="js/sync.js"></script>
   <script src="js/sync-ui.js"></script>
+  <script src="js/ensemble.js"></script>
   <script src="js/install.js"></script>
   <script src="js/update.js"></script>
 </body>

@@ -533,6 +533,16 @@ button, .tab, .chip, .key-btn {
 .sync-calib .note { margin: 6px 0 0; }
 .sync-calib-live { margin: 0 0 8px; padding: 8px 10px; border-radius: 10px; background: var(--beat); font-weight: 700; }
 #syncCalibResult.ok { color: var(--text); font-weight: 600; }
+.lab-unlock { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 12px; }
+.lab-unlock .code-input { flex: 1 1 140px; font-size: 16px; }
+.lab-unlock .error { flex-basis: 100%; margin: 0; }
+.ensemble-card { margin: 14px 0; padding: 14px; border: 1px dashed var(--accent); border-radius: 12px; }
+.ensemble-card h3 { margin: 0 0 6px; font-size: 16px; }
+.ensemble-card .btn.small { margin-top: 8px; }
+.ensemble-peers { display: grid; gap: 6px; margin-top: 10px; }
+.ensemble-peer { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: 10px; background: var(--beat); }
+.ensemble-peer .note { margin: 0; }
+.link-btn { margin-top: 10px; padding: 0; border: 0; background: none; color: var(--muted); font: inherit; font-size: 13px; text-decoration: underline; cursor: pointer; }
 #syncCalibResult.fail { color: var(--danger); font-weight: 600; }
 
 /* 大きな表示の部屋の情報 */

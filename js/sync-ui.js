@@ -19,6 +19,7 @@
   saveSettings(settings);
 
   const room = new SyncRoom(settings.syncId, settings.syncName);
+  syncHooks.room = room;
   let following = false; // この端末のメトロノームが部屋の時間軸で鳴っているか
   let bpmTimer = null;
   let realignTimer = null;
@@ -194,6 +195,7 @@
   }));
 
   $('syncLeave').addEventListener('click', () => {
+    if (syncHooks.onLeave) syncHooks.onLeave();
     room.leave();
     clearInterval(realignTimer);
     clearInterval(clockTimer);
