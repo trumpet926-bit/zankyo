@@ -1239,7 +1239,7 @@ let recordingMode = null;
 let recordingName = null; // 録り終えたときに付ける名前
 
 // 戻り値：録音を始められたら true
-async function startRecording({ withMetronome = settings.recWithMetronome, onError = showRecError } = {}) {
+async function startRecording({ withMetronome = settings.recWithMetronome, onError = showRecError, stream = null } = {}) {
   $('recError').hidden = true;
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) {
     onError('このブラウザ（またはこの開き方）では録音できません。');
@@ -1249,7 +1249,7 @@ async function startRecording({ withMetronome = settings.recWithMetronome, onErr
   stopDrone();
   player.pause(); // 再生中の音が録音に入らないようにする
   try {
-    await recorder.start();
+    await recorder.start(stream);
   } catch (e) {
     onError(micErrorMessage(e));
     return false;

@@ -41,6 +41,8 @@
   let statusTimer = null;
   let recStartedAt = 0;
   let wasRecording = false;
+  let heldMic = null; // 受け付けている間、開いたままにしておくマイク（iPhone は画面を触らないとマイクを開けないため）
+  let recFailedUntil = 0; // 録音を始められなかったことを、しばらく時計に知らせる
 
   function writeStatus() {
     if (!statusRef) return;
@@ -52,7 +54,7 @@
       bpm: settings.bpm,
       running: metronome.isRunning,
       recording,
-      rec: recording ? Math.floor((Date.now() - recStartedAt) / 1000) : 0,
+      rec: recording ? Math.floor((Date.now() - recStartedAt) / 1000) : Date.now() < recFailedUntil ? -1 : 0,
       alive,
     }).catch(() => {});
   }
@@ -63,19 +65,28 @@
     else if (cmd === 'down1') setBpm(settings.bpm - 1);
     else if (cmd === 'up5') setBpm(settings.bpm + 5);
     else if (cmd === 'down5') setBpm(settings.bpm - 5);
-    else if (cmd === 'rec') $('recButton').click();
+    else if (cmd === 'rec') toggleRecording();
     setTimeout(writeStatus, 300);
+  }
+
+  async function toggleRecording() {
+    if (recorder.isRecording) {
+      stopRecording();
+      return;
+    }
+    const ok = await startRecording({ stream: heldMic });
+    if (!ok) recFailedUntil = Date.now() + 8000; // 時計に「REC failed」と出す
+    writeStatus();
   }
 
   async function start() {
     $('watchToggle').disabled = true;
     getAudioContext().resume(); // 画面を触ったときでないと音を出せないため、ここで準備する
-    // iPhone は画面を触ったときでないとマイクを使わせてくれないので、ここで一度マイクの許可をもらっておく
-    // （すぐ閉じる。時計から録音を始めたときに、あらためて開く）
+    // iPhone は画面を触ったときでないとマイクを開けないので、ここで開いて、受け付けている間は開いたままにする
     try {
-      closeMicrophone(await openMicrophone());
+      heldMic = await openMicrophone();
     } catch (e) {
-      // 許可されなくても、メトロノームとテンポの操作はできる
+      heldMic = null; // 許可されなくても、メトロノームとテンポの操作はできる
     }
     try {
       const db = await SyncRoom.database();
@@ -107,12 +118,17 @@
     render();
   }
 
-  function stop() {
+  async function stop() {
+    if (recorder.isRecording) await stopRecording(); // 録音中なら、保存してからマイクを閉じる
     if (cmdRef) cmdRef.off();
     clearInterval(statusTimer);
     cmdRef = null;
     statusRef = null;
     listening = false;
+    if (heldMic) {
+      closeMicrophone(heldMic);
+      heldMic = null;
+    }
     holdScreen = false;
     if (!metronome.isRunning) keepScreenOn(false);
     render();

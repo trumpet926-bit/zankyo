@@ -6,8 +6,10 @@ class Recorder {
     this.onLevel = null; // (音量 0〜1, 経過秒数)
   }
 
-  async start() {
-    this.stream = await openMicrophone();
+  // stream：すでに開いているマイク（時計から録音するときに使う）。渡したときは、止めても閉じない
+  async start(stream = null) {
+    this.ownStream = !stream;
+    this.stream = stream || (await openMicrophone());
     // ブラウザが対応している形式を選ぶ（Chrome/Android は webm、iPhone は mp4）
     const mimeType = ['audio/webm;codecs=opus', 'audio/mp4', 'audio/webm']
       .find((type) => MediaRecorder.isTypeSupported(type));
@@ -41,7 +43,7 @@ class Recorder {
       this.mediaRecorder.onstop = () => {
         const blob = new Blob(this.chunks, { type: this.mediaRecorder.mimeType });
         this.source.disconnect();
-        closeMicrophone(this.stream);
+        if (this.ownStream) closeMicrophone(this.stream);
         resolve({ blob, duration });
       };
       this.mediaRecorder.stop();
