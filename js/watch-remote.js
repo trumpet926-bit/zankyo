@@ -41,7 +41,6 @@
   let statusTimer = null;
   let recStartedAt = 0;
   let wasRecording = false;
-  let heldMic = null; // 受け付けている間、開いたままにしておくマイク（iPhone は画面を触らないとマイクを開けないため）
   let recFailedUntil = 0; // 録音を始められなかったことを、しばらく時計に知らせる
 
   function writeStatus() {
@@ -74,7 +73,7 @@
       stopRecording();
       return;
     }
-    const ok = await startRecording({ stream: heldMic });
+    const ok = await startRecording(); // 受け付け中は、開いたままのマイク（sharedMic）を使う
     if (!ok) recFailedUntil = Date.now() + 8000; // 時計に「REC failed」と出す
     writeStatus();
   }
@@ -83,10 +82,11 @@
     $('watchToggle').disabled = true;
     getAudioContext().resume(); // 画面を触ったときでないと音を出せないため、ここで準備する
     // iPhone は画面を触ったときでないとマイクを開けないので、ここで開いて、受け付けている間は開いたままにする
+    // （sharedMic は app.js にあり、録音ボタンからの録音でも同じマイクを使う）
     try {
-      heldMic = await openMicrophone();
+      sharedMic = await openMicrophone();
     } catch (e) {
-      heldMic = null; // 許可されなくても、メトロノームとテンポの操作はできる
+      sharedMic = null; // 許可されなくても、メトロノームとテンポの操作はできる
     }
     try {
       const db = await SyncRoom.database();
@@ -125,9 +125,9 @@
     cmdRef = null;
     statusRef = null;
     listening = false;
-    if (heldMic) {
-      closeMicrophone(heldMic);
-      heldMic = null;
+    if (sharedMic) {
+      closeMicrophone(sharedMic);
+      sharedMic = null;
     }
     holdScreen = false;
     if (!metronome.isRunning) keepScreenOn(false);

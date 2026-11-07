@@ -9,6 +9,7 @@ class Recorder {
   // stream：すでに開いているマイク（時計から録音するときに使う）。渡したときは、止めても閉じない
   async start(stream = null) {
     this.ownStream = !stream;
+    if (stream) setAudioSessionForMic(true); // 開いたままのマイクを使うときも、マイクを使う扱いにそろえる
     this.stream = stream || (await openMicrophone());
     // ブラウザが対応している形式を選ぶ（Chrome/Android は webm、iPhone は mp4）
     const mimeType = ['audio/webm;codecs=opus', 'audio/mp4', 'audio/webm']

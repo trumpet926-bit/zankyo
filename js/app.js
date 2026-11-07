@@ -1224,9 +1224,15 @@ $('importInput').addEventListener('change', async (e) => {
   }
 });
 
+let recLoudest = 0; // 録音を始めてからいちばん大きかった音（マイクの音が入っているかの確認）
 recorder.onLevel = (level, seconds) => {
   $('levelBar').style.width = `${level * 100}%`;
   $('recTime').textContent = formatTime(seconds);
+  if (seconds < 0.3) recLoudest = 0;
+  recLoudest = Math.max(recLoudest, level);
+  if (seconds > 3 && seconds < 3.2 && recLoudest < 0.08) {
+    showRecError('マイクの音が入っていないようです。いったん録音を止めて、「時計で操作」を使っているときは受け付けを一度やめてから、もう一度試してください。');
+  }
 };
 
 function showRecError(message) {
@@ -1239,7 +1245,31 @@ let recordingMode = null;
 let recordingName = null; // 録り終えたときに付ける名前
 
 // 戻り値：録音を始められたら true
+// 時計からの操作を受け付けている間、開いたままにしているマイク（録音ボタンでもこれを使い、2つ目を開かない）
+let sharedMic = null;
+
+// マイクがまだ使えるか（iPhone は、ほかのアプリに切り替えたときなどに、だまって止めることがある）
+function micAlive(stream) {
+  const track = stream && stream.getAudioTracks()[0];
+  return !!track && track.readyState === 'live' && !track.muted;
+}
+
 async function startRecording({ withMetronome = settings.recWithMetronome, onError = showRecError, stream = null } = {}) {
+  if (!stream && sharedMic) stream = sharedMic;
+  if (stream && !micAlive(stream)) {
+    // 止まっていたら開き直す（画面を触ったときなら開ける。時計からのときは失敗することがある）
+    try {
+      const fresh = await openMicrophone();
+      if (stream === sharedMic) {
+        closeMicrophone(sharedMic);
+        sharedMic = fresh;
+      }
+      stream = fresh;
+    } catch (e) {
+      onError('マイクが止まっています。「時計で操作」の受け付けを一度やめて、もう一度押してください。');
+      return false;
+    }
+  }
   $('recError').hidden = true;
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) {
     onError('このブラウザ（またはこの開き方）では録音できません。');
