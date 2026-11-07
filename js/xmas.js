@@ -5,7 +5,43 @@
   if (!document.documentElement.classList.contains('theme-xmas')) return;
   document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0b2418');
 
-  // 下のメニューの後ろから顔を出す、サンタさん・トナカイ・雪だるま（押すと跳ねて、ひとこと）
+  // 押した仲間から、星・プレゼント・雪の結晶が飛び出す
+  const BURST = ['⭐', '🎁', '❄️', '✨', '🎄', '⭐', '🎁', '❄️'];
+  function burst(el) {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const rect = el.getBoundingClientRect();
+    BURST.forEach((ch, i) => {
+      const s = document.createElement('span');
+      s.className = 'xmas-pop';
+      s.textContent = ch;
+      const angle = (-150 + (i / (BURST.length - 1)) * 120) * (Math.PI / 180);
+      const dist = 70 + Math.random() * 50;
+      s.style.left = `${rect.left + rect.width / 2}px`;
+      s.style.top = `${rect.top + 10}px`;
+      s.style.setProperty('--dx', `${Math.cos(angle) * dist}px`);
+      s.style.setProperty('--dy', `${Math.sin(angle) * dist}px`);
+      s.style.setProperty('--r', `${(Math.random() * 2 - 1) * 90}deg`);
+      document.body.appendChild(s);
+      setTimeout(() => s.remove(), 1300);
+    });
+  }
+
+  // 上の帯の下に、ちかちか光る電球を下げる
+  const lights = document.createElement('div');
+  lights.className = 'xmas-lights';
+  lights.setAttribute('aria-hidden', 'true');
+  const COLORS = ['#ff4d55', '#ffd54a', '#4ade80', '#60a5fa'];
+  for (let i = 0; i < 16; i++) {
+    const bulb = document.createElement('i');
+    bulb.style.setProperty('--c', COLORS[i % COLORS.length]);
+    bulb.style.setProperty('--delay', `${(i % 4) * 0.45}s`);
+    bulb.style.left = `${(i + 0.5) * (100 / 16)}%`;
+    bulb.style.top = `${4 + Math.sin(((i % 4) / 4) * Math.PI) * 6}px`;
+    lights.appendChild(bulb);
+  }
+  document.querySelector('.app-header').appendChild(lights);
+
+  // 下のメニューの後ろから顔を出す、サンタさん・トナカイ・雪だるま・ツリー（押すと跳ねて、ひとこと）
   const FRIENDS = [
     {
       label: 'サンタさん',
@@ -37,7 +73,8 @@
         <path d="M24.5 35q2.5-3 5 0M34.5 35q2.5-3 5 0" fill="none" stroke="#3b2a20" stroke-width="2" stroke-linecap="round"/>
         <circle cx="22.5" cy="40" r="2.5" fill="#f7a8b0" opacity="0.85"/>
         <circle cx="41.5" cy="40" r="2.5" fill="#f7a8b0" opacity="0.85"/>
-        <ellipse cx="32" cy="43" rx="3.8" ry="2.7" fill="#4a2e20"/>
+        <circle cx="32" cy="43" r="4" fill="#e3242b"/>
+        <circle cx="30.7" cy="41.7" r="1.2" fill="#fff" opacity="0.85"/>
         <path d="M29.5 48q2.5 2 5 0" fill="none" stroke="#4a2e20" stroke-width="1.6" stroke-linecap="round"/>
         <rect x="20" y="51.5" width="24" height="4.5" rx="2.2" fill="#d4282f"/>
         <circle cx="32" cy="57.5" r="3" fill="#e3c26a"/>
@@ -62,6 +99,20 @@
         <rect x="38" y="54" width="5" height="9" rx="2" fill="#2f7d4f"/>
         <path d="M19 55 8 49M11 50.5 8 46M45 55l11-6M53 50.5l3-4.5" fill="none" stroke="#7a5236" stroke-width="2.2" stroke-linecap="round"/>`,
     },
+    {
+      label: 'クリスマスツリー',
+      say: 'キラキラ✨',
+      svg: `
+        <path d="M32 14 16 34h7L13 48h9L10 60h44L42 48h9L41 34h7Z" fill="#2f8a52"/>
+        <path d="M32 14 16 34h7L13 48h9L10 60h22Z" fill="#3a9d60" opacity="0.6"/>
+        <path d="M20 40q12 6 24-2M17 53q15 6 30-2" fill="none" stroke="#f1d48a" stroke-width="1.6" stroke-linecap="round"/>
+        <circle cx="26" cy="31" r="2.4" fill="#e3242b"/>
+        <circle cx="38" cy="36" r="2.4" fill="#3b82f6"/>
+        <circle cx="24" cy="46" r="2.4" fill="#f1d48a"/>
+        <circle cx="40" cy="49" r="2.4" fill="#e3242b"/>
+        <circle cx="31" cy="55" r="2.4" fill="#a855f7"/>
+        <path class="xmas-star" d="M32 4l2.6 5.4 5.9.8-4.3 4.1 1 5.8L32 17.3l-5.2 2.8 1-5.8-4.3-4.1 5.9-.8Z" fill="#ffd54a"/>`,
+    },
   ];
   FRIENDS.forEach((friend, i) => {
     const el = document.createElement('button');
@@ -74,6 +125,7 @@
       el.classList.remove('hop');
       void el.offsetWidth; // 何度押しても、はじめから跳ねる
       el.classList.add('hop');
+      burst(el);
     });
     document.body.appendChild(el);
   });
@@ -85,7 +137,12 @@
   box.setAttribute('aria-hidden', 'true');
   for (let i = 0; i < 28; i++) {
     const flake = document.createElement('i');
-    const size = 2 + Math.random() * 4;
+    const crystal = i % 4 === 0; // 4つに1つは結晶の形
+    if (crystal) {
+      flake.className = 'crystal';
+      flake.textContent = '❄';
+    }
+    const size = crystal ? 12 + Math.random() * 8 : 2 + Math.random() * 4;
     flake.style.setProperty('--x', `${Math.random() * 100}%`);
     flake.style.setProperty('--s', `${size}px`);
     flake.style.setProperty('--o', (0.35 + Math.random() * 0.45).toFixed(2));

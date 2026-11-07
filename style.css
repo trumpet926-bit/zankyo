@@ -1505,3 +1505,79 @@ html.theme-xmas body { padding-bottom: calc(124px + env(safe-area-inset-bottom))
 @media (prefers-reduced-motion: reduce) {
   .xmas-santa { animation: none; }
 }
+
+/* クリスマスの電球（上の帯の下） */
+html.theme-xmas .app-header { overflow: visible; }
+.xmas-lights { position: absolute; left: 0; right: 0; bottom: -14px; height: 18px; pointer-events: none; }
+.xmas-lights::before {
+  /* 電球をつなぐ線 */
+  content: "";
+  position: absolute;
+  left: 0; right: 0; top: 2px;
+  height: 10px;
+  border-bottom: 1.5px solid rgba(40, 70, 50, 0.9);
+  border-radius: 0 0 50% 50% / 0 0 100% 100%;
+}
+.xmas-lights i {
+  position: absolute;
+  width: 7px;
+  height: 10px;
+  margin-left: -3.5px;
+  border-radius: 50% 50% 45% 45%;
+  background: var(--c);
+  box-shadow: 0 0 6px 1px var(--c);
+  animation: xmas-twinkle 1.8s ease-in-out var(--delay) infinite;
+}
+@keyframes xmas-twinkle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+/* カードの上に積もった雪 */
+html.theme-xmas .tool-section { position: relative; }
+html.theme-xmas .tool-section::before {
+  content: "";
+  position: absolute;
+  top: -7px;
+  left: 14px;
+  right: 14px;
+  height: 14px;
+  /* 白い雪の下に、うすい影を1px ずらして重ねる（ぼかしは使わず軽く） */
+  background:
+    radial-gradient(circle at 9px 10px, #fff 8px, transparent 8.6px) 0 0 / 18px 14px repeat-x,
+    linear-gradient(#fff, #fff) 0 9px / 100% 5px no-repeat,
+    radial-gradient(circle at 9px 11px, rgba(60, 80, 100, 0.22) 8px, transparent 8.6px) 0 0 / 18px 14px repeat-x;
+  border-radius: 6px;
+  pointer-events: none;
+}
+
+/* 雪の結晶 */
+.xmas-snow i.crystal { width: auto; height: auto; background: none; color: #b8cadb; font-size: var(--s); line-height: 1; }
+@media (prefers-color-scheme: dark) {
+  .xmas-snow i.crystal { color: #ffffff; }
+}
+
+/* ツリーの星がきらきら */
+.xmas-star { transform-origin: 32px 11px; animation: xmas-star 2.4s ease-in-out infinite; }
+@keyframes xmas-star {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.8; }
+}
+
+/* 押したときに飛び出す星やプレゼント */
+.xmas-pop {
+  position: fixed;
+  z-index: 60;
+  font-size: 22px;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  animation: xmas-pop 1.2s ease-out forwards;
+}
+@keyframes xmas-pop {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
+  15% { opacity: 1; }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(var(--r)) scale(1.1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .xmas-lights i, .xmas-star { animation: none; }
+}
