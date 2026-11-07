@@ -1375,66 +1375,12 @@ body { min-height: 100vh; }
 .drone-mix .note { margin: 0; white-space: nowrap; }
 .drone-mix input { flex: 1; }
 
-/* 音階のページ：選ぶ → 見る → 吹く */
-.scale-picker {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  margin: 0 0 6px;
-  padding: 10px 12px;
-  border-radius: 14px;
-  border: 1px solid var(--border);
-  background: var(--bg);
-  color: var(--text);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-.scale-picker-text { display: flex; flex-direction: column; min-width: 0; }
-.scale-picker-title { font-size: 18px; font-weight: 700; }
-.scale-picker-caret { margin-left: 6px; color: var(--accent); font-size: 14px; }
-.scale-picker .scale-start { margin: 2px 0 0; }
-.practice-modes { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
-.practice-modes button {
-  padding: 11px 6px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text);
-  font: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-}
-.practice-modes button.selected { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
-.scale-tempo { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 14px 0 2px; }
-.scale-tempo .tempo-value { font-size: 22px; font-weight: 700; }
-.scale-main .note-lengths { margin-top: 8px; }
-.scale-play { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
-.scale-play .rec-along { font-size: 15px; white-space: nowrap; padding-left: 8px; padding-right: 8px; }
+/* 音階のページ：「再生」と「録音しながら」を横に並べる・詳しい設定 */
+.scale-play { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .scale-play .btn { width: 100%; }
-.scale-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-.scale-links .guide-link { margin: 0; }
+.scale-play .rec-along { font-size: 15px; white-space: nowrap; padding-left: 8px; padding-right: 8px; }
+.scale-more { margin: 14px 0 0; }
 .scale-settings { margin-top: 10px; padding-top: 6px; border-top: 1px solid var(--border); }
-
-/* 下から出る選択の画面 */
-.sheet { position: fixed; inset: 0; z-index: 20; display: flex; flex-direction: column; justify-content: flex-end; }
-.sheet-backdrop { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.45); animation: sheet-fade 0.2s ease-out; }
-.sheet-body {
-  position: relative;
-  max-height: 85vh;
-  overflow-y: auto;
-  padding: 16px 16px calc(20px + env(safe-area-inset-bottom));
-  border-radius: 20px 20px 0 0;
-  background: var(--surface);
-  color: var(--text);
-  animation: sheet-up 0.25s ease-out;
-}
-.sheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
-.sheet-head h2 { margin: 0; font-size: 18px; }
-@keyframes sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
-@keyframes sheet-fade { from { opacity: 0; } to { opacity: 1; } }
 
 /* ---------- クリスマス（html.theme-xmas のときだけ）。書の「残響」はそのまま ---------- */
 .xmas-holly, .xmas-snow { display: none; }
@@ -1509,9 +1455,9 @@ html.theme-xmas .xmas-snow { display: block; position: fixed; inset: 0; z-index:
 }
 
 /* サンタさん：下のメニューの後ろから顔を出す */
+html.theme-xmas body { padding-bottom: calc(124px + env(safe-area-inset-bottom)); } /* 仲間たちがページの下を隠さないように */
 .xmas-santa {
   position: fixed;
-  left: 12px;
   bottom: calc(52px + env(safe-area-inset-bottom));
   z-index: 1; /* 下のメニュー（z-index 2）の後ろに手が隠れる */
   width: 64px;
@@ -1523,7 +1469,7 @@ html.theme-xmas .xmas-snow { display: block; position: fixed; inset: 0; z-index:
   animation: santa-peek 9s ease-in-out infinite;
 }
 .xmas-santa svg { display: block; width: 100%; height: 100%; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25)); }
-.xmas-santa.hop { animation: santa-hop 0.9s ease-out; }
+.xmas-santa.hop { animation: santa-hop 0.9s ease-out; animation-delay: 0s !important; }
 .xmas-bubble {
   position: absolute;
   bottom: 62px;

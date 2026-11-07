@@ -26,7 +26,6 @@ const DEFAULT_SETTINGS = {
   scaleDrone: false, // 音階の主音をのばし続ける（ドローン）
   scaleDroneVolume: 0.5,
   scaleRelative: false, // 平行調の音階も続けて
-  scalePracticeMode: null, // 練習のしかた（listen・self・drone・relative）。上の3つはここから決まる
   a4: 442, // 基準のA（ラ）の周波数
   tunerSensitivity: 4, // 1=鈍い 〜 5=敏感
   droneMidi: 70, // 基準音の高さ（70 = B♭4）

@@ -433,7 +433,14 @@ function renderScale() {
   $('scaleStart').textContent = `始めの音：${nameWithOctave(first.name, first.midi)}` +
     (t ? ` ・ ${TRANSPOSITION_NAMES[t]}の楽譜では ${parts.map((p) => partName(p, 'written')).join(' → ')}` : '');
 
-  renderPracticeMode();
+  // 平行調のスイッチ（半音階・3度音階には出さない）
+  const rel = relativeOf(settings.scaleType);
+  $('scaleRelativeRow').hidden = !rel;
+  if (rel) {
+    const relPart = scalePart(rel.typeId, (settings.scaleKey + rel.shift + 12) % 12, 60);
+    $('scaleRelativeNote').textContent = `${partName(parts[0])} のあとに ${partName(relPart)} を続けます。同じ音の並びで、主音が変わると響きが変わります`;
+  }
+  $('scaleRelative').checked = settings.scaleRelative;
   $('openGuideLabel').textContent = `「${type.name}」の特徴と吹き方`;
   // 上の段が上行、下の段が下行の五線譜
   // 五線譜は楽器の読み方、下の小さな音名と鳴る音は実音
@@ -489,7 +496,7 @@ $('scaleBpmUp').addEventListener('click', () => setScaleBpm(settings.scaleBpm + 
 $('scaleBpmSlider').addEventListener('input', (e) => setScaleBpm(Number(e.target.value)));
 makeTempoEditable($('scaleBpmValue'), () => settings.scaleBpm, setScaleBpm);
 
-[['scaleClick', 'checked'], ['countIn', 'checked'], ['scaleRepeat', 'checked']]
+[['scaleClick', 'checked'], ['countIn', 'checked'], ['scaleRepeat', 'checked'], ['scaleSelfPlay', 'checked'], ['scaleDrone', 'checked']]
   .forEach(([id, prop]) => {
     $(id)[prop] = settings[id];
     $(id).addEventListener('change', (e) => {
@@ -498,68 +505,23 @@ makeTempoEditable($('scaleBpmValue'), () => settings.scaleBpm, setScaleBpm);
     });
   });
 
-// ---------- 練習のしかた（今までの3つのスイッチを、目的ごとの組み合わせで選ぶ） ----------
-const PRACTICE_MODES = {
-  listen: { self: false, drone: false, relative: false, note: 'アプリが音階を鳴らします。まずお手本を聞いて、音の並びをつかみます。' },
-  self: { self: true, drone: false, relative: false, note: '音は鳴らさず、楽譜の音符をテンポに合わせて光らせます。光る音符を見ながら吹きます。' },
-  drone: { self: true, drone: true, relative: false, note: '主音をのばし続け、楽譜を光らせます。主音とのずれが「うなり」として聞こえるので、音程の耳が育ちます。' },
-  relative: { self: true, drone: true, relative: true, note: '' },
-};
-
-// 前の版のスイッチの状態から、練習のしかたを決める
-if (!PRACTICE_MODES[settings.scalePracticeMode]) {
-  settings.scalePracticeMode = settings.scaleRelative ? 'relative' : settings.scaleDrone ? 'drone' : settings.scaleSelfPlay ? 'self' : 'listen';
-}
-
-function renderPracticeMode() {
-  const mode = settings.scalePracticeMode;
-  document.querySelectorAll('#practiceModes button').forEach((b) => b.classList.toggle('selected', b.dataset.mode === mode));
-  let note = PRACTICE_MODES[mode].note;
-  if (mode === 'relative') {
-    const rel = relativeOf(settings.scaleType);
-    if (rel) {
-      const relPart = scalePart(rel.typeId, (settings.scaleKey + rel.shift + 12) % 12, 60);
-      const firstPart = scalePart(settings.scaleType, settings.scaleKey, 60);
-      note = `${partName(firstPart)} → ${partName(relPart)} と続けて、楽譜を光らせます。ドローンも主音に合わせて切り替わり、同じ音の並びでも響きが変わるのが分かります。`;
-    } else {
-      note = 'この種類には平行調がないので、ドローンだけ鳴らします。';
-    }
-  }
-  $('practiceModeNote').textContent = note;
-  $('scaleDroneMix').hidden = !settings.scaleDrone;
-}
-
-document.querySelectorAll('#practiceModes button').forEach((b) => {
-  b.addEventListener('click', () => {
-    const m = PRACTICE_MODES[b.dataset.mode];
-    settings.scalePracticeMode = b.dataset.mode;
-    settings.scaleSelfPlay = m.self;
-    settings.scaleDrone = m.drone;
-    setScaleOption('scaleRelative', m.relative); // 平行調で五線譜が変わるので、保存して描き直す
-  });
-});
+// 平行調を続けるかどうかで五線譜が変わるので、描き直す
+$('scaleRelative').addEventListener('change', (e) => setScaleOption('scaleRelative', e.target.checked));
 
 // ドローンの音量（鳴らしている途中でも変えられる）
+function renderDroneMix() {
+  $('scaleDroneMix').hidden = !settings.scaleDrone;
+}
 $('scaleDroneVolume').value = settings.scaleDroneVolume;
 $('scaleDroneVolume').addEventListener('input', (e) => {
   settings.scaleDroneVolume = Number(e.target.value);
   saveSettings(settings);
   scaleDrone.setVolume(settings.scaleDroneVolume);
 });
+$('scaleDrone').addEventListener('change', renderDroneMix);
+renderDroneMix();
 
-// ---------- 調と種類を選ぶ画面・詳しい設定 ----------
-function openScalePicker() {
-  $('scalePicker').hidden = false;
-  document.body.style.overflow = 'hidden';
-}
-function closeScalePicker() {
-  $('scalePicker').hidden = true;
-  document.body.style.overflow = '';
-}
-$('openScalePicker').addEventListener('click', openScalePicker);
-$('closeScalePicker').addEventListener('click', closeScalePicker);
-$('scalePickerBackdrop').addEventListener('click', closeScalePicker);
-
+// めったに変えない設定（楽器の調・始める高さ・4拍数える・くり返す）は、押したときだけ開く
 $('toggleScaleSettings').addEventListener('click', () => {
   const open = $('scaleSettings').hidden;
   $('scaleSettings').hidden = !open;
