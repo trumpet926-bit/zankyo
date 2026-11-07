@@ -1507,3 +1507,55 @@ html.theme-xmas .xmas-snow { display: block; position: fixed; inset: 0; z-index:
 @media (prefers-reduced-motion: reduce) {
   html.theme-xmas .xmas-snow { display: none; }
 }
+
+/* サンタさん：下のメニューの後ろから顔を出す */
+.xmas-santa {
+  position: fixed;
+  left: 12px;
+  bottom: calc(52px + env(safe-area-inset-bottom));
+  z-index: 1; /* 下のメニュー（z-index 2）の後ろに手が隠れる */
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  animation: santa-peek 9s ease-in-out infinite;
+}
+.xmas-santa svg { display: block; width: 100%; height: 100%; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25)); }
+.xmas-santa.hop { animation: santa-hop 0.9s ease-out; }
+.xmas-bubble {
+  position: absolute;
+  bottom: 62px;
+  left: 30px;
+  padding: 5px 10px;
+  border-radius: 12px 12px 12px 2px;
+  background: #fff;
+  color: #b3202a;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  transform: translateY(6px);
+  pointer-events: none;
+}
+.xmas-santa.hop .xmas-bubble { animation: santa-bubble 2.4s ease-out; }
+@keyframes santa-peek {
+  0%, 70%, 100% { transform: translateY(0); }
+  78%, 90% { transform: translateY(-10px) rotate(-6deg); }
+}
+@keyframes santa-hop {
+  0% { transform: translateY(0); }
+  35% { transform: translateY(-28px) rotate(6deg); }
+  60% { transform: translateY(-8px) rotate(-4deg); }
+  100% { transform: translateY(0); }
+}
+@keyframes santa-bubble {
+  0% { opacity: 0; transform: translateY(6px); }
+  12%, 80% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-4px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .xmas-santa { animation: none; }
+}
