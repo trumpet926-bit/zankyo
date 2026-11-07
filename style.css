@@ -1374,3 +1374,136 @@ body { min-height: 100vh; }
 .drone-mix { display: flex; align-items: center; gap: 10px; margin: 4px 0 8px; }
 .drone-mix .note { margin: 0; white-space: nowrap; }
 .drone-mix input { flex: 1; }
+
+/* 音階のページ：選ぶ → 見る → 吹く */
+.scale-picker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin: 0 0 6px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.scale-picker-text { display: flex; flex-direction: column; min-width: 0; }
+.scale-picker-title { font-size: 18px; font-weight: 700; }
+.scale-picker-caret { margin-left: 6px; color: var(--accent); font-size: 14px; }
+.scale-picker .scale-start { margin: 2px 0 0; }
+.practice-modes { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+.practice-modes button {
+  padding: 11px 6px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.practice-modes button.selected { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+.scale-tempo { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 14px 0 2px; }
+.scale-tempo .tempo-value { font-size: 22px; font-weight: 700; }
+.scale-main .note-lengths { margin-top: 8px; }
+.scale-play { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+.scale-play .rec-along { font-size: 15px; white-space: nowrap; padding-left: 8px; padding-right: 8px; }
+.scale-play .btn { width: 100%; }
+.scale-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.scale-links .guide-link { margin: 0; }
+.scale-settings { margin-top: 10px; padding-top: 6px; border-top: 1px solid var(--border); }
+
+/* 下から出る選択の画面 */
+.sheet { position: fixed; inset: 0; z-index: 20; display: flex; flex-direction: column; justify-content: flex-end; }
+.sheet-backdrop { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.45); animation: sheet-fade 0.2s ease-out; }
+.sheet-body {
+  position: relative;
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 16px 16px calc(20px + env(safe-area-inset-bottom));
+  border-radius: 20px 20px 0 0;
+  background: var(--surface);
+  color: var(--text);
+  animation: sheet-up 0.25s ease-out;
+}
+.sheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.sheet-head h2 { margin: 0; font-size: 18px; }
+@keyframes sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes sheet-fade { from { opacity: 0; } to { opacity: 1; } }
+
+/* ---------- クリスマス（html.theme-xmas のときだけ）。書の「残響」はそのまま ---------- */
+.xmas-holly, .xmas-snow { display: none; }
+html.theme-xmas {
+  --bg: #f4f1ea;
+  --surface: #ffffff;
+  --text: #1b1a17;
+  --muted: #6f6a5f;
+  --border: #dcd5c6;
+  --accent: #b3202a;
+  --accent-text: #ffffff;
+  --accent-soft: rgba(179, 32, 42, 0.12);
+  --beat: #e6e0d3;
+  --beat-on: #c9a227;
+  --beat-strong: #b3202a;
+  --danger: #8f1d1d;
+}
+@media (prefers-color-scheme: dark) {
+  html.theme-xmas {
+    --bg: #0c1511;
+    --surface: #14211b;
+    --text: #f3efe4;
+    --muted: #a3ab9c;
+    --border: #26392f;
+    --accent: #e0464f;
+    --accent-text: #ffffff;
+    --accent-soft: rgba(224, 70, 79, 0.18);
+    --beat: #22332a;
+    --beat-on: #e3c26a;
+    --beat-strong: #e0464f;
+    --danger: #f2878b;
+  }
+}
+/* 上の帯：深い緑に、うっすら雪の粒 */
+html.theme-xmas .app-header {
+  background:
+    radial-gradient(circle at 50% 22%, rgba(255, 255, 255, 0.5) 0 1px, transparent 1.6px),
+    radial-gradient(circle at 58% 78%, rgba(255, 255, 255, 0.4) 0 1px, transparent 1.6px),
+    radial-gradient(circle at 66% 30%, rgba(255, 255, 255, 0.45) 0 1.2px, transparent 1.8px),
+    radial-gradient(circle at 88% 86%, rgba(255, 255, 255, 0.35) 0 1px, transparent 1.6px),
+    radial-gradient(circle at 97% 12%, rgba(255, 255, 255, 0.5) 0 1px, transparent 1.6px),
+    linear-gradient(135deg, #14452f, #061510);
+}
+html.theme-xmas .brand-sub { color: #f1d48a; }
+html.theme-xmas .xmas-holly { display: block; width: 26px; height: 20px; margin: 0 0 2px -4px; align-self: flex-end; }
+html.theme-xmas .mini-metro { border-color: rgba(241, 212, 138, 0.6); }
+html.theme-xmas .mini-icon { background: #c41f27; color: #fff; }
+html.theme-xmas .header-share { color: #f4ecd8; }
+
+/* 雪：カードの後ろ、書の透かしの前をゆっくり降る */
+html.theme-xmas .xmas-snow { display: block; position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.xmas-snow i {
+  position: absolute;
+  top: -12px;
+  left: var(--x);
+  width: var(--s);
+  height: var(--s);
+  border-radius: 50%;
+  background: #9fb3c6;
+  opacity: var(--o);
+  animation: xmas-fall var(--d) linear var(--delay) infinite;
+}
+@media (prefers-color-scheme: dark) {
+  .xmas-snow i { background: #ffffff; }
+}
+@keyframes xmas-fall {
+  from { transform: translate(0, -12px); }
+  to { transform: translate(var(--drift), 105vh); }
+}
+@media (prefers-reduced-motion: reduce) {
+  html.theme-xmas .xmas-snow { display: none; }
+}

@@ -33,6 +33,7 @@ const FILES = [
   'js/ensemble.js',
   'js/zankyo.js',
   'js/share.js',
+  'js/xmas.js',
   'js/install.js',
   'js/update.js',
   'icons/logo.png',

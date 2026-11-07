@@ -4,6 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#1a1726">
+  <!-- クリスマスの見た目（毎年11月1日〜12月25日）。描く前に切り替えて、ちらつかないようにする -->
+  <script>
+    (function () {
+      var d = new Date();
+      if (d.getMonth() === 10 || (d.getMonth() === 11 && d.getDate() <= 25)) document.documentElement.classList.add('theme-xmas');
+    })();
+  </script>
   <meta name="description" content="メトロノーム・チューナー・音階・録音をひとつにまとめた楽器練習アプリ">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="残響PracticeTool">
@@ -29,6 +36,14 @@
     <h1 class="brand">
       <img src="icons/logo.png" alt="残響" class="brand-logo" draggable="false">
       <span class="brand-sub">PracticeTool</span>
+      <!-- クリスマスの飾り（ひいらぎ） -->
+      <svg class="xmas-holly" viewBox="0 0 32 24" aria-hidden="true">
+        <path d="M15 13C10 4 4 6 2 9c3 0 4 3 2 5 4-1 6 2 5 5 3-3 5-3 6-6Z" fill="#2f7d4f"/>
+        <path d="M17 13c5-9 11-7 13-4-3 0-4 3-2 5-4-1-6 2-5 5-3-3-5-3-6-6Z" fill="#3a8f5c"/>
+        <circle cx="13.6" cy="15" r="2.6" fill="#d4282f"/>
+        <circle cx="18.4" cy="15" r="2.6" fill="#c41f27"/>
+        <circle cx="16" cy="11.4" r="2.6" fill="#e0353d"/>
+      </svg>
     </h1>
     <!-- アプリを人に紹介する（QRコードを見せる） -->
     <button class="header-share" id="openShare" aria-label="このアプリを紹介する">
@@ -293,40 +308,9 @@
 
     <!-- 音階 -->
     <section class="panel" id="panel-scale">
-      <!-- 調と種類 -->
-      <div class="tool-section">
-        <div class="section-head">
-          <span class="section-icon">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M9 3.5 7.5 20.5M15.5 3.5 14 20.5M4.5 9.5l15-2.5M4 16l15-2.5" class="line"/>
-            </svg>
-          </span>
-          <h2>調と種類</h2>
-        </div>
-        <div class="sub-head">楽器の調</div>
-        <div class="seg" id="scaleTranspositions">
-          <button data-transposition="0">C（実音）</button>
-          <button data-transposition="2">B♭</button>
-          <button data-transposition="9">E♭</button>
-          <button data-transposition="7">F</button>
-        </div>
-        <p class="note small-note" id="transpositionNote"></p>
-        <div class="sub-head">調</div>
-        <div class="key-grid" id="keyGrid"></div>
-        <div class="sub-head">種類</div>
-        <div class="chip-grid" id="scaleTypes"></div>
-        <div class="sub-head">始める高さ</div>
-        <div class="seg" id="scaleOctaves">
-          <button data-octave="-2">2つ下</button>
-          <button data-octave="-1">1つ下</button>
-          <button data-octave="0">標準</button>
-          <button data-octave="1">1つ上</button>
-        </div>
-      </div>
-
-      <!-- 音階（音の並びと再生） -->
-      <div class="tool-section">
-        <div class="section-head">
+      <div class="tool-section scale-main">
+        <!-- 選ぶ：押すと調と種類を選ぶ画面が下から出る -->
+        <button class="scale-picker" id="openScalePicker" aria-label="調と種類を選ぶ">
           <span class="section-icon">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <ellipse cx="5.6" cy="18.3" rx="2.4" ry="1.8" transform="rotate(-20 5.6 18.3)" class="dot"/>
@@ -336,74 +320,101 @@
               <path d="M7.8 8.8 19.8 2.9" class="beam"/>
             </svg>
           </span>
-          <div>
-            <h2 id="scaleTitle"></h2>
-            <div class="scale-start" id="scaleStart"></div>
-          </div>
-        </div>
-        <button class="guide-link" id="openGuide">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Zm0 15A2.5 2.5 0 0 0 6.5 23H20v-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
-          <span id="openGuideLabel">この音階の解説</span>
+          <span class="scale-picker-text">
+            <span class="scale-picker-title"><span id="scaleTitle"></span><span class="scale-picker-caret">▾</span></span>
+            <span class="scale-start" id="scaleStart"></span>
+          </span>
         </button>
+
+        <!-- 見る -->
         <div class="note-chips" id="noteChips"></div>
         <p class="note small-note">音符を押すと、その音が鳴ります。</p>
-        <button class="btn primary big full-width" id="scaleStartStop">再生</button>
-        <button class="btn big full-width rec-along" id="scaleRecord"></button>
-        <p class="note small-note">スピーカーで鳴らした音階と自分の演奏を、マイクでまとめて録音します。音階が終わると録音も止まり、「録音」の画面に保存されます。</p>
-        <p class="error" id="scaleRecError" hidden></p>
-      </div>
 
-      <!-- 再生の設定 -->
-      <div class="tool-section">
-        <div class="section-head">
-          <span class="section-icon">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M4 7h16M4 17h16" class="line"/>
-              <circle cx="9" cy="7" r="2.4" class="knob"/>
-              <circle cx="15" cy="17" r="2.4" class="knob"/>
-            </svg>
-          </span>
-          <h2>再生の設定</h2>
+        <!-- 吹く -->
+        <div class="sub-head">練習のしかた</div>
+        <div class="practice-modes" id="practiceModes">
+          <button data-mode="listen">お手本を聞く</button>
+          <button data-mode="self">自分で吹く</button>
+          <button data-mode="drone">ドローンで音程</button>
+          <button data-mode="relative">平行調と比べる</button>
         </div>
-        <div class="sub-head">テンポ</div>
-        <div class="tempo-row">
+        <p class="note small-note" id="practiceModeNote"></p>
+        <div class="drone-mix" id="scaleDroneMix">
+          <span class="note">ドローンの音量</span>
+          <input type="range" id="scaleDroneVolume" min="0.1" max="1" step="0.05" class="bpm-slider">
+        </div>
+
+        <div class="scale-tempo">
           <button class="round-btn small" id="scaleBpmDown" aria-label="テンポを下げる">−</button>
           <span class="tempo-value"><button class="tempo-edit" id="scaleBpmValue" aria-label="テンポを数字で入力">80</button> BPM</span>
           <button class="round-btn small" id="scaleBpmUp" aria-label="テンポを上げる">＋</button>
         </div>
         <input type="range" id="scaleBpmSlider" min="30" max="200" value="80" class="bpm-slider">
-        <div class="sub-head">音の長さ</div>
         <div class="note-lengths" id="noteLengths"></div>
-        <div class="sub-head">練習の補助</div>
-        <label class="setting-row">
-          <span class="sub-label">自分で吹く<small>音階は鳴らさず、楽譜の音符をテンポに合わせて光らせます</small></span>
-          <input type="checkbox" id="scaleSelfPlay" class="switch">
-        </label>
-        <label class="setting-row">
-          <span class="sub-label">ドローン（主音をのばす）<small>主音とのずれが「うなり」として聞こえます</small></span>
-          <input type="checkbox" id="scaleDrone" class="switch">
-        </label>
-        <div class="drone-mix" id="scaleDroneMix">
-          <span class="note">ドローンの音量</span>
-          <input type="range" id="scaleDroneVolume" min="0.1" max="1" step="0.05" class="bpm-slider">
+
+        <div class="scale-play">
+          <button class="btn primary big" id="scaleStartStop">再生</button>
+          <button class="btn big rec-along" id="scaleRecord"></button>
         </div>
-        <label class="setting-row" id="scaleRelativeRow">
-          <span class="sub-label">平行調も続けて<small id="scaleRelativeNote"></small></span>
-          <input type="checkbox" id="scaleRelative" class="switch">
-        </label>
-        <div class="sub-head">そのほか</div>
-        <label class="setting-row">
-          <span class="sub-label">メトロノームも鳴らす</span>
-          <input type="checkbox" id="scaleClick" class="switch">
-        </label>
-        <label class="setting-row">
-          <span class="sub-label">始める前に4拍数える</span>
-          <input type="checkbox" id="countIn" class="switch">
-        </label>
-        <label class="setting-row">
-          <span class="sub-label">くり返す</span>
-          <input type="checkbox" id="scaleRepeat" class="switch">
-        </label>
+        <p class="note small-note">「録音しながら」は、鳴らした音と自分の演奏をまとめて録音し、「録音」の画面に保存します。</p>
+        <p class="error" id="scaleRecError" hidden></p>
+
+        <div class="scale-links">
+          <button class="guide-link" id="openGuide">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Zm0 15A2.5 2.5 0 0 0 6.5 23H20v-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+            <span id="openGuideLabel">この音階の解説</span>
+          </button>
+          <button class="guide-link" id="toggleScaleSettings" aria-expanded="false">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="9" cy="7" r="2.4" fill="currentColor"/><circle cx="15" cy="17" r="2.4" fill="currentColor"/></svg>
+            <span>詳しい設定</span>
+          </button>
+        </div>
+
+        <!-- めったに変えない設定 -->
+        <div class="scale-settings" id="scaleSettings" hidden>
+          <div class="sub-head">楽器の調</div>
+          <div class="seg" id="scaleTranspositions">
+            <button data-transposition="0">C（実音）</button>
+            <button data-transposition="2">B♭</button>
+            <button data-transposition="9">E♭</button>
+            <button data-transposition="7">F</button>
+          </div>
+          <p class="note small-note" id="transpositionNote"></p>
+          <div class="sub-head">始める高さ</div>
+          <div class="seg" id="scaleOctaves">
+            <button data-octave="-2">2つ下</button>
+            <button data-octave="-1">1つ下</button>
+            <button data-octave="0">標準</button>
+            <button data-octave="1">1つ上</button>
+          </div>
+          <label class="setting-row">
+            <span class="sub-label">メトロノームも鳴らす</span>
+            <input type="checkbox" id="scaleClick" class="switch">
+          </label>
+          <label class="setting-row">
+            <span class="sub-label">始める前に4拍数える</span>
+            <input type="checkbox" id="countIn" class="switch">
+          </label>
+          <label class="setting-row">
+            <span class="sub-label">くり返す</span>
+            <input type="checkbox" id="scaleRepeat" class="switch">
+          </label>
+        </div>
+      </div>
+
+      <!-- 調と種類を選ぶ画面（下から出る） -->
+      <div class="sheet" id="scalePicker" hidden>
+        <div class="sheet-backdrop" id="scalePickerBackdrop"></div>
+        <div class="sheet-body" role="dialog" aria-label="調と種類を選ぶ">
+          <div class="sheet-head">
+            <h2>調と種類</h2>
+            <button class="btn primary small" id="closeScalePicker">完了</button>
+          </div>
+          <div class="sub-head">種類</div>
+          <div class="chip-grid" id="scaleTypes"></div>
+          <div class="sub-head">調</div>
+          <div class="key-grid" id="keyGrid"></div>
+        </div>
       </div>
     </section>
 
@@ -746,6 +757,7 @@
   <script src="js/ensemble.js"></script>
   <script src="js/zankyo.js"></script>
   <script src="js/share.js"></script>
+  <script src="js/xmas.js"></script>
   <script src="js/install.js"></script>
   <script src="js/update.js"></script>
 </body>
