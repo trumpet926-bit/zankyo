@@ -359,17 +359,44 @@ function writtenKey() {
   return (settings.scaleKey + settings.scaleTransposition) % 12;
 }
 
-// 実音の音階。始める高さは、楽器の楽譜が読みやすい高さ（標準なら楽譜の C4〜B4 から始まる）に合わせる
-function currentScale() {
-  const names = keyNamesFor(settings.scaleType);
-  const writtenTonic = 60 + writtenKey() + settings.scaleOctave * 12;
-  return buildScale(settings.scaleType, names[settings.scaleKey], writtenTonic - settings.scaleTransposition);
+// 音階を1つ作る：種類と（実音の）調と主音の高さから、実音と楽譜（楽器の読み方）の両方
+function scalePart(typeId, key, concertTonic) {
+  const names = keyNamesFor(typeId);
+  const t = settings.scaleTransposition;
+  return {
+    typeId,
+    concert: buildScale(typeId, names[key], concertTonic),
+    written: buildScale(typeId, names[(key + t) % 12], concertTonic + t),
+  };
 }
 
-// 楽器の読み方で書いた音階（五線譜用）
-function writtenScale() {
-  const names = keyNamesFor(settings.scaleType);
-  return buildScale(settings.scaleType, names[writtenKey()], 60 + writtenKey() + settings.scaleOctave * 12);
+// 平行調：短調なら3半音上の長調、長調なら3半音下の短調（自然的短音階）
+function relativeOf(typeId) {
+  const type = SCALE_TYPES.find((x) => x.id === typeId);
+  if (type.minor) return { typeId: 'major', shift: 3 };
+  if (typeId === 'major') return { typeId: 'natural-minor', shift: -3 };
+  return null; // 半音階・3度音階には平行調がない
+}
+
+// 練習する音階の並び（平行調も続けるときは2つ）
+// 始める高さは、楽器の楽譜が読みやすい高さ（標準なら楽譜の C4〜B4 から始まる）に合わせる
+function scaleParts() {
+  const writtenTonic = 60 + writtenKey() + settings.scaleOctave * 12;
+  const first = scalePart(settings.scaleType, settings.scaleKey, writtenTonic - settings.scaleTransposition);
+  const rel = relativeOf(settings.scaleType);
+  if (!settings.scaleRelative || !rel) return [first];
+  const second = scalePart(rel.typeId, (settings.scaleKey + rel.shift + 12) % 12, first.concert.up[0].midi + rel.shift);
+  return [first, second];
+}
+
+// 最初の音階（実音）
+function currentScale() {
+  return scaleParts()[0].concert;
+}
+
+function partName(part, which = 'concert') {
+  const type = SCALE_TYPES.find((x) => x.id === part.typeId);
+  return `${part[which].up[0].name} ${type.name}`;
 }
 
 let scaleNoteEls = []; // 五線譜の音符（再生中の音を光らせるため、上行・下行の順）
@@ -400,20 +427,28 @@ function renderScale() {
   });
   $('transpositionNote').textContent = TRANSPOSITION_NOTES[t];
 
-  const scale = currentScale();
-  const written = writtenScale();
-  const first = scale.up[0];
-  $('scaleTitle').textContent = `${first.name} ${type.name}`;
+  const parts = scaleParts();
+  const first = parts[0].concert.up[0];
+  $('scaleTitle').textContent = parts.map((p) => partName(p)).join(' → ');
   $('scaleStart').textContent = `始めの音：${nameWithOctave(first.name, first.midi)}` +
-    (t ? ` ・ ${TRANSPOSITION_NAMES[t]}の楽譜では ${written.up[0].name} ${type.name}` : '');
+    (t ? ` ・ ${TRANSPOSITION_NAMES[t]}の楽譜では ${parts.map((p) => partName(p, 'written')).join(' → ')}` : '');
+
+  // 平行調のスイッチ（半音階・3度音階には出さない）
+  const rel = relativeOf(settings.scaleType);
+  $('scaleRelativeRow').hidden = !rel;
+  if (rel) {
+    const relPart = scalePart(rel.typeId, (settings.scaleKey + rel.shift + 12) % 12, 60);
+    $('scaleRelativeNote').textContent = `${partName(parts[0])} のあとに ${partName(relPart)} を続けます。同じ音の並びで、主音が変わると響きが変わります`;
+  }
+  $('scaleRelative').checked = settings.scaleRelative;
   $('openGuideLabel').textContent = `「${type.name}」の特徴と吹き方`;
   // 上の段が上行、下の段が下行の五線譜
   // 五線譜は楽器の読み方、下の小さな音名と鳴る音は実音
-  const segments = ['up', 'down'].map((dir) => written[dir].map((note, i) => ({
+  const segments = parts.flatMap((p) => ['up', 'down'].map((dir) => p.written[dir].map((note, i) => ({
     ...note,
-    label: scale[dir][i].name,
-    sound: scale[dir][i].midi,
-  })));
+    label: p.concert[dir][i].name,
+    sound: p.concert[dir][i].midi,
+  }))));
   scaleNoteEls = renderScaleStaff($('noteChips'), segments, (note, el) => playSingleNote(note.sound, el));
 }
 
@@ -461,7 +496,7 @@ $('scaleBpmUp').addEventListener('click', () => setScaleBpm(settings.scaleBpm + 
 $('scaleBpmSlider').addEventListener('input', (e) => setScaleBpm(Number(e.target.value)));
 makeTempoEditable($('scaleBpmValue'), () => settings.scaleBpm, setScaleBpm);
 
-[['scaleClick', 'checked'], ['countIn', 'checked'], ['scaleRepeat', 'checked']]
+[['scaleClick', 'checked'], ['countIn', 'checked'], ['scaleRepeat', 'checked'], ['scaleSelfPlay', 'checked'], ['scaleDrone', 'checked']]
   .forEach(([id, prop]) => {
     $(id)[prop] = settings[id];
     $(id).addEventListener('change', (e) => {
@@ -469,6 +504,22 @@ makeTempoEditable($('scaleBpmValue'), () => settings.scaleBpm, setScaleBpm);
       saveSettings(settings);
     });
   });
+
+// 平行調を続けるかどうかで五線譜が変わるので、描き直す
+$('scaleRelative').addEventListener('change', (e) => setScaleOption('scaleRelative', e.target.checked));
+
+// ドローンの音量（鳴らしている途中でも変えられる）
+function renderDroneMix() {
+  $('scaleDroneMix').hidden = !settings.scaleDrone;
+}
+$('scaleDroneVolume').value = settings.scaleDroneVolume;
+$('scaleDroneVolume').addEventListener('input', (e) => {
+  settings.scaleDroneVolume = Number(e.target.value);
+  saveSettings(settings);
+  scaleDrone.setVolume(settings.scaleDroneVolume);
+});
+$('scaleDrone').addEventListener('change', renderDroneMix);
+renderDroneMix();
 
 // 音の長さ（1拍あたりの音の数）：2分音符＝0.5、4分音符＝1、8分音符＝2
 const NOTE_LENGTHS = [
@@ -557,7 +608,10 @@ scalePlayer.onNote = (index) => {
   scaleNoteEls.forEach((el, i) => el.classList.toggle('playing', i === index));
 };
 
+scalePlayer.onDrone = (midi, time) => scaleDrone.setNoteAt(midi, time);
+
 scalePlayer.onEnd = () => {
+  scaleDrone.stop();
   $('scaleStartStop').textContent = '再生';
   scaleNoteEls.forEach((el) => el.classList.remove('playing'));
   keepScreenOn(false);
@@ -572,11 +626,29 @@ $('scaleStartStop').addEventListener('click', () => {
   startScale();
 });
 
+// 音階の練習で鳴らすドローン（チューナー画面の基準音とは別。音色は同じ設定を使う）
+const scaleDrone = new Drone();
+
+// ドローンの高さ：その音階の主音の1オクターブ下
+function droneMidiOf(part) {
+  return Math.max(36, part.concert.up[0].midi - 12);
+}
+
 async function startScale() {
   stopMetronome();
-  const scale = currentScale();
+  const parts = scaleParts();
+  const drones = parts.flatMap((p) => [droneMidiOf(p), droneMidiOf(p)]);
+  if (settings.scaleDrone) {
+    stopDrone(); // チューナー画面の基準音とは重ねない
+    scaleDrone.timbre = settings.droneTimbre;
+    scaleDrone.volume = settings.scaleDroneVolume;
+    scaleDrone.setNote(drones[0]);
+    await scaleDrone.start();
+  }
   await scalePlayer.start({
-    segments: [scale.up, scale.down].map((notes) => notes.map((n) => n.midi)),
+    segments: parts.flatMap((p) => [p.concert.up, p.concert.down]).map((notes) => notes.map((n) => n.midi)),
+    silent: settings.scaleSelfPlay,
+    drones: settings.scaleDrone ? drones : null,
     bpm: settings.scaleBpm,
     notesPerBeat: settings.notesPerBeat,
     click: settings.scaleClick,

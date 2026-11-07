@@ -6,11 +6,13 @@ class ScalePlayer {
     this.isRunning = false;
     this.onNote = null; // 音が鳴った瞬間に呼ばれる（何番目の音か）
     this.onEnd = null;
+    this.onDrone = null; // まとまりの頭でドローンの高さを変えるとき（MIDI 番号, 時刻）
     this.session = 0;
   }
 
   // segments: 小節の頭から始める音のまとまり（上行・下行）。例：[[60, 62, ...], [72, 71, ...]]
-  async start({ segments, bpm, notesPerBeat, click, countIn, repeat }) {
+  // silent: 音階の音は鳴らさない（自分で吹くとき）。drones: まとまりごとのドローンの高さ
+  async start({ segments, bpm, notesPerBeat, click, countIn, repeat, silent = false, drones = null }) {
     this.ctx = getAudioContext();
     await this.ctx.resume();
     this.output = this.ctx.createGain();
@@ -22,7 +24,8 @@ class ScalePlayer {
     this.events = [];
     let beatPos = 0;
     let index = 0;
-    segments.forEach((midis) => {
+    segments.forEach((midis, s) => {
+      if (drones) this.events.push({ t: beatPos * beatLen, drone: drones[s] });
       // まとまりの最後の音は、小節（4拍）の終わりまで伸ばす
       const segBeats = Math.ceil(midis.length / notesPerBeat / 4) * 4;
       const segEnd = (beatPos + segBeats) * beatLen;
@@ -49,6 +52,7 @@ class ScalePlayer {
     }
 
     this.repeat = repeat;
+    this.silent = silent;
     this.cycleStart = startTime;
     this.pos = 0;
     this.isRunning = true;
@@ -81,10 +85,12 @@ class ScalePlayer {
       const ev = this.events[this.pos];
       const time = this.cycleStart + ev.t;
       if (time >= horizon) return;
-      if (ev.click) {
+      if (ev.drone) {
+        if (this.onDrone) this.onDrone(ev.drone, time);
+      } else if (ev.click) {
         playClick(this.ctx, this.output, time, ev.strong);
       } else {
-        playTone(this.ctx, this.output, ev.midi, time, ev.dur);
+        if (!this.silent) playTone(this.ctx, this.output, ev.midi, time, ev.dur);
         this.notifyNote(time, ev.index);
       }
       this.pos++;

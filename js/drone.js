@@ -53,6 +53,12 @@ class Drone {
     if (this.playing) this.voice.osc.frequency.setTargetAtTime(this.frequency, this.ctx.currentTime, 0.01);
   }
 
+  // 指定の時刻（AudioContext の秒）に高さを変える（音階の途中で調が変わるとき）
+  setNoteAt(midi, time) {
+    this.midi = midi;
+    if (this.playing) this.voice.osc.frequency.setTargetAtTime(this.frequency, time, 0.01);
+  }
+
   // 基準のA（ラ）が変わったときに、高さを合わせ直す
   retune() {
     this.setNote(this.midi);

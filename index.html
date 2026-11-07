@@ -374,6 +374,24 @@
         <input type="range" id="scaleBpmSlider" min="30" max="200" value="80" class="bpm-slider">
         <div class="sub-head">音の長さ</div>
         <div class="note-lengths" id="noteLengths"></div>
+        <div class="sub-head">練習の補助</div>
+        <label class="setting-row">
+          <span class="sub-label">自分で吹く<small>音階は鳴らさず、楽譜の音符をテンポに合わせて光らせます</small></span>
+          <input type="checkbox" id="scaleSelfPlay" class="switch">
+        </label>
+        <label class="setting-row">
+          <span class="sub-label">ドローン（主音をのばす）<small>主音とのずれが「うなり」として聞こえます</small></span>
+          <input type="checkbox" id="scaleDrone" class="switch">
+        </label>
+        <div class="drone-mix" id="scaleDroneMix">
+          <span class="note">ドローンの音量</span>
+          <input type="range" id="scaleDroneVolume" min="0.1" max="1" step="0.05" class="bpm-slider">
+        </div>
+        <label class="setting-row" id="scaleRelativeRow">
+          <span class="sub-label">平行調も続けて<small id="scaleRelativeNote"></small></span>
+          <input type="checkbox" id="scaleRelative" class="switch">
+        </label>
+        <div class="sub-head">そのほか</div>
         <label class="setting-row">
           <span class="sub-label">メトロノームも鳴らす</span>
           <input type="checkbox" id="scaleClick" class="switch">

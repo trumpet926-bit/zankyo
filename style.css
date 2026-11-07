@@ -1368,3 +1368,9 @@ body { min-height: 100vh; }
 .trim-row { display: flex; gap: 8px; margin-top: 10px; }
 .trim-row .btn { flex: 1; }
 .trim-cancel { display: block; margin: 10px auto 0; }
+
+/* 音階の練習の補助 */
+.setting-row .sub-label small { display: block; margin-top: 2px; font-size: 12px; font-weight: 400; color: var(--muted); line-height: 1.5; }
+.drone-mix { display: flex; align-items: center; gap: 10px; margin: 4px 0 8px; }
+.drone-mix .note { margin: 0; white-space: nowrap; }
+.drone-mix input { flex: 1; }

@@ -22,6 +22,10 @@ const DEFAULT_SETTINGS = {
   scaleClick: true,
   countIn: true,
   scaleRepeat: false,
+  scaleSelfPlay: false, // 自分で吹く（音階は鳴らさず、楽譜を光らせるだけ）
+  scaleDrone: false, // 音階の主音をのばし続ける（ドローン）
+  scaleDroneVolume: 0.5,
+  scaleRelative: false, // 平行調の音階も続けて
   a4: 442, // 基準のA（ラ）の周波数
   tunerSensitivity: 4, // 1=鈍い 〜 5=敏感
   droneMidi: 70, // 基準音の高さ（70 = B♭4）
