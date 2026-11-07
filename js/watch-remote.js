@@ -16,6 +16,20 @@
   } catch (e) {
     remoteId = null;
   }
+  // 隠しページの「貼り付けて登録」：コピーしておいた番号で登録する（登録していない端末でも使えるよう、先に用意する）
+  $('watchPaste').addEventListener('click', async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      const m = /([a-z0-9]{24})/.exec(text.replace(/^zankyo-watch:/, ''));
+      if (!m) throw new Error('no code');
+      localStorage.setItem(KEY, m[1]);
+      $('watchPasteNote').textContent = '登録しました。メトロノームの画面のいちばん下に「時計で操作」が出ます。';
+      setTimeout(() => location.reload(), 1500);
+    } catch (e) {
+      $('watchPasteNote').textContent = '番号が見つかりませんでした。先に、登録した方の画面で番号をコピーしてください。';
+    }
+  });
+
   if (!remoteId) return; // 時計を登録していない人には、何も出さない
 
   $('watchCard').hidden = false;
@@ -106,6 +120,17 @@
   }
 
   $('watchToggle').addEventListener('click', () => (listening ? stop() : start()));
+
+  // iPhone では Safari とホーム画面のアプリの記録が別々なので、番号をコピーして、もう一方に貼り付けて登録できるようにする
+  $('watchCopy').addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(`zankyo-watch:${remoteId}`);
+      $('watchCopyNote').hidden = false;
+    } catch (e) {
+      $('watchCopyNote').textContent = 'コピーできませんでした。';
+      $('watchCopyNote').hidden = false;
+    }
+  });
   // アプリに戻ってきたら、画面を消さない設定をかけ直す（離れると外れるため）
   document.addEventListener('visibilitychange', () => {
     if (listening && document.visibilityState === 'visible') keepScreenOn(true);

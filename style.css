@@ -1581,3 +1581,9 @@ html.theme-xmas .tool-section::before {
 @media (prefers-reduced-motion: reduce) {
   .xmas-lights i, .xmas-star { animation: none; }
 }
+
+/* 隠しページの、時計の登録（目立たせない） */
+.zk-watch { margin-top: 18px; text-align: center; }
+.zk-watch-btn { padding: 6px 12px; border-radius: 999px; border: 1px solid rgba(214, 178, 94, 0.3); background: none; color: rgba(168, 162, 143, 0.8); font: inherit; font-size: 11px; cursor: pointer; }
+.zk-watch-note { margin: 8px 0 0; font-size: 11px; color: #a8a28f; }
+#watchCopy { margin-top: 8px; }
