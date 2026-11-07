@@ -198,6 +198,20 @@
       </div>
 
       <p class="note">iPhoneで音が出ないときは、本体の消音スイッチ（マナーモード）をオフにしてください。</p>
+      <!-- 時計（Garmin）からの操作。時計を登録した端末だけに出る -->
+      <div class="tool-section" id="watchCard" hidden>
+        <div class="section-head">
+          <span class="section-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="6.5" class="line"/>
+              <path d="M9 5.5 9.8 2h4.4l.8 3.5M9 18.5l.8 3.5h4.4l.8-3.5M12 9v3l2 1.5" class="line"/>
+            </svg>
+          </span>
+          <h2>時計で操作</h2>
+        </div>
+        <button class="btn primary full-width" id="watchToggle">時計からの操作を受け付ける</button>
+        <p class="note" id="watchNote"></p>
+      </div>
     </section>
 
     <!-- チューナー -->
@@ -769,6 +783,7 @@
   <script src="js/zankyo.js"></script>
   <script src="js/share.js"></script>
   <script src="js/xmas.js"></script>
+  <script src="js/watch-remote.js"></script>
   <script src="js/install.js"></script>
   <script src="js/update.js"></script>
 </body>

@@ -192,6 +192,51 @@
           }
         }
       }
+    },
+    "remote": {
+      "$id": {
+        ".read": "$id.matches(/^[a-z0-9]{24}$/)",
+        ".write": "$id.matches(/^[a-z0-9]{24}$/)",
+        "cmd": {
+          ".validate": "newData.hasChildren(['cmd', 'seq'])",
+          "cmd": {
+            ".validate": "newData.isString() && newData.val().matches(/^(toggle|up1|down1|up5|down5|rec)$/)"
+          },
+          "seq": {
+            ".validate": "newData.isNumber()"
+          },
+          "at": {
+            ".validate": "newData.isNumber()"
+          },
+          "$other": {
+            ".validate": false
+          }
+        },
+        "status": {
+          ".validate": "newData.hasChildren(['bpm', 'running', 'recording', 'rec', 'alive'])",
+          "bpm": {
+            ".validate": "newData.isNumber()"
+          },
+          "running": {
+            ".validate": "newData.isBoolean()"
+          },
+          "recording": {
+            ".validate": "newData.isBoolean()"
+          },
+          "rec": {
+            ".validate": "newData.isNumber()"
+          },
+          "alive": {
+            ".validate": "newData.isNumber()"
+          },
+          "$other": {
+            ".validate": false
+          }
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
     }
   }
 }

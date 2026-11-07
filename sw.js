@@ -34,6 +34,7 @@ const FILES = [
   'js/zankyo.js',
   'js/share.js',
   'js/xmas.js',
+  'js/watch-remote.js',
   'js/install.js',
   'js/update.js',
   'icons/logo.png',
