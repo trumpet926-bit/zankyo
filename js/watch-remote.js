@@ -39,21 +39,18 @@
   let lastSeq = null;
   let alive = 0;
   let statusTimer = null;
-  let recStartedAt = 0;
-  let wasRecording = false;
   let recFailedUntil = 0; // 録音を始められなかったことを、しばらく時計に知らせる
 
   function writeStatus() {
     if (!statusRef) return;
     const recording = recorder.isRecording;
-    if (recording && !wasRecording) recStartedAt = Date.now();
-    wasRecording = recording;
     alive++;
     statusRef.set({
       bpm: settings.bpm,
       running: metronome.isRunning,
       recording,
-      rec: recording ? Math.floor((Date.now() - recStartedAt) / 1000) : Date.now() < recFailedUntil ? -1 : 0,
+      // 録音を始めた正確な時刻からの秒数（時計はこれをもとに、自分で1秒ずつ数える）
+      rec: recording ? Math.floor((performance.now() - recorder.startedAt) / 1000) : Date.now() < recFailedUntil ? -1 : 0,
       alive,
     }).catch(() => {});
   }
