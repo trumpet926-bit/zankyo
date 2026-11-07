@@ -70,6 +70,13 @@
   async function start() {
     $('watchToggle').disabled = true;
     getAudioContext().resume(); // 画面を触ったときでないと音を出せないため、ここで準備する
+    // iPhone は画面を触ったときでないとマイクを使わせてくれないので、ここで一度マイクの許可をもらっておく
+    // （すぐ閉じる。時計から録音を始めたときに、あらためて開く）
+    try {
+      closeMicrophone(await openMicrophone());
+    } catch (e) {
+      // 許可されなくても、メトロノームとテンポの操作はできる
+    }
     try {
       const db = await SyncRoom.database();
       const base = db.ref(`remote/${remoteId}`);
