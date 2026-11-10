@@ -1601,3 +1601,34 @@ html.theme-xmas .tool-section::before {
 .zk-shared-remove { padding: 6px 12px; border-radius: 999px; border: 1px solid rgba(243, 166, 166, 0.5); background: none; color: #f3a6a6; font: inherit; font-size: 12px; cursor: pointer; }
 .zk-shared-note { margin: 0; font-size: 13px; color: #a8a28f; }
 .hidden-share-form textarea { width: 100%; resize: vertical; }
+
+/* タップで合わせる（オンライン合奏用） */
+.tapcal-open { margin-top: 10px; }
+.tapcal-view { position: fixed; inset: 0; z-index: 45; overflow-y: auto; background: var(--bg); color: var(--text); }
+.tapcal-inner { max-width: 440px; margin: 0 auto; padding: calc(28px + env(safe-area-inset-top)) 20px calc(28px + env(safe-area-inset-bottom)); text-align: center; }
+.tapcal-tag { display: inline-block; margin: 0; padding: 3px 12px; border-radius: 999px; background: var(--accent); color: var(--accent-text); font-size: 12px; font-weight: 700; }
+.tapcal-title { margin: 10px 0 6px; font-size: 22px; }
+.tapcal-note { min-height: 4.8em; }
+.tapcal-pad {
+  display: block;
+  width: min(62vw, 240px);
+  height: min(62vw, 240px);
+  margin: 18px auto 8px;
+  border-radius: 50%;
+  border: 3px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  font: inherit;
+  font-size: 20px;
+  font-weight: 700;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: pointer;
+}
+.tapcal-pad.active { border-color: var(--accent); color: var(--accent); }
+.tapcal-pad.hit { animation: tapcal-hit 0.18s ease-out; }
+@keyframes tapcal-hit { from { transform: scale(0.94); background: var(--accent-soft); } to { transform: scale(1); } }
+.tapcal-pad:disabled { opacity: 0.5; }
+.tapcal-count { margin: 0; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.tapcal-actions { display: flex; justify-content: center; gap: 10px; margin-top: 16px; }

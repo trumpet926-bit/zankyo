@@ -31,6 +31,7 @@ const FILES = [
   'js/sync.js',
   'js/sync-ui.js',
   'js/ensemble.js',
+  'js/tap-calib.js',
   'js/zankyo.js',
   'js/share.js',
   'js/xmas.js',

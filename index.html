@@ -185,9 +185,11 @@
             <button class="btn primary full-width" id="syncCalib" hidden>基準の台に自動で合わせる</button>
             <p class="note" id="syncCalibNote"></p>
             <p class="note" id="syncCalibResult" hidden></p>
+            <button class="btn full-width tapcal-open" id="openTapCal">タップで合わせる（オンライン合奏用）</button>
+            <p class="note small-note">離れた場所の人と合わせるときの補正です。一緒にいるときは、上の「基準の台に自動で合わせる」のほうが正確です。</p>
           </div>
           <label class="sync-offset">音のタイミング補正（手で微調整）
-            <input type="range" id="syncOffset" min="-200" max="200" step="5" class="bpm-slider">
+            <input type="range" id="syncOffset" min="-400" max="200" step="5" class="bpm-slider">
             <span class="note" id="syncOffsetValue">0 ms</span>
           </label>
           <p class="note">ほかの人より音が早く聞こえるときは右へ、遅いときは左へ動かします。リズム・音・光は自分だけの設定です。</p>
@@ -606,6 +608,7 @@
 
           <div class="ens-actions">
             <button class="ens-chip" id="ensMute">マイクを切る</button>
+            <button class="ens-chip" id="ensTapCal">タップで合わせる（オンライン合奏用）</button>
           </div>
           <label class="ens-option">
             <input type="checkbox" id="metroViaElement" class="switch">
@@ -657,6 +660,22 @@
         <li>音階と管楽器向けの解説</li>
         <li>録音・聞き返し</li>
       </ul>
+    </div>
+  </div>
+
+  <!-- タップで合わせる（オンライン合奏用の補正） -->
+  <div class="tapcal-view" id="tapCal" hidden>
+    <div class="tapcal-inner">
+      <p class="tapcal-tag">オンライン合奏用</p>
+      <h2 class="tapcal-title">タップで合わせる</h2>
+      <p class="note tapcal-note" id="tapCalNote"></p>
+      <p class="note small-note">離れた場所の人と合わせるときの補正です。一緒にいるときは「基準の台に自動で合わせる」のほうが正確です。</p>
+      <button class="tapcal-pad" id="tapCalPad" disabled aria-label="ここをタップ">タップ</button>
+      <p class="tapcal-count" id="tapCalCount"></p>
+      <div class="tapcal-actions">
+        <button class="btn primary" id="tapCalStart">はじめる</button>
+        <button class="btn" id="tapCalClose">閉じる</button>
+      </div>
     </div>
   </div>
 
@@ -790,6 +809,7 @@
   <script src="js/sync.js"></script>
   <script src="js/sync-ui.js"></script>
   <script src="js/ensemble.js"></script>
+  <script src="js/tap-calib.js"></script>
   <script src="js/zankyo.js"></script>
   <script src="js/share.js"></script>
   <script src="js/xmas.js"></script>

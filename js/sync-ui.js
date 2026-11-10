@@ -266,6 +266,14 @@
     $('syncOffset').value = settings.syncOffsetMs;
     $('syncOffsetValue').textContent = offsetText(settings.syncOffsetMs);
   }
+  // タップで合わせる（tap-calib.js）から補正を決めるとき
+  syncHooks.setOffset = (ms) => {
+    settings.syncOffsetMs = ms;
+    saveSettings(settings);
+    showOffset();
+    if (following && room.state && room.state.running) metronome.realign(timelineOf(room.state));
+  };
+
   $('syncOffset').addEventListener('input', (e) => {
     settings.syncOffsetMs = Number(e.target.value);
     saveSettings(settings);
