@@ -1587,3 +1587,17 @@ html.theme-xmas .tool-section::before {
 .zk-watch-btn { padding: 6px 12px; border-radius: 999px; border: 1px solid rgba(214, 178, 94, 0.3); background: none; color: rgba(168, 162, 143, 0.8); font: inherit; font-size: 11px; cursor: pointer; }
 .zk-watch-note { margin: 8px 0 0; font-size: 11px; color: #a8a28f; }
 #watchCopy { margin-top: 8px; }
+
+/* 残響のページの「聞いてほしい録音」 */
+#zkSharedSection { margin-top: 36px; }
+.zk-shared { display: grid; gap: 14px; }
+.zk-shared-item { padding: 14px; border: 1px solid rgba(214, 178, 94, 0.3); border-radius: 14px; background: rgba(255, 255, 255, 0.03); }
+.zk-shared-item h3 { margin: 0; font-family: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", serif; font-size: 16px; font-weight: 600; }
+.zk-shared-meta { margin: 2px 0 0; font-size: 12px; color: #a8a28f; }
+.zk-shared-comment { margin: 8px 0 0; font-size: 14px; line-height: 1.7; white-space: pre-wrap; }
+.zk-shared-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 10px; }
+.zk-shared-row audio { width: 100%; }
+.zk-shared-play { padding: 8px 18px; border-radius: 999px; border: 0; background: linear-gradient(180deg, #f5dc95, #c99a3c); color: #1d1606; font: inherit; font-weight: 700; cursor: pointer; }
+.zk-shared-remove { padding: 6px 12px; border-radius: 999px; border: 1px solid rgba(243, 166, 166, 0.5); background: none; color: #f3a6a6; font: inherit; font-size: 12px; cursor: pointer; }
+.zk-shared-note { margin: 0; font-size: 13px; color: #a8a28f; }
+.hidden-share-form textarea { width: 100%; resize: vertical; }

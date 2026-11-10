@@ -35,6 +35,7 @@ const FILES = [
   'js/share.js',
   'js/xmas.js',
   'js/watch-remote.js',
+  'js/hidden-share.js',
   'js/install.js',
   'js/update.js',
   'icons/logo.png',

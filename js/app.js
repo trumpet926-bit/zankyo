@@ -907,12 +907,15 @@ function renderRecordings() {
       <div class="rec-actions">
         <button class="btn small" data-act="rename">名前</button>
         <button class="btn small" data-act="share">共有・保存</button>
+        ${typeof ownerKey === 'function' && ownerKey() ? '<button class="btn small" data-act="hidden">残響に置く</button>' : ''}
         <button class="btn small danger" data-act="delete">削除</button>
       </div>`;
     item.querySelector('.rec-title').textContent = displayName(rec); // 名前は文字としてそのまま表示する
     item.querySelector('.rec-main').addEventListener('click', () => openInPlayer(rec, true));
     item.querySelector('[data-act="rename"]').addEventListener('click', () => startRename(item, rec));
     item.querySelector('[data-act="share"]').addEventListener('click', () => shareRecording(rec));
+    const hidden = item.querySelector('[data-act="hidden"]');
+    if (hidden) hidden.addEventListener('click', () => startHiddenShare(item, rec)); // 持ち主だけ：残響のページに置く
     item.querySelector('[data-act="delete"]').addEventListener('click', () => deleteRecording(rec));
     list.appendChild(item);
   });

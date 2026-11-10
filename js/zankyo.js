@@ -51,6 +51,7 @@
   function openZankyo() {
     stopMetronome();
     renderVideos();
+    renderSharedRecordings();
     $('zankyoView').hidden = false;
     $('zankyoView').scrollTop = 0;
     document.body.style.overflow = 'hidden';
@@ -59,6 +60,7 @@
   function closeZankyo() {
     $('zankyoView').hidden = true;
     $('zkVideos').innerHTML = ''; // 再生中の動画も止める
+    clearSharedRecordings();
     document.body.style.overflow = '';
   }
 
