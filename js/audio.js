@@ -102,27 +102,92 @@ function getAudioContext() {
   return sharedAudioContext;
 }
 
-function playClick(ctx, destination, time, strong) {
+// メトロノームの音色。iPhone の小さなスピーカーでも聞こえやすいよう、倍音（硬さ）の多い音を用意する
+const CLICK_SOUNDS = [
+  { id: 'wood', name: 'ウッドブロック' },
+  { id: 'beep', name: '電子音' },
+  { id: 'cowbell', name: 'カウベル' },
+  { id: 'click', name: 'クリック' },
+];
+let clickSound = 'wood';
+
+function setClickSound(id) {
+  clickSound = CLICK_SOUNDS.some((s) => s.id === id) ? id : 'wood';
+}
+
+// 短い「音のかたまり」を1つ鳴らす（波の形・高さ・大きさ・長さ）
+function clickTone(ctx, destination, time, { type = 'sine', freq, amp, dur, filter = null }) {
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
-  osc.frequency.value = strong ? 1600 : 1000;
-  gain.gain.setValueAtTime(strong ? 1 : 0.6, time);
-  gain.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
-  osc.connect(gain).connect(destination);
+  osc.type = type;
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0.0001, time);
+  gain.gain.linearRampToValueAtTime(amp, time + 0.002);
+  gain.gain.exponentialRampToValueAtTime(0.001, time + dur);
+  let node = osc;
+  if (filter) {
+    const f = ctx.createBiquadFilter();
+    f.type = filter.type;
+    f.frequency.value = filter.freq;
+    f.Q.value = filter.q || 1;
+    node = node.connect(f);
+  }
+  node.connect(gain).connect(destination);
   osc.start(time);
-  osc.stop(time + 0.06);
+  osc.stop(time + dur + 0.02);
+}
+
+// ほんの一瞬の「ザッ」という音（木を叩いた感じを出す）
+let clickNoise = null;
+function clickNoiseBurst(ctx, destination, time, freq, amp) {
+  if (!clickNoise || clickNoise.sampleRate !== ctx.sampleRate) {
+    clickNoise = ctx.createBuffer(1, Math.round(ctx.sampleRate * 0.03), ctx.sampleRate);
+    const data = clickNoise.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+  }
+  const src = ctx.createBufferSource();
+  src.buffer = clickNoise;
+  const f = ctx.createBiquadFilter();
+  f.type = 'bandpass';
+  f.frequency.value = freq;
+  f.Q.value = 1.5;
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(amp, time);
+  gain.gain.exponentialRampToValueAtTime(0.001, time + 0.02);
+  src.connect(f).connect(gain).connect(destination);
+  src.start(time);
+}
+
+// strong：1拍目（強め・高め）。sub：拍の中の細かい刻み（弱め・低め）
+function playClickSound(ctx, destination, time, strong, sub) {
+  const level = sub ? 0.45 : strong ? 1 : 0.8;
+  if (clickSound === 'wood') {
+    const f = sub ? 760 : strong ? 1250 : 950;
+    clickTone(ctx, destination, time, { type: 'triangle', freq: f, amp: 0.8 * level, dur: 0.08 });
+    clickTone(ctx, destination, time, { type: 'sine', freq: f * 2.7, amp: 0.35 * level, dur: 0.035 });
+    clickNoiseBurst(ctx, destination, time, f * 2, 0.4 * level);
+  } else if (clickSound === 'beep') {
+    const f = sub ? 1100 : strong ? 1760 : 1320;
+    clickTone(ctx, destination, time, { type: 'square', freq: f, amp: 0.7 * level, dur: sub ? 0.035 : 0.06, filter: { type: 'lowpass', freq: 7000 } });
+  } else if (clickSound === 'cowbell') {
+    // 2つの四角い波を重ねて、金属の「カン」にする
+    const base = sub ? 0.8 : strong ? 1.15 : 1;
+    [540, 800].forEach((f) => clickTone(ctx, destination, time, {
+      type: 'square', freq: f * base, amp: 0.5 * level, dur: sub ? 0.12 : 0.28, filter: { type: 'bandpass', freq: 900 * base, q: 1.2 },
+    }));
+  } else {
+    // クリック（もとの音）
+    clickTone(ctx, destination, time, { freq: sub ? 700 : strong ? 1600 : 1000, amp: sub ? 0.35 : strong ? 1 : 0.6, dur: sub ? 0.04 : 0.05 });
+  }
+}
+
+function playClick(ctx, destination, time, strong) {
+  playClickSound(ctx, destination, time, strong, false);
 }
 
 // 拍の中の細かい刻みの音（拍の音より低く小さい）
 function playSubClick(ctx, destination, time) {
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.frequency.value = 700;
-  gain.gain.setValueAtTime(0.35, time);
-  gain.gain.exponentialRampToValueAtTime(0.001, time + 0.04);
-  osc.connect(gain).connect(destination);
-  osc.start(time);
-  osc.stop(time + 0.05);
+  playClickSound(ctx, destination, time, false, true);
 }
 
 // 音程のある音（金管っぽい少し明るい音）

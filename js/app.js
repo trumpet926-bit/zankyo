@@ -530,6 +530,30 @@ $('toggleScaleSettings').addEventListener('click', () => {
   $('toggleScaleSettings').setAttribute('aria-expanded', String(open));
 });
 
+// ---------- メトロノームの音色（押すと試しに鳴らす） ----------
+setClickSound(settings.clickSound);
+function renderClickSounds() {
+  document.querySelectorAll('#clickSounds button').forEach((b) => b.classList.toggle('selected', b.dataset.sound === settings.clickSound));
+}
+CLICK_SOUNDS.forEach((sound) => {
+  const btn = document.createElement('button');
+  btn.dataset.sound = sound.id;
+  btn.textContent = sound.name;
+  btn.addEventListener('click', async () => {
+    settings.clickSound = sound.id;
+    saveSettings(settings);
+    setClickSound(sound.id);
+    renderClickSounds();
+    const ctx = getAudioContext();
+    await ctx.resume();
+    if (!metronome.isRunning) {
+      for (let i = 0; i < 4; i++) playClick(ctx, audioOutput(ctx), ctx.currentTime + 0.05 + i * 0.4, i === 0);
+    }
+  });
+  $('clickSounds').appendChild(btn);
+});
+renderClickSounds();
+
 // 音の長さ（1拍あたりの音の数）：2分音符＝0.5、4分音符＝1、8分音符＝2
 const NOTE_LENGTHS = [
   { value: 0.5, icon: 'half', name: '2分音符', sub: '1音を2拍' },
