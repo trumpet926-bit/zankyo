@@ -1465,5 +1465,25 @@ $('accentCheck').checked = settings.accent;
 setBpm(settings.bpm);
 renderBeatDots();
 
+// ---------- 外から開かれたときの指定（譜面ファイルなどのアプリから） ----------
+// ?tab=metronome|tuner|scale|recorder|ensemble  ?bpm=120  ?beats=3
+// 使った指定は URL から消す（再読み込みで同じ指定がくり返されないように）。?room= などはそのまま
+(function applyLaunchParams() {
+  const q = new URLSearchParams(location.search);
+  if (!q.has('tab') && !q.has('bpm') && !q.has('beats')) return;
+  const bpm = Number(q.get('bpm'));
+  if (bpm >= 30 && bpm <= 240) setBpm(bpm);
+  const beats = Number(q.get('beats'));
+  if (beats >= 1 && beats <= 7 && beats !== settings.beats) {
+    $('beatsSelect').value = String(beats);
+    $('beatsSelect').dispatchEvent(new Event('change'));
+  }
+  const tab = q.get('tab');
+  if (tab && PANEL_ORDER.includes(tab)) showPanel(tab);
+  ['tab', 'bpm', 'beats'].forEach((k) => q.delete(k));
+  const rest = q.toString();
+  history.replaceState(null, '', location.pathname + (rest ? `?${rest}` : '') + location.hash);
+})();
+
 setScaleBpm(settings.scaleBpm);
 renderScale();
