@@ -1768,3 +1768,57 @@ button, input, select, textarea { font-family: inherit; letter-spacing: inherit;
 .big-cue { border-radius: 999px; font-weight: 500; }
 .share-actions .ens-btn { border-radius: 999px; }
 .click-sounds button { font-size: 12px; letter-spacing: 0; white-space: nowrap; }
+
+/* ================================================================
+   A案（墨と余白：静かなクリーム）× 書のはんこ × C案の色とりどりの下のメニュー
+   （スマホで見ると、青い帯の案は思ったよりにぎやかだったため）
+   ================================================================ */
+/* 上：クリームの帯。右上に黄色の円、下のふちに小さな青い半円 */
+.app-header {
+  background:
+    radial-gradient(circle at calc(100% + 18px) -26px, var(--ts-yellow) 0 76px, transparent 77px),
+    radial-gradient(circle at 38% 100%, var(--ts-blue) 0 15px, transparent 16px),
+    var(--bg);
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+.brand-logo { width: 52px; height: 52px; padding: 7px; }
+.brand-sub { color: var(--text); }
+.header-share { color: var(--text); }
+.mini-metro { border-color: var(--border); background: var(--surface); color: var(--text); }
+.mini-icon { background: var(--accent); color: var(--accent-text); }
+.mini-metro.running .mini-icon { background: var(--ts-yellow); color: var(--text); }
+
+/* 中：静かに。色は「押すもの」と「動いているもの」だけ */
+.section-icon { background: var(--panel); color: var(--accent); }
+.round-btn { background: var(--panel); border-color: transparent; color: var(--accent); }
+.tap-btn { background: transparent; border: 2px solid var(--accent); color: var(--accent); }
+.tap-btn:active { background: var(--accent-soft); }
+.toggle[aria-pressed="true"] { background: var(--ts-yellow); border-color: var(--ts-yellow); color: var(--text); }
+
+/* 下のメニュー：機能ごとに色を変える（C案）。今の画面は、その色の丸い印 */
+.tab[data-panel="metronome"] { --tab-color: #2F5DC8; --tab-on: #FBF6EA; }
+.tab[data-panel="tuner"] { --tab-color: #237046; --tab-on: #FBF6EA; }
+.tab[data-panel="scale"] { --tab-color: #8A6500; --tab-on: #1F1D24; --tab-pill: #F2B705; }
+.tab[data-panel="recorder"] { --tab-color: #C8401F; --tab-on: #FBF6EA; }
+.tab[data-panel="ensemble"] { --tab-color: #2F5DC8; --tab-on: #FBF6EA; }
+.tab { color: var(--tab-color, var(--muted)); }
+.tab.active { color: var(--tab-color, var(--text)); }
+.tab.active .tab-icon { background: var(--tab-pill, var(--tab-color)); color: var(--tab-on); }
+
+/* ほかの画面も、形は小さく控えめに */
+.share-view, .zk-view {
+  background:
+    radial-gradient(circle at 0 0, var(--ts-yellow) 0 84px, transparent 85px),
+    radial-gradient(circle at 100% 230px, var(--ts-blue) 0 26px, transparent 27px),
+    var(--bg);
+}
+.big-view {
+  background:
+    radial-gradient(circle at 100% 0, var(--ts-yellow) 0 84px, transparent 85px),
+    radial-gradient(circle at 0 100%, var(--ts-blue) 0 40px, transparent 41px),
+    var(--bg);
+}
+.big-close { color: var(--text); }
+.big-round { background: var(--panel); color: var(--accent); }
+.big-toggles .toggle[aria-pressed="true"] { background: var(--ts-yellow); border-color: var(--ts-yellow); color: var(--text); }
