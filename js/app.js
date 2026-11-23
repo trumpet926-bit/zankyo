@@ -288,6 +288,7 @@ const MINI_STOP = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6"
 
 function showMetronomeRunning(running) {
   $('startStop').textContent = running ? 'ストップ' : 'スタート';
+  $('startStop').classList.toggle('running', running); // 鳴っている間は黄色（T'S コンセプト：黄＝動いている）
   $('bigStartStop').textContent = running ? 'ストップ' : 'スタート';
   $('ensStart').textContent = running ? 'ストップ' : 'スタート';
   $('ensStart').classList.toggle('running', running);

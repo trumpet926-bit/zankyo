@@ -1384,51 +1384,7 @@ body { min-height: 100vh; }
 
 /* ---------- クリスマス（html.theme-xmas のときだけ）。書の「残響」はそのまま ---------- */
 .xmas-holly, .xmas-snow { display: none; }
-html.theme-xmas {
-  --bg: #f4f1ea;
-  --surface: #ffffff;
-  --text: #1b1a17;
-  --muted: #6f6a5f;
-  --border: #dcd5c6;
-  --accent: #b3202a;
-  --accent-text: #ffffff;
-  --accent-soft: rgba(179, 32, 42, 0.12);
-  --beat: #e6e0d3;
-  --beat-on: #c9a227;
-  --beat-strong: #b3202a;
-  --danger: #8f1d1d;
-}
-@media (prefers-color-scheme: dark) {
-  html.theme-xmas {
-    --bg: #0c1511;
-    --surface: #14211b;
-    --text: #f3efe4;
-    --muted: #a3ab9c;
-    --border: #26392f;
-    --accent: #e0464f;
-    --accent-text: #ffffff;
-    --accent-soft: rgba(224, 70, 79, 0.18);
-    --beat: #22332a;
-    --beat-on: #e3c26a;
-    --beat-strong: #e0464f;
-    --danger: #f2878b;
-  }
-}
-/* 上の帯：深い緑に、うっすら雪の粒 */
-html.theme-xmas .app-header {
-  background:
-    radial-gradient(circle at 50% 22%, rgba(255, 255, 255, 0.5) 0 1px, transparent 1.6px),
-    radial-gradient(circle at 58% 78%, rgba(255, 255, 255, 0.4) 0 1px, transparent 1.6px),
-    radial-gradient(circle at 66% 30%, rgba(255, 255, 255, 0.45) 0 1.2px, transparent 1.8px),
-    radial-gradient(circle at 88% 86%, rgba(255, 255, 255, 0.35) 0 1px, transparent 1.6px),
-    radial-gradient(circle at 97% 12%, rgba(255, 255, 255, 0.5) 0 1px, transparent 1.6px),
-    linear-gradient(135deg, #14452f, #061510);
-}
-html.theme-xmas .brand-sub { color: #f1d48a; }
 html.theme-xmas .xmas-holly { display: block; width: 26px; height: 20px; margin: 0 0 2px -4px; align-self: flex-end; }
-html.theme-xmas .mini-metro { border-color: rgba(241, 212, 138, 0.6); }
-html.theme-xmas .mini-icon { background: #c41f27; color: #fff; }
-html.theme-xmas .header-share { color: #f4ecd8; }
 
 /* 雪：カードの後ろ、書の透かしの前をゆっくり降る */
 html.theme-xmas .xmas-snow { display: block; position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
@@ -1635,3 +1591,109 @@ html.theme-xmas .tool-section::before {
 
 /* メトロノームの音色 */
 .click-sounds button { font-size: 13px; padding-left: 4px; padding-right: 4px; }
+
+/* ================================================================
+   T'S コンセプト（禅丸ゴシック・クリーム地・暖かい原色・円と半円）× 残響の書（朱のはんこ）
+   色の意味：青＝選ぶ・主なボタン、黄＝動いている・光、赤＝録音・タップ・大事なこと。
+   暗い画面にはしない（端末が暗い表示の設定でも、明るいクリームのまま）
+   ================================================================ */
+:root {
+  color-scheme: light;
+  --bg: #F7F0E1;
+  --surface: #FBF6EA;
+  --panel: #F3ECDC;
+  --text: #1F1D24;
+  --muted: #6B6573;
+  --border: #E2D7C1;
+  --accent: #2F5DC8;
+  --accent-text: #FBF6EA;
+  --accent-soft: rgba(47, 93, 200, 0.12);
+  --beat: #E9E1CF;
+  --beat-on: #F2B705;
+  --beat-strong: #E4572E;
+  --danger: #C8401F;
+  --ts-red: #E4572E;
+  --ts-yellow: #F2B705;
+  --ts-blue: #2F5DC8;
+  --ts-green: #2E8B57;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #F7F0E1;
+    --surface: #FBF6EA;
+    --text: #1F1D24;
+    --muted: #6B6573;
+    --border: #E2D7C1;
+    --accent: #2F5DC8;
+    --accent-text: #FBF6EA;
+    --accent-soft: rgba(47, 93, 200, 0.12);
+    --beat: #E9E1CF;
+    --beat-on: #F2B705;
+    --beat-strong: #E4572E;
+    --danger: #C8401F;
+  }
+  body::before { background-image: url("icons/watermark-light.png"); opacity: 0.06; }
+  .xmas-snow i { background: #9fb3c6; }
+  .xmas-snow i.crystal { color: #b8cadb; }
+}
+html { background-color: var(--surface); }
+body {
+  font-family: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic UI", sans-serif;
+  letter-spacing: 0.03em;
+  font-synthesis: none; /* 太字を作らない（禅丸ゴシックは中太まで） */
+}
+button, input, select, textarea { font-family: inherit; letter-spacing: inherit; }
+
+/* 上の帯：青に、赤の四分円（右上の角）と黄色の半円（下のふち）。左に書のはんこ。
+   形は背景として描く（帯の外に下がるクリスマスの電球を切らないように） */
+.app-header {
+  background:
+    radial-gradient(circle at 100% 0, var(--ts-red) 0 92px, transparent 93px),
+    radial-gradient(circle at 30% 100%, var(--ts-yellow) 0 20px, transparent 21px),
+    var(--ts-blue);
+  color: var(--surface);
+}
+.brand-logo {
+  width: 58px;
+  height: 58px;
+  box-sizing: border-box;
+  padding: 8px;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 2.5px var(--ts-red);
+  object-fit: contain;
+}
+.brand { align-items: center; }
+.brand-sub { color: var(--surface); opacity: 1; font-weight: 500; letter-spacing: 0.06em; }
+.header-share { color: var(--surface); }
+.mini-metro { border-color: rgba(251, 246, 234, 0.7); background: rgba(251, 246, 234, 0.12); color: var(--surface); }
+.mini-icon { background: var(--ts-yellow); color: var(--text); }
+.mini-metro.running .mini-icon { background: var(--surface); }
+
+/* カード */
+.tool-section { border: none; border-radius: 28px; background: var(--surface); }
+.section-icon { background: var(--ts-yellow); color: var(--text); }
+.section-head h2 { font-weight: 500; }
+
+/* ボタン：丸いカプセル */
+.btn { border-radius: 999px; font-weight: 500; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+#startStop.running, .ens-btn.gold.running { background: var(--ts-yellow); border-color: var(--ts-yellow); color: var(--text); }
+.round-btn { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+.tap-btn { background: var(--ts-red); border-color: var(--ts-red); border-style: solid; color: var(--surface); }
+.tap-btn:active { background: #C8401F; }
+.key-btn, .chip-btn, .rhythm-btn { border-radius: 16px; background: var(--panel); border-color: transparent; }
+.seg { border-radius: 999px; border-color: var(--border); }
+.seg button.selected, .chip-btn.selected, .key-btn.selected, .rhythm-btn.selected { font-weight: 500; }
+.toggle { border-radius: 999px; }
+.rec-button { border-color: var(--border); }
+.rec-button .rec-icon { background: var(--ts-red); }
+.bpm-value, .bpm-value.tempo-edit, .bpm-value.tempo-input { font-weight: 500; }
+.beat-dot.on { background: var(--ts-yellow); }
+.beat-dot.on.strong { background: var(--ts-red); }
+
+/* 下のメニュー：クリーム。今の画面は黄色の丸い印 */
+.tab-bar { background: var(--surface); border-top: 1px solid var(--border); }
+.tab { color: var(--muted); }
+.tab.active { color: var(--text); font-weight: 500; }
+.tab.active .tab-icon { background: var(--ts-yellow); }

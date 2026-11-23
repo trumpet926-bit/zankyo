@@ -3,7 +3,6 @@
 
 (function () {
   if (!document.documentElement.classList.contains('theme-xmas')) return;
-  document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0b2418');
 
   // 押した仲間から、星・プレゼント・雪の結晶が飛び出す
   const BURST = ['⭐', '🎁', '❄️', '✨', '🎄', '⭐', '🎁', '❄️'];

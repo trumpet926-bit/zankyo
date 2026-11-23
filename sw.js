@@ -40,6 +40,7 @@ const FILES = [
   'js/install.js',
   'js/update.js',
   'icons/logo.png',
+  'icons/logo-seal.png',
   'icons/app-qr.svg',
   'icons/icon-32.png',
   'icons/icon-180.png',
