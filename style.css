@@ -1915,3 +1915,21 @@ html.theme-xmas .tool-section::before {
     radial-gradient(circle at 9px 11.5px, rgba(60, 80, 100, 0.38) 8.4px, transparent 9px) 0 0 / 18px 14px repeat-x;
 }
 .waveform { --accent: #E4572E; } /* 録音の波形は、白っぽい地でも見える朱 */
+
+/* 黄色を控えめに（2026-11-23）：濃い黄色は上の帯だけ。ボタンや選んだものは淡い黄色。
+   鳴っている・止めるものは朱のまま */
+:root { --soft-yellow: #FBE7A8; }
+.btn.primary, .round-btn, .big-round, .big-start, .ens-btn.gold,
+.seg button.selected, .key-btn.selected, .chip-btn.selected, .rhythm-btn.selected {
+  background: var(--soft-yellow);
+  border-color: var(--soft-yellow);
+  color: var(--text);
+}
+#startStop.running, #bigStartStop.running, .big-start.running, .ens-btn.gold.running, .drone-toggle.playing {
+  background: var(--ts-red);
+  border-color: var(--ts-red);
+  color: #FBF6EA;
+}
+.toggle[aria-pressed="true"], .big-toggles .toggle[aria-pressed="true"] { background: #FDF3D3; border-color: #F2D06B; color: var(--text); }
+.tab[data-panel="scale"] { --tab-pill: var(--soft-yellow); }
+#panel-scale { --pc: var(--soft-yellow); }
