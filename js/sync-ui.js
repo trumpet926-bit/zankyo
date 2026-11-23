@@ -256,9 +256,12 @@
     entered();
   }));
 
-  $('syncLeave').addEventListener('click', () => {
+  // 部屋を出る。基準の台が出るときは部屋を閉じ、ほかの人も自動で出る（出忘れて電池が減り続けないように）
+  function leaveRoom(closedByRef = false) {
+    if (!room.code) return;
+    const isRef = room.referenceId() === settings.syncId;
     if (syncHooks.onLeave) syncHooks.onLeave();
-    room.leave();
+    room.leave(isRef && !closedByRef);
     clearInterval(realignTimer);
     clearInterval(clockTimer);
     unfollow();
@@ -274,7 +277,10 @@
     $('syncCalibLive').hidden = true;
     $('syncCalibResult').hidden = true;
     $('bigRoom').hidden = true;
-  });
+    showError(closedByRef ? '基準の台が部屋を閉じたので、部屋から出ました。' : '');
+  }
+  $('syncLeave').addEventListener('click', () => leaveRoom());
+  room.onClosed = () => leaveRoom(true);
 
   // アプリに戻ってきたら、時計を測り直して合わせ直す（iPhone は裏にいる間止まるため）
   document.addEventListener('visibilitychange', async () => {
@@ -324,6 +330,7 @@
     const ref = refId && room.members[refId];
     const isRef = refId === settings.syncId;
     $('syncCalib').hidden = isRef || !ref;
+    $('syncLeave').textContent = isRef ? '部屋を閉じる' : '部屋を出る';
     $('syncCalibNote').textContent = isRef
       ? 'この台が基準です。ほかの人が音合わせをするときは、この台からも「ピッ」と鳴ります。画面を開いたままにしてください。'
       : ref

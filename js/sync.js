@@ -173,6 +173,7 @@ class SyncRoom {
       const previous = this.state;
       this.state = snap.val();
       if (this.state && this.onState) this.onState(this.state, previous);
+      if (!this.state && previous && this.onClosed) this.onClosed(); // 基準の台が部屋を閉じた
     });
     this.roomRef.child('calib').on('value', (snap) => {
       this.calib = snap.val();
@@ -180,7 +181,8 @@ class SyncRoom {
     });
   }
 
-  leave() {
+  // close：部屋ごと閉じる（基準の台が出るとき）。共有している状態を消すと、ほかの人も自動で部屋から出る
+  leave(close = false) {
     if (!this.code) return;
     this.connectedRef.off();
     this.roomRef.child('members').off();
@@ -188,6 +190,10 @@ class SyncRoom {
     this.roomRef.child('calib').off();
     this.memberRef.onDisconnect().cancel();
     this.memberRef.remove();
+    if (close) {
+      this.roomRef.child('state').remove().catch(() => {});
+      this.roomRef.child('calib').remove().catch(() => {});
+    }
     this.code = null;
     this.state = null;
     this.calib = null;
