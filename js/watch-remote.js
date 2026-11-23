@@ -106,7 +106,7 @@
       statusTimer = setInterval(writeStatus, 2000);
       writeStatus();
       listening = true;
-      holdScreen = true; // 画面が消えると受け取れないので、つけたままにする
+      screenHolds.add('watch'); // 画面が消えると受け取れないので、つけたままにする
       keepScreenOn(true);
     } catch (e) {
       $('watchNote').textContent = 'つながりませんでした。インターネットにつながっているか確認してください。';
@@ -126,7 +126,7 @@
       closeMicrophone(sharedMic);
       sharedMic = null;
     }
-    holdScreen = false;
+    screenHolds.delete('watch');
     if (!metronome.isRunning) keepScreenOn(false);
     render();
   }

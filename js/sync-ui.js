@@ -190,6 +190,9 @@
     $('syncMe').textContent = room.name;
     $('bigRoom').hidden = false;
     if (syncHooks.onRoomChange) syncHooks.onRoomChange();
+    // 部屋にいる間は画面を消さない（基準の台が眠ると、音合わせの「ピッ」が鳴らず、合わせられなくなる）
+    screenHolds.add('room');
+    keepScreenOn(true);
     // 端末の時計はわずかに進み方が違うので、こまめに少しずつ合わせ直す
     clockMap.length = 0;
     realignTimer = setInterval(() => {
@@ -259,6 +262,8 @@
     clearInterval(realignTimer);
     clearInterval(clockTimer);
     unfollow();
+    screenHolds.delete('room');
+    if (!metronome.isRunning) keepScreenOn(false);
     metronome.bpm = settings.bpm;
     metronome.beats = settings.beats;
     renderBeatDots();
@@ -274,6 +279,7 @@
   // アプリに戻ってきたら、時計を測り直して合わせ直す（iPhone は裏にいる間止まるため）
   document.addEventListener('visibilitychange', async () => {
     if (document.visibilityState !== 'visible' || !room.code) return;
+    keepScreenOn(true); // アプリを離れると画面をつけたままの設定が外れるので、かけ直す
     clockMap.length = 0; // 裏にいた間の音の時計の記録は使わない
     try {
       await room.measureClock();

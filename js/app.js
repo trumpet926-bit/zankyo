@@ -88,9 +88,12 @@ document.querySelectorAll('.tab').forEach((tab) => {
 
 // 再生中は画面が消えないようにする（対応している端末のみ）
 let wakeLock = null;
-let holdScreen = false; // 時計からの操作を受け付けている間は、ほかの理由で消さない
+// 画面をつけたままにする理由：'watch'（時計からの操作を受け付け中）・'room'（みんなで合わせるの部屋に入っている）。
+// 理由が残っている間は、メトロノームを止めても画面を消さない
+const screenHolds = new Set();
 async function keepScreenOn(on) {
-  if (!on && holdScreen) return;
+  if (!on && screenHolds.size) return;
+  if (on && wakeLock && !wakeLock.released) return; // すでにつけたまま
   try {
     if (on && navigator.wakeLock) {
       wakeLock = await navigator.wakeLock.request('screen');
