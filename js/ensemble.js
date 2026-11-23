@@ -473,7 +473,7 @@
       card.dataset.id = id;
       const avatar = document.createElement('div');
       avatar.className = 'ens-avatar';
-      avatar.textContent = initialOf(m.name);
+      avatar.innerHTML = edoFaceSvg(m.name, 52); // 浮世絵風の顔（edo-faces.js）
       if (id === refId) {
         const ref = document.createElement('span');
         ref.className = 'ens-ref';

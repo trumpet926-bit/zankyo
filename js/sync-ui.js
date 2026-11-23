@@ -145,7 +145,8 @@
     Object.entries(members).forEach(([id, m]) => {
       const chip = document.createElement('span');
       chip.className = 'member' + (id === settings.syncId ? ' me' : '');
-      chip.textContent = m.name;
+      chip.innerHTML = edoFaceSvg(m.name, 28);
+      chip.append(m.name);
       if (id === refId) {
         const mark = document.createElement('span');
         mark.className = 'ref-mark';
@@ -203,6 +204,8 @@
     $('syncIn').hidden = false;
     $('syncCode').textContent = room.code;
     $('syncMe').textContent = room.name;
+    $('syncMeFace').innerHTML = edoFaceSvg(room.name, 72);
+    $('syncMeRole').textContent = edoPerson(room.name).role;
     $('bigRoom').hidden = false;
     if (syncHooks.onRoomChange) syncHooks.onRoomChange();
     // 部屋にいる間は画面を消さない（基準の台が眠ると、音合わせの「ピッ」が鳴らず、合わせられなくなる）

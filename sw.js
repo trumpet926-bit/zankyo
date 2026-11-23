@@ -28,6 +28,7 @@ const FILES = [
   'js/waveform.js',
   'js/app.js',
   'js/calib.js',
+  'js/edo-faces.js',
   'js/sync.js',
   'js/sync-ui.js',
   'js/ensemble.js',
