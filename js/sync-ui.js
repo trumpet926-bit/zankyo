@@ -23,6 +23,7 @@
   let following = false; // この端末のメトロノームが部屋の時間軸で鳴っているか
   let bpmTimer = null;
   let realignTimer = null;
+  let realignTick = 0;
   let clockTimer = null;
   let joinedAt = 0;
 
@@ -49,9 +50,20 @@
   }
 
   // サーバーの時刻（ミリ秒）を、音の時計（AudioContext の秒）に直す
-  function toCtxTime(serverMs) {
+  // 音の時計（AudioContext）と端末の時計の関係。音の時計は細かい区切りごとにしか進まないので、
+  // 1回の読み取りでは数ミリ秒ぶれる。読み取りを何度も記録し、いちばん小さい値（読んだ瞬間に近い）を使う
+  const clockMap = [];
+  function ctxLag() {
     const ctx = getAudioContext();
-    return ctx.currentTime + (serverMs + settings.syncOffsetMs - room.serverNow()) / 1000;
+    clockMap.push(performance.now() / 1000 - ctx.currentTime);
+    if (clockMap.length > 40) clockMap.shift();
+    return Math.min(...clockMap);
+  }
+
+  function toCtxTime(serverMs) {
+    // サーバーの時刻 → この端末の時計（ミリ秒）→ 音の時計（秒）
+    const wallMs = serverMs + settings.syncOffsetMs - room.offset;
+    return (wallMs - performance.timeOrigin) / 1000 - ctxLag();
   }
 
   function timelineOf(s) {
@@ -168,13 +180,16 @@
     $('syncMe').textContent = room.name;
     $('bigRoom').hidden = false;
     if (syncHooks.onRoomChange) syncHooks.onRoomChange();
-    // 端末の時計はわずかに進み方が違うので、ときどき合わせ直す
+    // 端末の時計はわずかに進み方が違うので、こまめに少しずつ合わせ直す
+    clockMap.length = 0;
     realignTimer = setInterval(() => {
-      if (following && metronome.isRunning && room.state && room.state.running) {
-        metronome.realign(timelineOf(room.state));
+      room.slew(250);
+      ctxLag(); // 音の時計の読み取りを記録しておく
+      if (++realignTick % 8 === 0 && following && metronome.isRunning && room.state && room.state.running) {
+        metronome.realign(timelineOf(room.state)); // 2秒ごと
       }
-    }, 10000);
-    clockTimer = setInterval(() => room.measureClock().catch(() => {}), 120000);
+    }, 250);
+    clockTimer = setInterval(() => room.refineClock().catch(() => {}), 15000);
   }
 
   // ---------- オンライン合奏の画面から使う ----------
@@ -271,14 +286,14 @@
     settings.syncOffsetMs = ms;
     saveSettings(settings);
     showOffset();
-    if (following && room.state && room.state.running) metronome.realign(timelineOf(room.state));
+    if (following && room.state && room.state.running) metronome.realign(timelineOf(room.state), true);
   };
 
   $('syncOffset').addEventListener('input', (e) => {
     settings.syncOffsetMs = Number(e.target.value);
     saveSettings(settings);
     showOffset();
-    if (following && room.state && room.state.running) metronome.realign(timelineOf(room.state));
+    if (following && room.state && room.state.running) metronome.realign(timelineOf(room.state), true);
   });
   showOffset();
 
@@ -380,7 +395,7 @@
       settings.syncOffsetMs = Math.max(-200, Math.min(200, wanted));
       saveSettings(settings);
       showOffset();
-      if (following && room.state && room.state.running) metronome.realign(timelineOf(room.state));
+      if (following && room.state && room.state.running) metronome.realign(timelineOf(room.state), true);
 
       const size = Math.round(Math.abs(lag));
       const found = size < 3 ? `基準の台とほぼぴったりでした（ずれ ${size} ms）。` : `自分の音が基準より ${size} ms ${lag > 0 ? '遅れて' : '早く'}聞こえていました。`;

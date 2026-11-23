@@ -76,9 +76,20 @@ class Metronome {
   }
 
   // 時計のずれを直すため、今の時間軸の位置に合わせ直す（ずれが小さいときだけ使う）
-  realign(timeline) {
+  // force：補正のバーを動かしたときなど、すぐに合わせたいとき
+  // ふだんは、0.003秒より小さいずれは無視し、大きいずれも1回に 0.006秒ずつ寄せる（揺れて聞こえないように）
+  realign(timeline, force = false) {
     if (!this.isRunning || this.pending) return;
-    this.alignTo(timeline, this.nextTime - 30 / this.bpm);
+    const from = this.nextTime - 30 / this.bpm;
+    const beatLen = 60 / timeline.bpm;
+    const n = Math.max(0, Math.ceil((from - timeline.anchor) / beatLen - 1e-6));
+    const diff = timeline.anchor + n * beatLen - this.nextTime;
+    if (force || Math.abs(diff) > 0.05 || timeline.bpm !== this.bpm || timeline.beats !== this.beats) {
+      this.alignTo(timeline, from);
+      return;
+    }
+    if (Math.abs(diff) < 0.003) return;
+    this.nextTime += Math.max(-0.006, Math.min(0.006, diff));
   }
 
   // from 以降で最初の拍を、次に鳴らす拍にする

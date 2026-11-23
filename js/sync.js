@@ -43,7 +43,9 @@ class SyncRoom {
     this.name = null;
     this.state = null;
     this.members = {};
-    this.offset = 0; // サーバーの時計 − この端末の時計（ミリ秒）
+    this.offset = 0; // サーバーの時計 − この端末の時計（ミリ秒）。実際に使う値（少しずつ targetOffset に寄せる）
+    this.targetOffset = 0; // 測った中でいちばん確かな値
+    this.clockSamples = []; // { offset, rtt, at }
     this.onState = null; // (state, previousState)
     this.onMembers = null; // (members)
     this.calib = null; // 音合わせ中の人と時刻
@@ -65,24 +67,50 @@ class SyncRoom {
     return wallNow() + this.offset;
   }
 
-  // サーバーの時計とのずれを測る
-  // 書き込みの前後の時刻の真ん中にサーバーが時刻を記録したとみなし、往復がいちばん速かった回を使う
-  async measureClock() {
+  // サーバーの時計とのずれを count 回測って、記録に足す
+  // 書き込みの前後の時刻の真ん中にサーバーが時刻を記録したとみなす。往復が速い回ほど誤差が小さい
+  async sampleClock(count) {
     const url = `${FIREBASE_CONFIG.databaseURL}/clock/${this.memberId}.json`;
-    let best = null;
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < count + 1; i++) {
       const t0 = wallNow();
       const res = await fetch(url, { method: 'PUT', body: JSON.stringify({ '.sv': 'timestamp' }) });
       const t1 = wallNow();
       let serverTime = await res.json();
       if (typeof serverTime !== 'number') serverTime = await (await fetch(url)).json();
       if (i === 0) continue; // 1回目は接続の準備で遅くなるので使わない
-      const rtt = t1 - t0;
-      if (!best || rtt < best.rtt) best = { rtt, offset: serverTime - (t0 + t1) / 2 };
+      this.clockSamples.push({ rtt: t1 - t0, offset: serverTime - (t0 + t1) / 2, at: t1 });
     }
     fetch(url, { method: 'DELETE' }).catch(() => {});
-    this.offset = best.offset;
+    // ここ3分の記録のうち、往復がいちばん速かった3回の平均を、確かな値とする
+    const recent = this.clockSamples.filter((s) => wallNow() - s.at < 180000);
+    this.clockSamples = recent;
+    const best = [...recent].sort((a, b) => a.rtt - b.rtt).slice(0, 3);
+    this.targetOffset = best.reduce((sum, s) => sum + s.offset, 0) / best.length;
+    return best[0];
+  }
+
+  // 部屋に入るとき・アプリに戻ってきたとき：しっかり測って、すぐにその値にする
+  async measureClock() {
+    this.clockSamples = [];
+    const best = await this.sampleClock(8);
+    this.offset = this.targetOffset;
     return best;
+  }
+
+  // 合奏中：少しだけ測り足す（値は slew で少しずつ寄せる）
+  refineClock() {
+    return this.sampleClock(3);
+  }
+
+  // 実際に使う値を、確かな値へ少しずつ寄せる（1秒に 2ms まで。急に動くと音がずれて聞こえるため）
+  slew(elapsedMs) {
+    const diff = this.targetOffset - this.offset;
+    if (Math.abs(diff) > 100) {
+      this.offset = this.targetOffset; // 大きく違うとき（回線が変わったなど）は、すぐ合わせる
+      return;
+    }
+    const maxStep = (2 * elapsedMs) / 1000;
+    this.offset += Math.max(-maxStep, Math.min(maxStep, diff));
   }
 
   async create(initialState) {
