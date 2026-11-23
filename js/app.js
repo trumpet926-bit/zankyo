@@ -290,6 +290,7 @@ function showMetronomeRunning(running) {
   $('startStop').textContent = running ? 'ストップ' : 'スタート';
   $('startStop').classList.toggle('running', running); // 鳴っている間は黄色（T'S コンセプト：黄＝動いている）
   $('bigStartStop').textContent = running ? 'ストップ' : 'スタート';
+  $('bigStartStop').classList.toggle('running', running);
   $('ensStart').textContent = running ? 'ストップ' : 'スタート';
   $('ensStart').classList.toggle('running', running);
   $('miniIcon').innerHTML = running ? MINI_STOP : MINI_PLAY;

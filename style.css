@@ -1697,3 +1697,74 @@ button, input, select, textarea { font-family: inherit; letter-spacing: inherit;
 .tab { color: var(--muted); }
 .tab.active { color: var(--text); font-weight: 500; }
 .tab.active .tab-icon { background: var(--ts-yellow); }
+
+/* ---------- T'S コンセプト：紹介の画面・残響のページ・大きく表示 ---------- */
+/* 共通：クリーム地に、円と半円の形を背景として描く */
+.share-view, .zk-view {
+  background:
+    radial-gradient(circle at 0 0, var(--ts-yellow) 0 120px, transparent 121px),
+    radial-gradient(circle at 100% 210px, var(--ts-blue) 0 54px, transparent 55px),
+    var(--bg);
+  color: var(--text);
+}
+.zk-close {
+  border: 0;
+  background: var(--accent);
+  color: var(--accent-text);
+}
+.share-logo, .zk-logo {
+  box-sizing: border-box;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 3px var(--ts-red);
+  object-fit: contain;
+  filter: none;
+  animation: none;
+}
+.share-logo { width: 112px; height: 112px; padding: 16px; }
+.zk-logo { width: 150px; height: 150px; padding: 22px; }
+.zk-eyebrow { color: var(--ts-blue); font-weight: 500; }
+.share-title, .zk-lead, .zk-heading, .zk-video h3, .zk-shared-item h3 { font-family: inherit; font-weight: 500; }
+.share-title { color: var(--text); letter-spacing: 0.06em; }
+.share-lead, .share-note, .zk-program, .zk-shared-meta, .zk-shared-note, .zk-watch-note { color: var(--muted); }
+.share-url { color: var(--ts-blue); }
+.share-qr { box-shadow: 0 0 0 2px var(--border); }
+.share-points { border-color: var(--border); color: var(--text); background: var(--surface); }
+.share-points li::marker { color: var(--ts-red); }
+.zk-lead { color: var(--text); }
+.zk-heading { color: var(--text); }
+.zk-heading::before, .zk-heading::after { background: var(--border); }
+.zk-frame { border: 0; border-radius: 20px; box-shadow: none; }
+.zk-foot { color: var(--muted); }
+.zk-shared-item { border: 0; background: var(--surface); border-radius: 22px; }
+.zk-shared-play { background: var(--accent); color: var(--accent-text); font-weight: 500; }
+.zk-shared-remove { border-color: var(--ts-red); color: var(--ts-red); }
+.zk-watch-btn { border-color: var(--border); color: var(--muted); }
+
+/* 大きく表示：明るいクリーム。拍の数字は墨色、1拍目は赤、光は黄色 */
+.big-view {
+  background:
+    radial-gradient(circle at 100% 0, var(--ts-red) 0 120px, transparent 121px),
+    radial-gradient(circle at 0 100%, var(--ts-blue) 0 90px, transparent 91px),
+    var(--bg);
+  color: var(--text);
+}
+.big-flash.flash { background: var(--ts-yellow); --peak: 0.22; }
+.big-flash.flash-strong { background: var(--ts-red); --peak: 0.35; }
+.big-close { color: var(--surface); }
+.big-beat { font-weight: 500; color: var(--text); }
+.big-beat.strong { color: var(--ts-red); }
+.big-dots .beat-dot { background: var(--beat); }
+.big-dots .beat-dot.on { background: var(--ts-yellow); }
+.big-dots .beat-dot.on.strong { background: var(--ts-red); }
+.big-info { color: var(--muted); }
+.big-info span { color: var(--text); font-weight: 500; }
+.big-round { border: 0; background: var(--accent); color: var(--accent-text); }
+.big-start { border-radius: 999px; background: var(--accent); color: var(--accent-text); font-weight: 500; }
+.big-start.running { background: var(--ts-yellow); color: var(--text); }
+.big-toggles .toggle { background: var(--surface); border-color: var(--border); color: var(--muted); }
+.big-toggles .toggle[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+.big-room { color: var(--muted); }
+.big-cue { border-radius: 999px; font-weight: 500; }
+.share-actions .ens-btn { border-radius: 999px; }
+.click-sounds button { font-size: 12px; letter-spacing: 0; white-space: nowrap; }

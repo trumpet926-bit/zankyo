@@ -10,6 +10,8 @@
 <meta property="og:image" content="https://trumpet926-bit.github.io/zankyo/icons/og-image.png">
 <meta property="og:type" content="website">
 <link rel="icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500&amp;display=swap" rel="stylesheet">
 <style>
   :root {
     --gold: #d6b25e; --gold-light: #f1d48a; --ivory: #f4ecd8; --muted: #a8a28f; --line: rgba(214, 178, 94, 0.28);
@@ -78,12 +80,35 @@
   .step b { color: var(--gold-light); }
   .step p { margin: 4px 0 0; font-size: 14px; color: var(--muted); }
   footer { margin-top: 48px; text-align: center; font-size: 12px; color: rgba(168, 162, 143, 0.7); }
+  /* T'S コンセプト：クリーム地・暖かい原色・禅丸ゴシック。書は朱のはんこ */
+  :root { --gold: #2F5DC8; --gold-light: #2F5DC8; --ivory: #1F1D24; --muted: #6B6573; --line: #E2D7C1; --mincho: "Zen Maru Gothic", sans-serif; }
+  html { background: #F7F0E1; }
+  body {
+    background:
+      radial-gradient(circle at 0 0, #F2B705 0 140px, transparent 141px),
+      radial-gradient(circle at 100% 260px, #2F5DC8 0 60px, transparent 61px),
+      #F7F0E1;
+    color: #1F1D24;
+    font-family: "Zen Maru Gothic", sans-serif;
+    letter-spacing: 0.03em;
+    font-synthesis: none;
+  }
+  h1, h2, .feature h3 { font-weight: 500; }
+  .hero img { width: 130px; height: 130px; box-sizing: border-box; padding: 18px; border-radius: 50%; background: #FBF6EA; box-shadow: inset 0 0 0 3px #E4572E; object-fit: contain; filter: none; }
+  .qr-card, .feature, .step { background: #FBF6EA; border-color: #E2D7C1; }
+  .step { border-left-color: #E4572E; }
+  .step b { color: #1F1D24; font-weight: 500; }
+  .tag { background: #F2B705; color: #1F1D24; font-weight: 500; }
+  .open { background: #2F5DC8; color: #FBF6EA; box-shadow: none; font-weight: 500; }
+  .url { color: #2F5DC8; }
+  h2 { color: #1F1D24; }
+  h2::before, h2::after { background: #E2D7C1; }
 </style>
 </head>
 <body>
 <main>
   <section class="hero">
-    <img src="icons/logo.png" alt="残響">
+    <img src="icons/logo-seal.png" alt="残響">
     <p class="eyebrow">PRACTICE TOOL</p>
     <h1>残響 PracticeTool</h1>
     <p class="lead">管楽器奏者のための、練習アプリです。<br>無料で、スマホのブラウザからすぐに使えます。インストールや登録はいりません。</p>
