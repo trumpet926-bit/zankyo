@@ -208,9 +208,10 @@ class SyncRoom {
   }
 
   // 音合わせを始める。ほかの人が音合わせ中なら null
-  async startCalib() {
-    const startAt = this.serverNow() + 1500; // 基準の台に届く余裕を見て、少し先から鳴らす
-    const calib = { id: this.memberId, name: this.name, startAt, endAt: startAt + CALIB_BEATS * CALIB_INTERVAL_MS };
+  // id・name・leadMs を渡すと、その人の台を合わせる（基準の台が全員を順番に合わせるとき。マイクの準備に時間をみる）
+  async startCalib(id = this.memberId, name = this.name, leadMs = 1500) {
+    const startAt = this.serverNow() + leadMs; // 基準の台に届く余裕を見て、少し先から鳴らす
+    const calib = { id, name, startAt, endAt: startAt + CALIB_BEATS * CALIB_INTERVAL_MS };
     const result = await this.roomRef.child('calib').transaction((current) => {
       if (current && current.endAt + 1000 > this.serverNow()) return undefined;
       return calib;
@@ -233,9 +234,14 @@ class SyncRoom {
     });
   }
 
+  // 音で合わせる（カウントイン）がオンなら、ピッを鳴らして聞き取る時間の分だけ、1拍目を先にする
   toggleRunning() {
     return this.change(this.state && this.state.running ? 'stop' : 'start', (s) =>
-      s.running ? { running: false } : { running: true, anchorAt: this.serverNow() + 800 });
+      s.running ? { running: false } : { running: true, anchorAt: this.serverNow() + (s.countIn ? COUNTIN_TOTAL_MS : 800) });
+  }
+
+  setCountIn(on) {
+    return this.change('countin', () => ({ countIn: on }));
   }
 
   setBpm(bpm) {

@@ -1933,3 +1933,6 @@ html.theme-xmas .tool-section::before {
 .toggle[aria-pressed="true"], .big-toggles .toggle[aria-pressed="true"] { background: #FDF3D3; border-color: #F2D06B; color: var(--text); }
 .tab[data-panel="scale"] { --tab-pill: var(--soft-yellow); }
 #panel-scale { --pc: var(--soft-yellow); }
+.sync-countin { margin: 12px 0 4px; }
+.sync-countin .setting-row { gap: 12px; }
+#syncCalibAll { margin-top: 8px; }

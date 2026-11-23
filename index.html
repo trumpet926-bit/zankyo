@@ -189,10 +189,18 @@
           <div class="sync-calib">
             <p class="sync-calib-live" id="syncCalibLive" hidden></p>
             <button class="btn primary full-width" id="syncCalib" hidden>基準の台に自動で合わせる</button>
+            <button class="btn primary full-width" id="syncCalibAll" hidden>全員を順番に合わせる</button>
             <p class="note" id="syncCalibNote"></p>
             <p class="note" id="syncCalibResult" hidden></p>
             <button class="btn full-width tapcal-open" id="openTapCal">タップで合わせる（オンライン合奏用）</button>
             <p class="note small-note">離れた場所の人と合わせるときの補正です。一緒にいるときは、上の「基準の台に自動で合わせる」のほうが正確です。</p>
+          </div>
+          <div class="sync-countin">
+            <label class="setting-row">
+              <span class="sub-label">スタートのたびに音で合わせる<small>カウントイン（ピッ×4）のあいだに、全員のマイクで聞いて合わせ直します。同じ部屋にいるとき用。通信の具合に左右されにくくなります。</small></span>
+              <input type="checkbox" class="switch" id="syncCountIn">
+            </label>
+            <p class="note small-note" id="syncCountInNote"></p>
           </div>
           <label class="sync-offset">音のタイミング補正（手で微調整）
             <input type="range" id="syncOffset" min="-400" max="200" step="5" class="bpm-slider">

@@ -27,6 +27,9 @@
           "action": {
             ".validate": "newData.isString() && newData.val().length <= 10"
           },
+          "countIn": {
+            ".validate": "newData.isBoolean()"
+          },
           "$other": {
             ".validate": false
           }

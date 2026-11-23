@@ -9,6 +9,21 @@ const CALIB_SELF_HZ = 1000; // 合わせる台の音
 const CALIB_WINDOW = 256; // 音の大きさを調べる区切りの長さ（サンプル数）
 const CALIB_HOP = 16; // 区切りをずらす幅（サンプル数）
 
+// 音で合わせる（カウントイン）：スタートのたびに、全員が同時に短い音を鳴らして合わせ直す
+// 基準の台は CALIB_REF_HZ、ほかの台は部屋に入った順に COUNTIN_FREQS の高さを使う（同時に鳴っても聞き分けられるよう離す）
+const COUNTIN_BEATS = 4; // ピッの回数
+const COUNTIN_INTERVAL_MS = 450; // ピッの間隔
+const COUNTIN_LEAD_MS = 1200; // スタートを押してから最初のピッまで（全員に合図が届き、マイクを準備する時間）
+const COUNTIN_TAIL_MS = 900; // 最後のピッから1拍目まで（聞き取って直す時間）
+const COUNTIN_TOTAL_MS = COUNTIN_LEAD_MS + (COUNTIN_BEATS - 1) * COUNTIN_INTERVAL_MS + COUNTIN_TAIL_MS;
+const COUNTIN_FREQS = [1000, 1500, 3300, 3800, 4300, 2000, 4800, 700];
+
+// 1拍目の時刻（部屋の時刻・ミリ秒）から、カウントインのピッの時刻を求める
+function countInTimes(anchorAt) {
+  const first = anchorAt - COUNTIN_TAIL_MS - (COUNTIN_BEATS - 1) * COUNTIN_INTERVAL_MS;
+  return Array.from({ length: COUNTIN_BEATS }, (_, i) => first + i * COUNTIN_INTERVAL_MS);
+}
+
 class CalibError extends Error {}
 
 // マイクの音をそのまま集める
@@ -88,10 +103,11 @@ function calibMedian(values) {
 }
 
 // 戻り値：自分の音が基準の音より何ミリ秒遅れて届いたか（早いときはマイナス）
-function measureCalibLag(x, sampleRate) {
+// refHz・selfHz：基準の台と自分の音の高さ。need：そろって聞こえる必要がある回数
+function measureCalibLag(x, sampleRate, refHz = CALIB_REF_HZ, selfHz = CALIB_SELF_HZ, need = 5) {
   const framesPerMs = sampleRate / CALIB_HOP / 1000;
-  const ref = calibBandEnvelope(x, sampleRate, CALIB_REF_HZ);
-  const self = calibBandEnvelope(x, sampleRate, CALIB_SELF_HZ);
+  const ref = calibBandEnvelope(x, sampleRate, refHz);
+  const self = calibBandEnvelope(x, sampleRate, selfHz);
   if (!ref.length) throw new CalibError('うまく測れませんでした。もう一度お試しください。');
   const refMax = ref.reduce((a, b) => Math.max(a, b), 0);
   const selfMax = self.reduce((a, b) => Math.max(a, b), 0);
@@ -113,7 +129,7 @@ function measureCalibLag(x, sampleRate) {
       i = peak + Math.round(300 * framesPerMs);
     }
   }
-  if (refOnsets.length < 5) {
+  if (refOnsets.length < need) {
     throw new CalibError('基準の台の音が聞こえませんでした。基準の台の画面を開いたまま、音量を上げてもらってください。');
   }
 
@@ -130,12 +146,12 @@ function measureCalibLag(x, sampleRate) {
       diffs.push((calibOnsetBefore(self, peak, from) - r) / framesPerMs);
     });
   }
-  if (diffs.length < 5) throw new CalibError('自分の台の音が聞こえませんでした。音量を上げてください。');
+  if (diffs.length < need) throw new CalibError('自分の台の音が聞こえませんでした。音量を上げてください。');
 
   // まわりの音で外れた回は除き、そろっている回の平均を使う
   const mid = calibMedian(diffs);
   const good = diffs.filter((d) => Math.abs(d - mid) <= 10);
-  if (good.length < 5 || good.length < diffs.length * 0.6) {
+  if (good.length < need || good.length < diffs.length * 0.6) {
     throw new CalibError('まわりの音でうまく測れませんでした。静かにしてもう一度お試しください。');
   }
   return good.reduce((a, b) => a + b, 0) / good.length;
