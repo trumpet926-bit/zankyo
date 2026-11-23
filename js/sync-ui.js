@@ -52,12 +52,22 @@
   // サーバーの時刻（ミリ秒）を、音の時計（AudioContext の秒）に直す
   // 音の時計（AudioContext）と端末の時計の関係。音の時計は細かい区切りごとにしか進まないので、
   // 1回の読み取りでは数ミリ秒ぶれる。読み取りを何度も記録し、いちばん小さい値（読んだ瞬間に近い）を使う
-  const clockMap = [];
+  // 音の時計が止まっていたとき（アプリが裏にいた・音の準備前・音の出口が変わった）は、それまでの記録を捨てる。
+  // 古い記録を使い続けると、10秒ほど拍の位置がずれたまま鳴ってしまう
+  const clockMap = []; // { lag, at }（秒）
   function ctxLag() {
     const ctx = getAudioContext();
-    clockMap.push(performance.now() / 1000 - ctx.currentTime);
-    if (clockMap.length > 40) clockMap.shift();
-    return Math.min(...clockMap);
+    const now = performance.now() / 1000;
+    const lag = now - ctx.currentTime;
+    if (ctx.state !== 'running') {
+      clockMap.length = 0; // 止まっている間は記録しない（動き出すと、止まった所から進む）
+      return lag;
+    }
+    while (clockMap.length && now - clockMap[0].at > 10) clockMap.shift(); // ここ10秒の記録だけ使う
+    const min = clockMap.length ? Math.min(...clockMap.map((m) => m.lag)) : lag;
+    if (lag - min > 0.06) clockMap.length = 0; // 急に大きくなった＝音の時計がしばらく止まっていた
+    clockMap.push({ lag, at: now });
+    return Math.min(...clockMap.map((m) => m.lag));
   }
 
   function toCtxTime(serverMs) {
@@ -264,6 +274,7 @@
   // アプリに戻ってきたら、時計を測り直して合わせ直す（iPhone は裏にいる間止まるため）
   document.addEventListener('visibilitychange', async () => {
     if (document.visibilityState !== 'visible' || !room.code) return;
+    clockMap.length = 0; // 裏にいた間の音の時計の記録は使わない
     try {
       await room.measureClock();
     } catch (e) {
