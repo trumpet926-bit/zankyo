@@ -44,10 +44,21 @@
   syncHooks.beats = (beats) => room.setBeats(beats);
 
   // スピーカーから音が出るまでの遅れ（秒）
+  // スピーカーから音が出るまでの遅れ（秒）。その分だけ早めに鳴らす。
+  // 端末が知らせる値は読むたびにぶれるので、最初に読めた値をこの端末の値として保存し、ずっと同じ値を使う。
+  // （毎回読み直すと、スタートのたびにずれ方が変わり、音合わせの結果も合わなくなる）
+  // 本当の遅れとの差は、音合わせ（自動・タップ）の補正がまとめて埋める
   function audioLead() {
+    if (typeof settings.syncLeadMs === 'number') return settings.syncLeadMs / 1000;
     const ctx = getAudioContext();
-    return ctx.outputLatency || ctx.baseLatency || 0;
+    const reading = ctx.outputLatency || ctx.baseLatency || 0;
+    if (ctx.state === 'running' && reading > 0) {
+      settings.syncLeadMs = Math.round(reading * 1000);
+      saveSettings(settings);
+    }
+    return reading;
   }
+  syncHooks.audioLead = audioLead;
 
   // サーバーの時刻（ミリ秒）を、音の時計（AudioContext の秒）に直す
   // 音の時計（AudioContext）と端末の時計の関係。音の時計は細かい区切りごとにしか進まないので、

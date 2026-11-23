@@ -12,7 +12,9 @@
   let endTimer = null;
 
   // スピーカー（イヤホン）から音が出るまでの遅れとして、ブラウザが教えてくれる値（秒）
+  // みんなで合わせると同じ値を使う（sync-ui.js）。端末ごとに固定した値
   function audioLead() {
+    if (syncHooks.audioLead) return syncHooks.audioLead();
     const ctx = getAudioContext();
     return ctx.outputLatency || ctx.baseLatency || 0;
   }
