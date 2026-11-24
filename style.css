@@ -2026,3 +2026,50 @@ html.theme-xmas .tool-section::before {
 @media (max-width: 440px) {
   .brand-sub { display: none; } /* スマホの幅では、はんこだけにして並びに余裕をもたせる */
 }
+
+/* お知らせ：読みやすく（2026-11-24）。お知らせ と 連絡 は別のページ */
+.notice-inner { gap: 16px; }
+.notice-tabs { display: flex; gap: 6px; padding: 5px; margin-right: 44px; border-radius: 999px; background: var(--panel); }
+.notice-tab { flex: 1; padding: 10px 6px; border: 0; border-radius: 999px; background: none; color: var(--muted); font: inherit; font-size: 15px; cursor: pointer; }
+.notice-tab.active { background: var(--ts-yellow); color: var(--text); }
+.notice-page { display: grid; gap: 14px; }
+.notice-page[hidden] { display: none; }
+.notice-owner-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.notice-write { padding: 8px 18px; }
+.notice-send-note:empty { display: none; }
+.notice-list { gap: 14px; }
+.notice-item { padding: 18px 18px 16px; background: var(--bg); border: 1px solid var(--border); border-radius: 24px; }
+.notice-item.fresh { border-color: var(--ts-yellow); box-shadow: inset 0 0 0 1px var(--ts-yellow); }
+.notice-date { font-size: 13px; }
+.notice-item-title { margin: 8px 0 0; font-size: 19px; line-height: 1.5; }
+.notice-item-body { margin: 10px 0 0; font-size: 16px; line-height: 1.95; color: var(--text); }
+.notice-foot { display: grid; gap: 10px; justify-items: center; text-align: center; padding-top: 6px; }
+.notice-foot .ens-btn { padding: 10px 22px; }
+.notice-contact-card { display: grid; gap: 14px; justify-items: center; text-align: center; padding: 28px 20px; border-radius: 28px; background: var(--surface); }
+.notice-contact-card h2 { margin: 0; font-size: 22px; font-weight: 500; }
+.notice-contact-card p { margin: 0; color: var(--muted); line-height: 1.8; }
+.notice-contact-seal { width: 76px; height: 76px; box-sizing: border-box; padding: 10px; border-radius: 50%; background: var(--bg); box-shadow: inset 0 0 0 2.5px var(--ts-red); }
+.notice-sms { justify-self: stretch; padding: 14px; font-size: 17px; }
+.notice-number { font-size: 22px; letter-spacing: 0.08em; color: var(--text) !important; }
+
+/* 新しくできた「お知らせ」の案内と、読んでいないお知らせがあるときのベル */
+.notice-intro {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px 12px;
+  align-items: center;
+  margin: 0 0 14px;
+  padding: 14px 16px;
+  border-radius: 24px;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 2px var(--ts-yellow);
+}
+.notice-intro[hidden] { display: none; }
+.notice-intro-bell { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; background: var(--ts-yellow); }
+.notice-intro-bell svg { width: 26px; height: 26px; fill: none; stroke: var(--text); stroke-width: 1.7; stroke-linejoin: round; }
+.notice-intro-text b { display: block; font-size: 16px; font-weight: 500; }
+.notice-intro-text span { display: block; margin-top: 2px; font-size: 13px; color: var(--muted); line-height: 1.6; }
+.notice-intro-open { grid-column: 1 / -1; padding: 11px; font-size: 15px; }
+@keyframes notice-ring { 0%, 70%, 100% { transform: rotate(0); } 76% { transform: rotate(14deg); } 82% { transform: rotate(-12deg); } 88% { transform: rotate(8deg); } 94% { transform: rotate(-5deg); } }
+.header-notice.has-new svg { transform-origin: 50% 15%; animation: notice-ring 2.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .header-notice.has-new svg { animation: none; } }

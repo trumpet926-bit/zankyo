@@ -10,6 +10,7 @@
   const CONTACT_SMS = '09049701484';
   const SEEN_KEY = 'practice-app-notice-seen';
   const TOKEN_KEY = 'practice-app-notice-token';
+  const INTRO_KEY = 'practice-app-notice-intro'; // 「お知らせができました」の案内を見終わったか
 
   let items = [];
   let reads = {};
@@ -62,12 +63,14 @@
   function renderBadge() {
     const count = isOwner() ? 0 : unreadIds().length;
     $('noticeDot').hidden = count === 0;
+    $('openNotice').classList.toggle('has-new', count > 0); // 読んでいないお知らせがあると、ベルが揺れる
     $('noticeDot').textContent = count > 9 ? '9+' : String(count || '');
     try {
       if (navigator.setAppBadge) {
         if (count) navigator.setAppBadge(count);
         else navigator.clearAppBadge();
       }
+      if (window.caches) caches.open('zankyo-badge').then((c) => c.put('count', new Response(String(count)))).catch(() => {});
     } catch (e) {
       // 数字を出せない端末もある
     }
@@ -280,11 +283,15 @@
 
   // ---------- 開く・閉じる ----------
   async function openNotice() {
+    hideIntro();
     $('noticeView').hidden = false;
     document.body.style.overflow = 'hidden';
     renderName();
     renderPush();
-    $('noticeCompose').hidden = !isOwner();
+    $('noticeOwnerBar').hidden = !isOwner();
+    $('noticeCompose').hidden = true;
+    $('noticeSendNote').textContent = '';
+    showPage('news');
     $('noticeList').innerHTML = '<p class="note notice-empty">読み込んでいます…</p>';
     try {
       await loadList();
@@ -292,7 +299,7 @@
         const r = await post({ action: 'notice-reads', ownerKey: ownerKey() });
         if (r.ok) {
           reads = r.reads || {};
-          $('noticeSendNote').textContent = `通知を受け取る端末：${r.devices}台`;
+          $('noticeDevices').textContent = `通知を受け取る端末：${r.devices}台`;
         }
       }
       renderList();
@@ -324,6 +331,28 @@
     document.body.style.overflow = '';
     renderList();
   }
+
+  // 新しくできた機能なので、一度お知らせを開くまで、画面の上に案内を出す
+  function introDone() {
+    try {
+      return localStorage.getItem(INTRO_KEY) === '1';
+    } catch (e) {
+      return false;
+    }
+  }
+  function hideIntro() {
+    $('noticeIntro').hidden = true;
+    try {
+      localStorage.setItem(INTRO_KEY, '1');
+    } catch (e) {
+      // 保存できなくても、案内がもう一度出るだけ
+    }
+  }
+  if (!isOwner() && !introDone()) $('noticeIntro').hidden = false;
+  $('noticeIntroOpen').addEventListener('click', () => {
+    usage.track('notice');
+    openNotice();
+  });
 
   $('openNotice').addEventListener('click', () => {
     usage.track('notice');
@@ -363,6 +392,8 @@
       if (!res.ok) throw new Error(res.error);
       $('noticeTitleInput').value = '';
       $('noticeBodyInput').value = '';
+      $('noticeCompose').hidden = true;
+      $('noticeWrite').hidden = false;
       const push = res.push || {};
       $('noticeSendNote').textContent = push.ready
         ? `送りました。通知：${push.sent}台に届けました${push.failed ? `（${push.failed}台は届きませんでした）` : ''}。`
@@ -373,6 +404,31 @@
       $('noticeSendNote').textContent = '送れませんでした。インターネットにつながっているか確認してください。';
     }
     $('noticeSend').disabled = false;
+  });
+
+  // お知らせ と 連絡 のページの切り替え
+  function showPage(page) {
+    const news = page === 'news';
+    $('noticePageNews').hidden = !news;
+    $('noticePageContact').hidden = news;
+    $('noticeTabNews').classList.toggle('active', news);
+    $('noticeTabContact').classList.toggle('active', !news);
+    $('noticeTabNews').setAttribute('aria-selected', String(news));
+    $('noticeTabContact').setAttribute('aria-selected', String(!news));
+  }
+  $('noticeTabNews').addEventListener('click', () => showPage('news'));
+  $('noticeTabContact').addEventListener('click', () => showPage('contact'));
+
+  // 持ち主だけ：「＋ 書く」で書く欄を開く
+  $('noticeWrite').addEventListener('click', () => {
+    $('noticeCompose').hidden = false;
+    $('noticeWrite').hidden = true;
+    $('noticeSendNote').textContent = '';
+    $('noticeTitleInput').focus();
+  });
+  $('noticeCancel').addEventListener('click', () => {
+    $('noticeCompose').hidden = true;
+    $('noticeWrite').hidden = false;
   });
 
   // 持ち主への連絡（SMS。相手の端末が対応していれば RCS になる）

@@ -61,7 +61,7 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))))
+    caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== CACHE_NAME && k !== 'zankyo-badge').map((k) => caches.delete(k))))
   );
   self.clients.claim();
 });
@@ -102,6 +102,18 @@ self.addEventListener('push', (event) => {
       renotify: true,
       data: { link: m.link || './?notice=1' },
     });
+    // ホーム画面のアイコンの数字を1つ増やす（開いて読むと、アプリが正しい数に直す）
+    try {
+      if (self.navigator.setAppBadge) {
+        const cache = await caches.open('zankyo-badge');
+        const saved = await cache.match('count');
+        const count = (saved ? Number(await saved.text()) : 0) + 1;
+        await cache.put('count', new Response(String(count)));
+        await self.navigator.setAppBadge(count);
+      }
+    } catch (e) {
+      // 数字を出せない端末もある
+    }
     // アプリを開いている人には、新しいお知らせが来たことを伝える
     const list = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
     list.forEach((client) => client.postMessage({ type: 'notice-new' }));

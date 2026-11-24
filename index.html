@@ -81,6 +81,17 @@
   <div class="update-banner done" id="updatedToast" hidden>新しい版に更新しました</div>
 
   <main>
+    <!-- 新しくできた「お知らせ」の案内（一度お知らせを開くまで出す） -->
+    <div class="notice-intro" id="noticeIntro" hidden>
+      <span class="notice-intro-bell" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15Z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg>
+      </span>
+      <div class="notice-intro-text">
+        <b>「お知らせ」ができました</b>
+        <span>タカシからの連絡は、これからここに届きます。名前を入れて、通知を受け取れるようにしてください。</span>
+      </div>
+      <button class="ens-btn gold notice-intro-open" id="noticeIntroOpen">見てみる</button>
+    </div>
     <!-- ホーム画面に追加する案内（必要なときだけ表示） -->
     <div class="install-banner" id="installBanner" hidden>
       <button class="install-close" id="installClose" aria-label="閉じる">×</button>
@@ -667,33 +678,52 @@
   <div class="share-view notice-view" id="noticeView" hidden>
     <button class="zk-close" id="closeNotice" aria-label="閉じる">×</button>
     <div class="notice-inner">
-      <h2 class="notice-title">お知らせ</h2>
-      <form class="notice-card" id="noticeNameForm" hidden>
-        <p>はじめに、お名前を教えてください。お知らせを読んだことが、タカシに伝わります。</p>
-        <div class="notice-row">
-          <input type="text" id="noticeNameInput" maxlength="20" placeholder="お名前" autocomplete="name">
-          <button class="ens-btn gold" type="submit">決める</button>
+      <!-- お知らせ と 連絡 は別のページ（上の切り替えで移る） -->
+      <div class="notice-tabs" role="tablist">
+        <button class="notice-tab active" id="noticeTabNews" role="tab" aria-selected="true">お知らせ</button>
+        <button class="notice-tab" id="noticeTabContact" role="tab" aria-selected="false">タカシに連絡</button>
+      </div>
+
+      <section class="notice-page" id="noticePageNews">
+        <form class="notice-card" id="noticeNameForm" hidden>
+          <p>はじめに、お名前を教えてください。お知らせを読んだことが、タカシに伝わります。</p>
+          <div class="notice-row">
+            <input type="text" id="noticeNameInput" maxlength="20" placeholder="お名前" autocomplete="name">
+            <button class="ens-btn gold" type="submit">決める</button>
+          </div>
+        </form>
+        <div class="notice-owner-bar" id="noticeOwnerBar" hidden>
+          <span class="note small-note" id="noticeDevices"></span>
+          <button class="ens-btn gold notice-write" id="noticeWrite">＋ 書く</button>
         </div>
-      </form>
-      <div class="notice-card" id="noticePushCard" hidden>
-        <p id="noticePushText"></p>
-        <button class="ens-btn gold" id="noticePushOn" hidden>通知を受け取る</button>
-      </div>
-      <div class="notice-card notice-compose" id="noticeCompose" hidden>
-        <p class="notice-label">お知らせを書く（持ち主だけ）</p>
-        <input type="text" id="noticeTitleInput" maxlength="60" placeholder="見出し">
-        <textarea id="noticeBodyInput" rows="5" maxlength="2000" placeholder="本文"></textarea>
-        <button class="ens-btn gold" id="noticeSend">全員に送る</button>
-        <p class="note small-note" id="noticeSendNote"></p>
-      </div>
-      <div class="notice-list" id="noticeList"></div>
-      <div class="notice-card notice-contact">
-        <p class="notice-label" id="noticeContactLabel"></p>
-        <p class="note small-note">SMS で届きます（相手の端末が対応していれば RCS になります）。</p>
-        <a class="ens-btn gold notice-sms" id="noticeSms" href="#">メッセージを送る</a>
-        <p class="note small-note" id="noticeSmsNumber"></p>
-      </div>
-      <p class="note small-note notice-me" id="noticeMe" hidden>お名前：<b id="noticeMeName"></b> <button class="btn small" id="noticeRename" type="button">変える</button></p>
+        <div class="notice-card notice-compose" id="noticeCompose" hidden>
+          <input type="text" id="noticeTitleInput" maxlength="60" placeholder="見出し">
+          <textarea id="noticeBodyInput" rows="6" maxlength="2000" placeholder="本文"></textarea>
+          <div class="notice-row">
+            <button class="ens-btn outline" id="noticeCancel" type="button">やめる</button>
+            <button class="ens-btn gold" id="noticeSend">全員に送る</button>
+          </div>
+        </div>
+        <p class="note small-note notice-send-note" id="noticeSendNote"></p>
+        <div class="notice-list" id="noticeList"></div>
+        <div class="notice-foot">
+          <div id="noticePushCard" hidden>
+            <p class="note small-note" id="noticePushText"></p>
+            <button class="ens-btn gold" id="noticePushOn" hidden>通知を受け取る</button>
+          </div>
+          <p class="note small-note" id="noticeMe" hidden>お名前：<b id="noticeMeName"></b> <button class="btn small" id="noticeRename" type="button">変える</button></p>
+        </div>
+      </section>
+
+      <section class="notice-page notice-contact" id="noticePageContact" hidden>
+        <div class="notice-contact-card">
+          <img src="icons/logo-seal.png" alt="" class="notice-contact-seal">
+          <h2 id="noticeContactLabel"></h2>
+          <p>ご連絡は、SMS（ショートメッセージ）でお願いします。<br>スマホが対応していれば、自動で RCS になります。</p>
+          <a class="ens-btn gold notice-sms" id="noticeSms" href="#">メッセージを送る</a>
+          <p class="notice-number" id="noticeSmsNumber"></p>
+        </div>
+      </section>
     </div>
   </div>
 
