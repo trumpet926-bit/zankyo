@@ -1,6 +1,8 @@
-// お知らせ（持ち主から全員へ。一方通行）・既読・スマホへの通知・持ち主への連絡（SMS）
+// お知らせ（名前を入れた人ならだれでも書けて、全員に届く）・既読・スマホへの通知・持ち主への連絡（SMS）
 // お知らせと既読は、持ち主の Google ドライブの受け取り口（Apps Script、hidden-share.js の SHARE_DRIVE_URL）にためる
 // 通知は Firebase Cloud Messaging。受け取った通知は sw.js が画面に出す
+// 一覧は端末に1か月とっておき、毎回は読みに行かない。新しいお知らせの通知が来たとき・自分が書いたとき・
+// 「新しいお知らせを確かめる」を押したとき・1か月たったときだけ読み直す
 
 (function () {
   const NOTICE_URL = SHARE_DRIVE_URL;
@@ -11,10 +13,22 @@
   const SEEN_KEY = 'practice-app-notice-seen';
   const TOKEN_KEY = 'practice-app-notice-token';
   const INTRO_KEY = 'practice-app-notice-intro'; // 「お知らせができました」の案内を見終わったか
+  const LIST_KEY = 'practice-app-notice-list'; // とっておいた一覧 { items, at }
+  const MINE_KEY = 'practice-app-notice-mine'; // 自分が書いたお知らせの id（消せるように）
+  const LIST_KEEP = 30 * 86400000; // 1か月
 
   let items = [];
   let reads = {};
   let loadedAt = 0;
+  try {
+    const saved = JSON.parse(localStorage.getItem(LIST_KEY) || 'null');
+    if (saved && Array.isArray(saved.items)) {
+      items = saved.items;
+      loadedAt = saved.at || 0;
+    }
+  } catch (e) {
+    // とっておいた一覧がなければ、読みに行くだけ
+  }
 
   const isOwner = () => typeof ownerKey === 'function' && !!ownerKey();
   const readerId = () => settings.syncId;
@@ -45,13 +59,50 @@
     return res.json();
   }
 
-  async function loadList() {
+  function mineIds() {
+    try {
+      return new Set(JSON.parse(localStorage.getItem(MINE_KEY) || '[]'));
+    } catch (e) {
+      return new Set();
+    }
+  }
+  function addMine(id) {
+    const mine = mineIds();
+    mine.add(id);
+    try {
+      localStorage.setItem(MINE_KEY, JSON.stringify([...mine].slice(-100)));
+    } catch (e) {
+      // 保存できなくても、消すボタンが出ないだけ
+    }
+  }
+
+  // force でなければ、とっておいた一覧（1か月以内）をそのまま使う
+  async function loadList(force = false) {
+    if (!force && loadedAt && Date.now() - loadedAt < LIST_KEEP) return items;
     const res = await fetch(`${NOTICE_URL}?action=notice-list`);
     const data = await res.json();
     if (!data.ok) throw new Error('list');
     items = data.items || [];
     loadedAt = Date.now();
+    try {
+      localStorage.setItem(LIST_KEY, JSON.stringify({ items, at: loadedAt }));
+    } catch (e) {
+      // 保存できなくても、次に開いたときに読み直すだけ
+    }
     return items;
+  }
+
+  // アプリを閉じているあいだに通知が届いていたら（sw.js が印を残す）、読み直す
+  async function pushArrived() {
+    try {
+      if (!window.caches) return false;
+      const cache = await caches.open('zankyo-badge');
+      if (!(await cache.match('notice-stale'))) return false;
+      await cache.delete('notice-stale');
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 
   function unreadIds() {
@@ -61,7 +112,7 @@
 
   // 上の「お知らせ」ボタンの赤い印と、ホーム画面のアイコンの数字
   function renderBadge() {
-    const count = isOwner() ? 0 : unreadIds().length;
+    const count = unreadIds().length;
     $('noticeDot').hidden = count === 0;
     $('openNotice').classList.toggle('has-new', count > 0); // 読んでいないお知らせがあると、ベルが揺れる
     $('noticeDot').textContent = count > 9 ? '9+' : String(count || '');
@@ -77,9 +128,8 @@
   }
 
   async function refreshBadge(force = false) {
-    if (!force && Date.now() - loadedAt < 60000) return;
     try {
-      await loadList();
+      await loadList(force || (await pushArrived()));
       renderBadge();
     } catch (e) {
       // つながらないときは、次の機会に
@@ -101,11 +151,16 @@
       return;
     }
     const seen = seenIds();
+    const mine = mineIds();
     items.forEach((n) => {
       const card = document.createElement('article');
-      card.className = 'notice-item' + (!seen.has(n.id) && !isOwner() ? ' fresh' : '');
+      card.className = 'notice-item' + (!seen.has(n.id) ? ' fresh' : '');
       const head = document.createElement('div');
       head.className = 'notice-item-head';
+      const author = document.createElement('span');
+      author.className = 'notice-author';
+      author.textContent = n.name || CONTACT_NAME; // 名前のない古いお知らせは、持ち主が書いたもの
+      head.appendChild(author);
       const date = document.createElement('span');
       date.className = 'notice-date';
       date.textContent = formatDate(n.at);
@@ -130,8 +185,46 @@
         card.appendChild(p);
       }
       if (isOwner()) card.appendChild(ownerTools(n));
+      else if (mine.has(n.id)) {
+        const wrap = document.createElement('div');
+        wrap.className = 'notice-mine';
+        wrap.appendChild(deleteButton(n));
+        card.appendChild(wrap);
+      }
       box.appendChild(card);
     });
+  }
+
+  // 消すボタン（2回押すと消える）。持ち主はどれでも、ほかの人は自分が書いたものだけ
+  function deleteButton(n) {
+    const del = document.createElement('button');
+    del.className = 'btn small notice-del';
+    del.textContent = '消す';
+    let armed = false;
+    del.addEventListener('click', async () => {
+      if (!armed) {
+        armed = true;
+        del.textContent = 'もう一度押すと消えます';
+        setTimeout(() => {
+          armed = false;
+          del.textContent = '消す';
+        }, 3000);
+        return;
+      }
+      del.disabled = true;
+      try {
+        const res = await post({ action: 'notice-delete', ownerKey: isOwner() ? ownerKey() : undefined, reader: readerId(), id: n.id });
+        if (!res.ok) throw new Error(res.error);
+        await loadList(true).catch(() => {
+          items = items.filter((x) => x.id !== n.id);
+        });
+        renderList();
+      } catch (e) {
+        del.disabled = false;
+        del.textContent = '消せませんでした';
+      }
+    });
+    return del;
   }
 
   // 持ち主だけ：だれがいつ読んだかと、消すボタン
@@ -156,39 +249,20 @@
     }
     details.appendChild(ul);
     wrap.appendChild(details);
-    const del = document.createElement('button');
-    del.className = 'btn small notice-del';
-    del.textContent = '消す';
-    let armed = false;
-    del.addEventListener('click', async () => {
-      if (!armed) {
-        armed = true;
-        del.textContent = 'もう一度押すと消えます';
-        setTimeout(() => {
-          armed = false;
-          del.textContent = '消す';
-        }, 3000);
-        return;
-      }
-      del.disabled = true;
-      try {
-        await post({ action: 'notice-delete', ownerKey: ownerKey(), id: n.id });
-        items = items.filter((x) => x.id !== n.id);
-        renderList();
-      } catch (e) {
-        del.disabled = false;
-        del.textContent = '消せませんでした';
-      }
-    });
-    wrap.appendChild(del);
+    wrap.appendChild(deleteButton(n));
     return wrap;
   }
+
+  // 書くときの名前（持ち主は名前を入れていなければ「タカシ」）
+  const writerName = () => settings.noticeName || (isOwner() ? CONTACT_NAME : '');
 
   function renderName() {
     const named = !!settings.noticeName;
     $('noticeNameForm').hidden = named || isOwner();
     $('noticeMe').hidden = !named;
     $('noticeMeName').textContent = settings.noticeName || '';
+    // 名前が決まっていれば、だれでも「＋ 書く」が使える
+    $('noticeOwnerBar').hidden = !writerName();
   }
 
   // ---------- 通知 ----------
@@ -288,32 +362,59 @@
     document.body.style.overflow = 'hidden';
     renderName();
     renderPush();
-    $('noticeOwnerBar').hidden = !isOwner();
     $('noticeCompose').hidden = true;
+    $('noticeWrite').hidden = false;
     $('noticeSendNote').textContent = '';
+    $('noticeDevices').hidden = true;
     showPage('news');
-    $('noticeList').innerHTML = '<p class="note notice-empty">読み込んでいます…</p>';
-    try {
-      await loadList();
-      if (isOwner()) {
+    await showList(false);
+  }
+
+  // 一覧を出す。とっておいた一覧があればすぐ出し、読みに行くのは必要なときだけ
+  async function showList(force) {
+    force = force || (await pushArrived());
+    const cached = loadedAt && Date.now() - loadedAt < LIST_KEEP;
+    if (cached) renderList();
+    if (!cached || force) {
+      if (!cached) $('noticeList').innerHTML = '<p class="note notice-empty">読み込んでいます…</p>';
+      try {
+        await loadList(true);
+        renderList();
+      } catch (e) {
+        if (!cached) {
+          $('noticeList').innerHTML = '<p class="note notice-empty">お知らせを読み込めませんでした。インターネットにつながっているか確認してください。</p>';
+          return;
+        }
+        $('noticeSendNote').textContent = 'いまは新しいお知らせを確かめられませんでした。前に読み込んだものを出しています。';
+      }
+    }
+    // 持ち主だけ：だれが読んだか（これは開くたびに確かめる）
+    if (isOwner()) {
+      try {
         const r = await post({ action: 'notice-reads', ownerKey: ownerKey() });
         if (r.ok) {
           reads = r.reads || {};
           $('noticeDevices').textContent = `通知を受け取る端末：${r.devices}台`;
+          $('noticeDevices').hidden = false;
+          renderList();
         }
+      } catch (e) {
+        // 読んだ人の一覧は、次に開いたときに
       }
-      renderList();
-      await markRead();
-    } catch (e) {
-      $('noticeList').innerHTML = '<p class="note notice-empty">お知らせを読み込めませんでした。インターネットにつながっているか確認してください。</p>';
     }
+    await markRead();
   }
 
-  // 名前が決まっていれば、まだ読んでいないお知らせを「読んだ」と知らせる
+  // まだ読んでいないお知らせを「読んだ」にする。名前が決まっていれば、読んだことを書いた側に知らせる
   async function markRead() {
-    if (isOwner() || !settings.noticeName) return;
     const ids = unreadIds();
     if (!ids.length) {
+      renderBadge();
+      return;
+    }
+    if (!settings.noticeName) {
+      // 持ち主は名前がなくても読んだことにする。ほかの人は名前を入れるまで「新着」のまま
+      if (isOwner()) markSeen(ids);
       renderBadge();
       return;
     }
@@ -377,7 +478,16 @@
     $('noticeNameInput').focus();
   });
 
-  // 持ち主だけ：お知らせを書いて全員に送る
+  // 新しいお知らせを確かめる（とっておいた一覧を読み直す）
+  $('noticeReload').addEventListener('click', async () => {
+    const button = $('noticeReload');
+    button.disabled = true;
+    $('noticeSendNote').textContent = '';
+    await showList(true);
+    button.disabled = false;
+  });
+
+  // 名前を入れた人ならだれでも：お知らせを書いて全員に送る
   $('noticeSend').addEventListener('click', async () => {
     const title = $('noticeTitleInput').value.trim();
     const body = $('noticeBodyInput').value.trim();
@@ -388,8 +498,18 @@
     $('noticeSend').disabled = true;
     $('noticeSendNote').textContent = '送っています…';
     try {
-      const res = await post({ action: 'notice-post', ownerKey: ownerKey(), title, body });
-      if (!res.ok) throw new Error(res.error);
+      const res = await post({ action: 'notice-post', ownerKey: isOwner() ? ownerKey() : undefined, reader: readerId(), name: writerName(), title, body });
+      if (!res.ok) {
+        $('noticeSendNote').textContent = res.error === 'wait'
+          ? '続けて送るときは、1分ほど待ってからにしてください。'
+          : res.error === 'owner'
+            ? 'まだ準備中です。タカシの作業が終わると、みんな書けるようになります。'
+            : '送れませんでした。';
+        $('noticeSend').disabled = false;
+        return;
+      }
+      addMine(res.id);
+      markSeen([res.id]); // 自分が書いたものは「新着」にしない
       $('noticeTitleInput').value = '';
       $('noticeBodyInput').value = '';
       $('noticeCompose').hidden = true;
@@ -398,7 +518,7 @@
       $('noticeSendNote').textContent = push.ready
         ? `送りました。通知：${push.sent}台に届けました${push.failed ? `（${push.failed}台は届きませんでした）` : ''}。`
         : '送りました（通知の準備がまだなので、アプリを開いた人に表示されます）。';
-      await loadList();
+      await loadList(true);
       renderList();
     } catch (e) {
       $('noticeSendNote').textContent = '送れませんでした。インターネットにつながっているか確認してください。';
@@ -419,7 +539,7 @@
   $('noticeTabNews').addEventListener('click', () => showPage('news'));
   $('noticeTabContact').addEventListener('click', () => showPage('contact'));
 
-  // 持ち主だけ：「＋ 書く」で書く欄を開く
+  // 「＋ 書く」で書く欄を開く
   $('noticeWrite').addEventListener('click', () => {
     $('noticeCompose').hidden = false;
     $('noticeWrite').hidden = true;
@@ -449,7 +569,7 @@
     });
   }
 
-  setTimeout(() => refreshBadge(true), 1500);
+  setTimeout(() => refreshBadge(), 1500); // とっておいた一覧で数える（通知が届いていたときと、1か月たったときだけ読み直す）
   setTimeout(refreshPushToken, 4000);
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') refreshBadge();

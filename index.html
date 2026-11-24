@@ -49,7 +49,7 @@
         <circle cx="16" cy="11.4" r="2.6" fill="#e0353d"/>
       </svg>
     </h1>
-    <!-- お知らせ（持ち主から全員へ） -->
+    <!-- お知らせ（だれでも書けて全員に届く） -->
     <button class="header-share header-notice" id="openNotice" aria-label="お知らせ">
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15Z"/>
@@ -674,7 +674,7 @@
   </div>
 
   <!-- アプリの紹介（QRコードを見せて、使う人を増やす） -->
-  <!-- お知らせ（持ち主から全員へ。一方通行）と、持ち主への連絡 -->
+  <!-- お知らせ（だれでも書けて全員に届く）と、持ち主への連絡 -->
   <div class="share-view notice-view" id="noticeView" hidden>
     <button class="zk-close" id="closeNotice" aria-label="閉じる">×</button>
     <div class="notice-inner">
@@ -686,14 +686,14 @@
 
       <section class="notice-page" id="noticePageNews">
         <form class="notice-card" id="noticeNameForm" hidden>
-          <p>はじめに、お名前を教えてください。お知らせを読んだことが、タカシに伝わります。</p>
+          <p>はじめに、お名前を教えてください。お知らせを読んだことがタカシに伝わり、お知らせを書けるようになります。</p>
           <div class="notice-row">
             <input type="text" id="noticeNameInput" maxlength="20" placeholder="お名前" autocomplete="name">
             <button class="ens-btn gold" type="submit">決める</button>
           </div>
         </form>
         <div class="notice-owner-bar" id="noticeOwnerBar" hidden>
-          <span class="note small-note" id="noticeDevices"></span>
+          <button class="btn small notice-reload" id="noticeReload" type="button">↻ 新しいお知らせを確かめる</button>
           <button class="ens-btn gold notice-write" id="noticeWrite">＋ 書く</button>
         </div>
         <div class="notice-card notice-compose" id="noticeCompose" hidden>
@@ -705,6 +705,7 @@
           </div>
         </div>
         <p class="note small-note notice-send-note" id="noticeSendNote"></p>
+        <p class="note small-note" id="noticeDevices" hidden></p>
         <div class="notice-list" id="noticeList"></div>
         <div class="notice-foot">
           <div id="noticePushCard" hidden>

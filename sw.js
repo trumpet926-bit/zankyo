@@ -102,6 +102,13 @@ self.addEventListener('push', (event) => {
       renotify: true,
       data: { link: m.link || './?notice=1' },
     });
+    // 新しいお知らせが来た印（アプリは一覧を1か月とっておくので、次に開いたときに読み直してもらう）
+    try {
+      const cache = await caches.open('zankyo-badge');
+      await cache.put('notice-stale', new Response('1'));
+    } catch (e) {
+      // 印を残せなくても、「新しいお知らせを確かめる」で読み直せる
+    }
     // ホーム画面のアイコンの数字を1つ増やす（開いて読むと、アプリが正しい数に直す）
     try {
       if (self.navigator.setAppBadge) {
