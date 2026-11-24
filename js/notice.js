@@ -5,7 +5,7 @@
 (function () {
   const NOTICE_URL = SHARE_DRIVE_URL;
   // Firebase のコンソール →「プロジェクトの設定」→「Cloud Messaging」→「ウェブプッシュ証明書」の鍵（公開してよい鍵）
-  const NOTICE_VAPID_KEY = '';
+  const NOTICE_VAPID_KEY = 'BJzglBPt9Ws9hSNd9o9aB6bNzsMkIiuTsxnJEEZElcGpwE0YZgEnCBJa7mlWKUrYGB4E82vFqCz8ZpaowJeiRp4';
   const CONTACT_NAME = 'タカシ';
   const CONTACT_SMS = '09049701484';
   const SEEN_KEY = 'practice-app-notice-seen';
