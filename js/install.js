@@ -13,7 +13,41 @@
     navigator.serviceWorker.register('sw.js').catch(() => {});
   }
 
-  if (isStandalone || !(isIOS || isAndroid)) return; // ホーム画面から開いている、またはPC
+  // ---------- アイコンの自動更新 ----------
+  // アイコンの絵を変えたら、ここと manifest.webmanifest・index.html の ?v= を同じ値に上げる
+  // Android：Chrome がアプリの情報（manifest）を見直したときに、ホーム画面のアイコンを自動で替える（数日以内）
+  // iPhone：ホーム画面のアイコンは追加したときのまま替わらないので、入れ直しの案内を一度だけ出す
+  const ICON_VERSION = '20261123';
+  const ICON_KEY = 'practice-app-icon-version';
+  if (isStandalone) {
+    let seen = null;
+    try { seen = localStorage.getItem(ICON_KEY); } catch (e) { seen = ICON_VERSION; }
+    const markSeen = () => { try { localStorage.setItem(ICON_KEY, ICON_VERSION); } catch (e) { /* 次回また出るだけ */ } };
+    if (seen !== ICON_VERSION) {
+      // 新しく入れたばかりの端末は、もう新しいアイコンになっている
+      if (!isIOS || (typeof firstRun !== 'undefined' && firstRun)) {
+        markSeen();
+      } else {
+        const banner = document.getElementById('installBanner');
+        document.getElementById('installTitle').textContent = 'アプリのアイコンが新しくなりました';
+        document.getElementById('installBody').innerHTML =
+          'iPhone のホーム画面のアイコンは、自動では替わりません。新しいアイコンにするには、入れ直してください。' +
+          '<ol><li>ホーム画面のこのアプリを長押しして <b>削除</b></li>' +
+          '<li>Safari で <b>trumpet926-bit.github.io/zankyo</b> を開く</li>' +
+          '<li><b>共有ボタン</b>（□に↑）→ <b>「ホーム画面に追加」</b></li></ol>' +
+          '※ 残したい録音は、先に「録音」の画面の「共有・保存」で保存してください。';
+        const button = document.getElementById('installButton');
+        button.textContent = 'このままでよい';
+        button.hidden = false;
+        button.addEventListener('click', () => { banner.hidden = true; markSeen(); });
+        document.getElementById('installClose').addEventListener('click', () => { banner.hidden = true; markSeen(); });
+        banner.hidden = false;
+      }
+    }
+    return;
+  }
+
+  if (!(isIOS || isAndroid)) return; // PC
 
   const banner = document.getElementById('installBanner');
   const title = document.getElementById('installTitle');

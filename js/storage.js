@@ -38,9 +38,11 @@ const DEFAULT_SETTINGS = {
   metroViaElement: false, // メトロノームを相手の声と同じ部品から鳴らす（オンライン合奏で聞こえないパソコン向け）
 };
 
+let firstRun = false; // この端末で初めて開いた（設定がまだない）
 function loadSettings() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    firstRun = !saved;
     const settings = { ...DEFAULT_SETTINGS, ...saved };
     // 以前の版では楽器ごとに保存していたので、数値でなければ初期値に戻す
     if (typeof settings.scaleOctave !== 'number') settings.scaleOctave = 0;
