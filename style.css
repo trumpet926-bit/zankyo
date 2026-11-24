@@ -1959,3 +1959,70 @@ html.theme-xmas .tool-section::before {
 .member.me .ref-mark { color: var(--accent-ink); }
 .ens-avatar { padding: 0; overflow: visible; background: none; border-color: var(--ts-yellow); }
 .ens-avatar .edo-face { width: 100%; height: 100%; display: block; }
+
+/* お知らせ（持ち主から全員へ）と、持ち主への連絡 */
+.header-notice { position: relative; }
+.notice-dot {
+  position: absolute;
+  top: -2px;
+  right: 2px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--ts-red);
+  color: #FBF6EA;
+  font-size: 11px;
+  font-style: normal;
+  line-height: 17px;
+  text-align: center;
+  box-shadow: 0 0 0 2px var(--ts-yellow);
+}
+.notice-view { background: radial-gradient(circle at 100% 0, var(--ts-yellow) 0 84px, transparent 85px), var(--bg); color: var(--text); }
+.notice-inner { max-width: 480px; margin: 0 auto; padding: calc(28px + env(safe-area-inset-top)) 16px calc(36px + env(safe-area-inset-bottom)); display: grid; gap: 14px; }
+.notice-title { margin: 0; font-size: 24px; font-weight: 500; }
+.notice-card { background: var(--surface); border-radius: 22px; padding: 14px 16px; display: grid; gap: 10px; }
+.notice-card p { margin: 0; }
+.notice-label { font-weight: 500; }
+.notice-row { display: flex; gap: 8px; }
+.notice-row input { flex: 1; min-width: 0; }
+.notice-card input[type="text"], .notice-card textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+}
+.notice-card textarea { resize: vertical; line-height: 1.6; }
+.notice-list { display: grid; gap: 10px; }
+.notice-item { background: var(--surface); border-radius: 22px; padding: 14px 16px; }
+.notice-item.fresh { box-shadow: inset 0 0 0 2px var(--ts-yellow); }
+.notice-item-head { display: flex; align-items: center; gap: 8px; }
+.notice-date { font-size: 12px; color: var(--muted); }
+.notice-new { padding: 1px 9px; border-radius: 999px; background: var(--ts-red); color: #FBF6EA; font-size: 11px; }
+.notice-item-title { margin: 6px 0 0; font-size: 17px; font-weight: 500; }
+.notice-item-body { margin: 6px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.75; }
+.notice-owner { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 14px; }
+.notice-owner summary { cursor: pointer; color: var(--accent-ink); }
+.notice-owner ul { margin: 6px 0 0; padding-left: 1.2em; color: var(--muted); font-size: 13px; }
+.notice-empty { text-align: center; }
+.notice-sms { display: block; text-align: center; text-decoration: none; }
+.notice-me { text-align: center; }
+.notice-me b { font-weight: 500; }
+/* 上の帯：お知らせのボタンが増えたので、並びを詰める。赤い点はお知らせの印と紛れないよう、アイコンと同じ左上へ */
+.header-notice { margin-left: auto; }
+.header-notice + .header-share { margin-left: 0; }
+.header-share { padding: 4px 5px; }
+.header-share span { white-space: nowrap; }
+.app-header {
+  background:
+    radial-gradient(circle at calc(100% - 30px) 100%, var(--ts-blue) 0 26px, transparent 27px),
+    radial-gradient(circle at 9px 9px, var(--ts-red) 0 6px, transparent 7px),
+    var(--ts-yellow);
+}
+@media (max-width: 440px) {
+  .brand-sub { display: none; } /* スマホの幅では、はんこだけにして並びに余裕をもたせる */
+}

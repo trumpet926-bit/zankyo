@@ -12,6 +12,7 @@ const DEFAULT_SETTINGS = {
   clickSound: 'wood', // メトロノームの音色（wood・beep・cowbell・click）
   syncId: null, // みんなで合わせるときの、この端末の番号（初回に自動で決める）
   syncName: null, // この端末の名前（江戸時代風、初回に自動で決める）
+  noticeName: '', // お知らせを読んだ人として伝える名前（初回に入れてもらう）
   syncOffsetMs: 0, // 音のタイミング補正（ミリ秒、プラスで遅らせる）
   syncLeadMs: null, // スピーカーの遅れとして使う値（ミリ秒）。最初に読めた値で固定する（sync-ui.js）
   scaleKey: 0, // 0=C 〜 11=B

@@ -49,6 +49,15 @@
         <circle cx="16" cy="11.4" r="2.6" fill="#e0353d"/>
       </svg>
     </h1>
+    <!-- お知らせ（持ち主から全員へ） -->
+    <button class="header-share header-notice" id="openNotice" aria-label="お知らせ">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15Z"/>
+        <path d="M10 20.5a2 2 0 0 0 4 0"/>
+      </svg>
+      <span>お知らせ</span>
+      <i class="notice-dot" id="noticeDot" hidden></i>
+    </button>
     <!-- アプリを人に紹介する（QRコードを見せる） -->
     <button class="header-share" id="openShare" aria-label="このアプリを紹介する">
       <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -654,6 +663,40 @@
   </div>
 
   <!-- アプリの紹介（QRコードを見せて、使う人を増やす） -->
+  <!-- お知らせ（持ち主から全員へ。一方通行）と、持ち主への連絡 -->
+  <div class="share-view notice-view" id="noticeView" hidden>
+    <button class="zk-close" id="closeNotice" aria-label="閉じる">×</button>
+    <div class="notice-inner">
+      <h2 class="notice-title">お知らせ</h2>
+      <form class="notice-card" id="noticeNameForm" hidden>
+        <p>はじめに、お名前を教えてください。お知らせを読んだことが、タカシに伝わります。</p>
+        <div class="notice-row">
+          <input type="text" id="noticeNameInput" maxlength="20" placeholder="お名前" autocomplete="name">
+          <button class="ens-btn gold" type="submit">決める</button>
+        </div>
+      </form>
+      <div class="notice-card" id="noticePushCard" hidden>
+        <p id="noticePushText"></p>
+        <button class="ens-btn gold" id="noticePushOn" hidden>通知を受け取る</button>
+      </div>
+      <div class="notice-card notice-compose" id="noticeCompose" hidden>
+        <p class="notice-label">お知らせを書く（持ち主だけ）</p>
+        <input type="text" id="noticeTitleInput" maxlength="60" placeholder="見出し">
+        <textarea id="noticeBodyInput" rows="5" maxlength="2000" placeholder="本文"></textarea>
+        <button class="ens-btn gold" id="noticeSend">全員に送る</button>
+        <p class="note small-note" id="noticeSendNote"></p>
+      </div>
+      <div class="notice-list" id="noticeList"></div>
+      <div class="notice-card notice-contact">
+        <p class="notice-label" id="noticeContactLabel"></p>
+        <p class="note small-note">SMS で届きます（相手の端末が対応していれば RCS になります）。</p>
+        <a class="ens-btn gold notice-sms" id="noticeSms" href="#">メッセージを送る</a>
+        <p class="note small-note" id="noticeSmsNumber"></p>
+      </div>
+      <p class="note small-note notice-me" id="noticeMe" hidden>お名前：<b id="noticeMeName"></b> <button class="btn small" id="noticeRename" type="button">変える</button></p>
+    </div>
+  </div>
+
   <div class="share-view" id="shareView" hidden>
     <button class="zk-close" id="closeShare" aria-label="閉じる">×</button>
     <div class="share-inner">
@@ -830,6 +873,7 @@
   <script src="js/xmas.js"></script>
   <script src="js/watch-remote.js"></script>
   <script src="js/hidden-share.js"></script>
+  <script src="js/notice.js"></script>
   <script src="js/install.js"></script>
   <script src="js/update.js"></script>
 </body>

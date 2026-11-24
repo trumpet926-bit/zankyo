@@ -29,6 +29,7 @@ const FILES = [
   'js/app.js',
   'js/calib.js',
   'js/edo-faces.js',
+  'js/notice.js',
   'js/sync.js',
   'js/sync-ui.js',
   'js/ensemble.js',
@@ -81,4 +82,44 @@ self.addEventListener('fetch', (event) => {
       })
       .catch(() => caches.match(request, { ignoreSearch: true }))
   );
+});
+
+// ---------- お知らせの通知（Firebase Cloud Messaging から届く） ----------
+self.addEventListener('push', (event) => {
+  let payload = {};
+  try {
+    payload = event.data ? event.data.json() : {};
+  } catch (e) {
+    payload = {};
+  }
+  const m = payload.data || payload.notification || payload;
+  event.waitUntil((async () => {
+    await self.registration.showNotification(m.title || '残響 お知らせ', {
+      body: m.body || '',
+      icon: 'icons/icon-192.png',
+      badge: 'icons/icon-192.png',
+      tag: 'zankyo-notice',
+      renotify: true,
+      data: { link: m.link || './?notice=1' },
+    });
+    // アプリを開いている人には、新しいお知らせが来たことを伝える
+    const list = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    list.forEach((client) => client.postMessage({ type: 'notice-new' }));
+  })());
+});
+
+// 通知を押したら、アプリを開いてお知らせを出す
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const link = (event.notification.data && event.notification.data.link) || './?notice=1';
+  event.waitUntil((async () => {
+    const list = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    if (list.length) {
+      const client = list[0];
+      await client.focus();
+      client.postMessage({ type: 'notice-open' });
+      return;
+    }
+    await self.clients.openWindow(link);
+  })());
 });
