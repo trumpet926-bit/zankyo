@@ -10,6 +10,7 @@
   const NOTICE_VAPID_KEY = 'BJzglBPt9Ws9hSNd9o9aB6bNzsMkIiuTsxnJEEZElcGpwE0YZgEnCBJa7mlWKUrYGB4E82vFqCz8ZpaowJeiRp4';
   const CONTACT_NAME = 'タカシ';
   const CONTACT_SMS = '09049701484';
+  const CONTACT_MAIL = 'trumpet926@gmail.com';
   const SEEN_KEY = 'practice-app-notice-seen';
   const TOKEN_KEY = 'practice-app-notice-token';
   const INTRO_KEY = 'practice-app-notice-intro'; // 「お知らせができました」の案内を見終わったか
@@ -555,6 +556,13 @@
   $('noticeContactLabel').textContent = `${CONTACT_NAME}に連絡する`;
   $('noticeSms').href = `sms:${CONTACT_SMS}`;
   $('noticeSmsNumber').textContent = CONTACT_SMS.replace(/^(\d{3})(\d{4})(\d{4})$/, '$1-$2-$3');
+  // メール（スマホのメールアプリが開く。件名に「残響」と名前を入れておく）
+  $('noticeMailAddress').textContent = CONTACT_MAIL;
+  $('noticeMail').addEventListener('click', () => {
+    const who = settings.noticeName ? `（${settings.noticeName}）` : '';
+    $('noticeMail').href = `mailto:${CONTACT_MAIL}?subject=${encodeURIComponent('【残響】' + who)}`;
+  });
+  $('noticeMail').href = `mailto:${CONTACT_MAIL}?subject=${encodeURIComponent('【残響】')}`;
 
   // 通知を押して開いたとき（?notice=1）は、すぐにお知らせを出す
   if (new URLSearchParams(location.search).get('notice')) {
