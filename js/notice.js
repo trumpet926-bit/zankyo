@@ -106,10 +106,14 @@
     }
   }
 
-  function unreadIds() {
+  // an updated notice counts as new again: it is "seen" per version (id, or id:time of the last update)
+  const seenKey = (n) => (n.edited ? `${n.id}:${n.edited}` : n.id);
+
+  function unreadItems() {
     const seen = seenIds();
-    return items.filter((n) => !seen.has(n.id)).map((n) => n.id);
+    return items.filter((n) => !seen.has(seenKey(n)));
   }
+  const unreadIds = () => unreadItems().map((n) => n.id);
 
   // 上の「お知らせ」ボタンの赤い印と、ホーム画面のアイコンの数字
   function renderBadge() {
@@ -155,7 +159,7 @@
     const mine = mineIds();
     items.forEach((n) => {
       const card = document.createElement('article');
-      card.className = 'notice-item' + (!seen.has(n.id) ? ' fresh' : '');
+      card.className = 'notice-item' + (!seen.has(seenKey(n)) ? ' fresh' : '');
       const head = document.createElement('div');
       head.className = 'notice-item-head';
       const author = document.createElement('span');
@@ -169,7 +173,7 @@
       if (card.classList.contains('fresh')) {
         const tag = document.createElement('span');
         tag.className = 'notice-new';
-        tag.textContent = '新着';
+        tag.textContent = n.edited ? '更新' : '新着';
         head.appendChild(tag);
       }
       card.appendChild(head);
@@ -185,10 +189,17 @@
         p.textContent = n.body;
         card.appendChild(p);
       }
+      if (n.edited) {
+        const e = document.createElement('p');
+        e.className = 'notice-edited';
+        e.textContent = `${formatDate(n.edited)} に更新`;
+        card.appendChild(e);
+      }
       if (isOwner()) card.appendChild(ownerTools(n));
       else if (mine.has(n.id)) {
         const wrap = document.createElement('div');
         wrap.className = 'notice-mine';
+        wrap.appendChild(editButton(n));
         wrap.appendChild(deleteButton(n));
         card.appendChild(wrap);
       }
@@ -250,8 +261,36 @@
     }
     details.appendChild(ul);
     wrap.appendChild(details);
-    wrap.appendChild(deleteButton(n));
+    const tools = document.createElement('div');
+    tools.className = 'notice-tools';
+    tools.appendChild(editButton(n));
+    tools.appendChild(deleteButton(n));
+    wrap.appendChild(tools);
     return wrap;
+  }
+
+  // なおす：書いた本人（持ち主はどれでも）が、あとから見出しや本文を直したり書き足したりする
+  let editingId = null;
+  function editButton(n) {
+    const b = document.createElement('button');
+    b.className = 'btn small notice-edit';
+    b.textContent = 'なおす';
+    b.addEventListener('click', () => {
+      editingId = n.id;
+      $('noticeTitleInput').value = n.title || '';
+      $('noticeBodyInput').value = n.body || '';
+      $('noticeSend').textContent = '更新する';
+      $('noticeCompose').hidden = false;
+      $('noticeWrite').hidden = true;
+      $('noticeSendNote').textContent = '直したら「更新する」を押してください。読んだ人にも、もう一度お知らせします。';
+      $('noticeCompose').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      $('noticeBodyInput').focus();
+    });
+    return b;
+  }
+  function stopEditing() {
+    editingId = null;
+    $('noticeSend').textContent = '全員に送る';
   }
 
   // 書くときの名前（持ち主は名前を入れていなければ「タカシ」）
@@ -408,20 +447,22 @@
 
   // まだ読んでいないお知らせを「読んだ」にする。名前が決まっていれば、読んだことを書いた側に知らせる
   async function markRead() {
-    const ids = unreadIds();
+    const fresh = unreadItems();
+    const ids = fresh.map((n) => n.id);
+    const keys = fresh.map(seenKey);
     if (!ids.length) {
       renderBadge();
       return;
     }
     if (!settings.noticeName) {
       // 持ち主は名前がなくても読んだことにする。ほかの人は名前を入れるまで「新着」のまま
-      if (isOwner()) markSeen(ids);
+      if (isOwner()) markSeen(keys);
       renderBadge();
       return;
     }
     try {
       const res = await post({ action: 'notice-read', reader: readerId(), name: settings.noticeName, ids });
-      if (res.ok) markSeen(ids);
+      if (res.ok) markSeen(keys);
     } catch (e) {
       // 次に開いたときにもう一度
     }
@@ -498,6 +539,27 @@
     }
     $('noticeSend').disabled = true;
     $('noticeSendNote').textContent = '送っています…';
+    if (editingId) {
+      try {
+        const res = await post({ action: 'notice-edit', id: editingId, ownerKey: isOwner() ? ownerKey() : undefined, reader: readerId(), title, body });
+        if (!res.ok) throw new Error(res.error);
+        markSeen([`${editingId}:${res.edited}`]); // 自分で直したものは「更新」にしない
+        stopEditing();
+        $('noticeTitleInput').value = '';
+        $('noticeBodyInput').value = '';
+        $('noticeCompose').hidden = true;
+        $('noticeWrite').hidden = false;
+        $('noticeSendNote').textContent = '更新しました。';
+        await loadList(true);
+        renderList();
+      } catch (e) {
+        $('noticeSendNote').textContent = e.message === 'key'
+          ? 'まだ準備中です。タカシの作業が終わると、直せるようになります。'
+          : '更新できませんでした。インターネットにつながっているか確認してください。';
+      }
+      $('noticeSend').disabled = false;
+      return;
+    }
     try {
       const res = await post({ action: 'notice-post', ownerKey: isOwner() ? ownerKey() : undefined, reader: readerId(), name: writerName(), title, body });
       if (!res.ok) {
@@ -550,6 +612,12 @@
   $('noticeCancel').addEventListener('click', () => {
     $('noticeCompose').hidden = true;
     $('noticeWrite').hidden = false;
+    if (editingId) {
+      stopEditing();
+      $('noticeTitleInput').value = '';
+      $('noticeBodyInput').value = '';
+      $('noticeSendNote').textContent = '';
+    }
   });
 
   // 持ち主への連絡（SMS。相手の端末が対応していれば RCS になる）

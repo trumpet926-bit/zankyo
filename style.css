@@ -2079,3 +2079,8 @@ html.theme-xmas .tool-section::before {
 @keyframes notice-ring { 0%, 70%, 100% { transform: rotate(0); } 76% { transform: rotate(14deg); } 82% { transform: rotate(-12deg); } 88% { transform: rotate(8deg); } 94% { transform: rotate(-5deg); } }
 .header-notice.has-new svg { transform-origin: 50% 15%; animation: notice-ring 2.4s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .header-notice.has-new svg { animation: none; } }
+
+/* お知らせ：なおす（2026-11-26） */
+.notice-edited { margin: 8px 0 0; font-size: 12px; color: var(--muted); }
+.notice-tools { display: flex; gap: 8px; }
+.notice-mine { gap: 8px; }
