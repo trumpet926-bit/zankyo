@@ -2084,3 +2084,29 @@ html.theme-xmas .tool-section::before {
 .notice-edited { margin: 8px 0 0; font-size: 12px; color: var(--muted); }
 .notice-tools { display: flex; gap: 8px; }
 .notice-mine { gap: 8px; }
+
+/* ---- タブレット・パソコン（横に広い画面）向け（2026-11-26）。スマホの見た目はそのまま ---- */
+/* 上の帯：お知らせ と 紹介 のあいだを少し空けて、どちらも押しやすく（指1本分の幅を確保） */
+.header-notice + .header-share { margin-left: 12px; }
+.header-share { min-width: 48px; min-height: 44px; justify-content: center; border-radius: 14px; }
+.header-share:active { background: rgba(0, 0, 0, 0.06); }
+
+@media (min-width: 900px) {
+  main { max-width: 1120px; padding: 24px 32px 110px; }
+  /* お知らせの案内・ホーム画面に追加の案内は、読みやすい幅に */
+  main > .notice-intro, main > .install-banner { max-width: 720px; margin-left: auto; margin-right: auto; }
+  /* メトロノームと音階は、カードを2列に並べる */
+  #panel-metronome.active, #panel-scale.active {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 24px; align-items: start;
+  }
+  #panel-metronome > .tool-section, #panel-scale > .tool-section { margin-top: 0; margin-bottom: 24px; }
+  /* チューナー・録音・オンライン合奏は1列のまま、少し広く */
+  #panel-tuner, #panel-recorder, #panel-ensemble { max-width: 760px; margin: 0 auto; }
+  /* 下のタブは、まん中に寄せて押しやすい幅に */
+  .tab-bar { justify-content: center; }
+  .tab { flex: 0 1 150px; font-size: 13px; padding: 14px 8px; }
+  .tab svg { width: 28px; height: 28px; }
+  /* 上の帯も、ボタンどうしにゆとり */
+  .app-header { padding-left: 28px; padding-right: 28px; }
+  .header-notice + .header-share { margin-left: 18px; }
+}
