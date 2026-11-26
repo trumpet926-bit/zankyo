@@ -1486,11 +1486,15 @@ renderMicChoices();
 // 音を出す場所：外付けレコーダーのスピーカーではなく、本体や Bluetooth から鳴らす（選べる端末だけ）
 setPreferredSpeaker(settings.speakerId);
 async function renderSpeakerChoices() {
-  $('speakerRow').hidden = !canPickSpeaker;
-  $('speakerNote').hidden = canPickSpeaker || !/Android/i.test(navigator.userAgent);
-  if (!canPickSpeaker) return;
   let outs = [];
-  try { outs = await listSpeakers(); } catch (e) { /* 一覧がとれないときは「おまかせ」だけ */ }
+  if (canPickSpeaker) {
+    try { outs = await listSpeakers(); } catch (e) { /* 一覧がとれないときは選べない扱い */ }
+  }
+  // Android の Chrome は「出口を選ぶ」機能はあっても、スピーカーの一覧を教えてくれない → 選ぶ欄は出さず、本体での切り替え方を案内する
+  const pickable = canPickSpeaker && outs.length > 0;
+  $('speakerRow').hidden = !pickable;
+  $('speakerNote').hidden = pickable || !/Android/i.test(navigator.userAgent);
+  if (!pickable) return;
   const sel = $('outSpeaker');
   sel.innerHTML = '';
   const auto = document.createElement('option');
