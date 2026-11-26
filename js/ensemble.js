@@ -257,7 +257,7 @@
   function createPeer(peerId, peerSid, name) {
     closePeer(peerId);
     const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
-    const peer = { pc, sid: peerSid, name, pendingIce: [], state: 'つないでいます…', latency: null, audio: new Audio(), meter: null };
+    const peer = { pc, sid: peerSid, name, pendingIce: [], state: 'つないでいます…', latency: null, audio: useSpeakerFor(new Audio()), meter: null };
     peer.audio.autoplay = true;
     peer.audio.playsInline = true;
     peers[peerId] = peer;

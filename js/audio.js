@@ -119,7 +119,7 @@ function audioOutput(ctx) {
 function setElementRoute(on) {
   if (on && !elementRoute) {
     const node = getAudioContext().createMediaStreamDestination();
-    const audio = new Audio();
+    const audio = useSpeakerFor(new Audio());
     audio.srcObject = node.stream;
     audio.play().catch(() => {});
     elementRoute = { node, audio };
@@ -134,8 +134,41 @@ function setElementRoute(on) {
 function getAudioContext() {
   if (!sharedAudioContext) {
     sharedAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+    applySpeaker(sharedAudioContext);
   }
   return sharedAudioContext;
+}
+
+// 音を出す場所（'' = おまかせ）。マイクだけ外付けのレコーダーにして、音は本体や Bluetooth のスピーカーから出す。
+// 選べるのは、ブラウザが「音の出口を選ぶ」機能（setSinkId）を持っているときだけ（パソコンの Chrome・Edge など）
+const canPickSpeaker = (window.AudioContext && 'setSinkId' in AudioContext.prototype) ||
+  (window.HTMLMediaElement && 'setSinkId' in HTMLMediaElement.prototype);
+let preferredSpeakerId = '';
+const speakerTargets = new Set();
+
+function applySpeaker(target) {
+  if (target && typeof target.setSinkId === 'function') {
+    target.setSinkId(preferredSpeakerId || '').catch(() => {});
+  }
+}
+
+// <audio> の部品も、選んだ出口から鳴らす
+function useSpeakerFor(el) {
+  speakerTargets.add(el);
+  applySpeaker(el);
+  return el;
+}
+
+function setPreferredSpeaker(id) {
+  preferredSpeakerId = id || '';
+  if (sharedAudioContext) applySpeaker(sharedAudioContext);
+  speakerTargets.forEach(applySpeaker);
+}
+
+async function listSpeakers() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return [];
+  const devices = await navigator.mediaDevices.enumerateDevices();
+  return devices.filter((d) => d.kind === 'audiooutput' && d.deviceId && d.deviceId !== 'default' && d.deviceId !== 'communications');
 }
 
 // メトロノームの音色。iPhone の小さなスピーカーでも聞こえやすいよう、倍音（硬さ）の多い音を用意する

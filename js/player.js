@@ -2,7 +2,7 @@
 
 class PracticePlayer {
   constructor() {
-    this.audio = new Audio();
+    this.audio = typeof useSpeakerFor === 'function' ? useSpeakerFor(new Audio()) : new Audio();
     this.audio.preload = 'auto';
     // 速さを変えても、音の高さは変えない
     this.audio.preservesPitch = true;

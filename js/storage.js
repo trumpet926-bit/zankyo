@@ -36,6 +36,7 @@ const DEFAULT_SETTINGS = {
   droneVolume: 0.6, // 基準音の音量
   recWithMetronome: false,
   micId: '', // 使うマイク（'' = おまかせ）
+  speakerId: '', // 音を出す場所（'' = おまかせ）
   metroViaElement: false, // メトロノームを相手の声と同じ部品から鳴らす（オンライン合奏で聞こえないパソコン向け）
 };
 

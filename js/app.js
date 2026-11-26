@@ -1210,7 +1210,7 @@ $('trimSave').addEventListener('click', async () => {
 // 長さを調べる（読めないときは 0）
 function audioDuration(blob) {
   return new Promise((resolve) => {
-    const audio = new Audio();
+    const audio = useSpeakerFor(new Audio());
     const url = URL.createObjectURL(blob);
     const done = (value) => {
       URL.revokeObjectURL(url);
@@ -1483,12 +1483,44 @@ if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
 }
 renderMicChoices();
 
+// 音を出す場所：外付けレコーダーのスピーカーではなく、本体や Bluetooth から鳴らす（選べる端末だけ）
+setPreferredSpeaker(settings.speakerId);
+async function renderSpeakerChoices() {
+  $('speakerRow').hidden = !canPickSpeaker;
+  $('speakerNote').hidden = canPickSpeaker || !/Android/i.test(navigator.userAgent);
+  if (!canPickSpeaker) return;
+  let outs = [];
+  try { outs = await listSpeakers(); } catch (e) { /* 一覧がとれないときは「おまかせ」だけ */ }
+  const sel = $('outSpeaker');
+  sel.innerHTML = '';
+  const auto = document.createElement('option');
+  auto.value = ''; auto.textContent = 'おまかせ';
+  sel.appendChild(auto);
+  outs.forEach((d, i) => {
+    const o = document.createElement('option');
+    o.value = d.deviceId; o.textContent = d.label || `スピーカー ${i + 1}`;
+    sel.appendChild(o);
+  });
+  sel.value = outs.some((d) => d.deviceId === settings.speakerId) ? settings.speakerId : '';
+}
+$('outSpeaker').addEventListener('change', (e) => {
+  settings.speakerId = e.target.value;
+  setPreferredSpeaker(settings.speakerId);
+  saveSettings(settings);
+});
+$('outSpeaker').addEventListener('focus', renderSpeakerChoices);
+if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
+  navigator.mediaDevices.addEventListener('devicechange', renderSpeakerChoices);
+}
+renderSpeakerChoices();
+
 // 録音を始めたら、実際に使っているマイクの名前を出す（外付けを選べているか確かめられる）
 function showMicInUse(stream) {
   const track = stream && stream.getAudioTracks()[0];
   $('recMicNow').textContent = track && track.label ? `使っているマイク：${track.label}` : '';
   $('recMicNow').hidden = !(track && track.label);
   renderMicChoices();
+  renderSpeakerChoices(); // マイクを許可すると、スピーカーの名前も出るようになる
 }
 
 $('recWithMetronome').checked = settings.recWithMetronome;
