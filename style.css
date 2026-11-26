@@ -2110,3 +2110,6 @@ html.theme-xmas .tool-section::before {
   .app-header { padding-left: 28px; padding-right: 28px; }
   .header-notice + .header-share { margin-left: 18px; }
 }
+
+/* 録音：使うマイク（名前が長いことがある） */
+.mic-select { max-width: 62%; text-overflow: ellipsis; }

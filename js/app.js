@@ -13,11 +13,14 @@ setAudioSessionForMic(false);
 function micErrorMessage(e) {
   switch (e && e.name) {
     case 'NotAllowedError':
-      return 'マイクの使用が許可されていません。iPhoneは「設定」→「アプリ」→「Safari」→「マイク」を「確認」か「許可」にして、アプリを開き直してください。';
+      return /Android/i.test(navigator.userAgent)
+        ? 'マイクの使用が許可されていません。Android の「設定」→「アプリ」→「Chrome」（または「残響」）→「権限」→「マイク」を「許可」にして、アプリを開き直してください。'
+        : 'マイクの使用が許可されていません。iPhoneは「設定」→「アプリ」→「Safari」→「マイク」を「確認」か「許可」にして、アプリを開き直してください。';
     case 'NotFoundError':
       return 'マイクが見つかりませんでした。';
     case 'NotReadableError':
-      return 'マイクを使えませんでした。通話中や、ほかのアプリがマイクを使っていないか確認してください。';
+      return 'マイクを使えませんでした。通話中や、ほかのアプリがマイクを使っていないか確認してください。' +
+        '外付けのレコーダー（H4n Pro など）は、レコーダーのメニューで「オーディオインターフェース」にして電池で動かし、つなぎ直してから下の「使うマイク」で選んでください。';
     default:
       return `マイクを使えませんでした。（${e && e.name ? e.name : '原因不明'}）`;
   }
@@ -1317,6 +1320,7 @@ async function startRecording({ withMetronome = settings.recWithMetronome, onErr
     return false;
   }
   usage.track('recorder');
+  showMicInUse(recorder.stream);
   // 部屋に入っているときは、部屋のメトロノームに合わせて録音する（勝手に鳴らし始めない）
   if (withMetronome && !metronome.isRunning && !syncHooks.active()) {
     await startMetronome();
@@ -1444,6 +1448,48 @@ $('recButton').addEventListener('click', () => {
     startRecording();
   }
 });
+
+// 使うマイク：外付けのレコーダーやUSBマイクを選ぶ（名前はマイクを一度使うと出てくる）
+setPreferredMic(settings.micId);
+async function renderMicChoices() {
+  let mics = [];
+  try { mics = await listMicrophones(); } catch (e) { /* 一覧がとれないときは「おまかせ」だけ */ }
+  const sel = $('recMic');
+  sel.innerHTML = '';
+  const auto = document.createElement('option');
+  auto.value = ''; auto.textContent = 'おまかせ';
+  sel.appendChild(auto);
+  mics.forEach((m, i) => {
+    const o = document.createElement('option');
+    o.value = m.deviceId;
+    o.textContent = m.label || `マイク ${i + 1}`;
+    sel.appendChild(o);
+  });
+  if (settings.micId && !mics.some((m) => m.deviceId === settings.micId)) {
+    const o = document.createElement('option');
+    o.value = settings.micId; o.textContent = '前に選んだマイク（いまはつながっていません）';
+    sel.appendChild(o);
+  }
+  sel.value = settings.micId || '';
+}
+$('recMic').addEventListener('change', (e) => {
+  settings.micId = e.target.value;
+  setPreferredMic(settings.micId);
+  saveSettings(settings);
+});
+$('recMic').addEventListener('focus', renderMicChoices);
+if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
+  navigator.mediaDevices.addEventListener('devicechange', renderMicChoices);
+}
+renderMicChoices();
+
+// 録音を始めたら、実際に使っているマイクの名前を出す（外付けを選べているか確かめられる）
+function showMicInUse(stream) {
+  const track = stream && stream.getAudioTracks()[0];
+  $('recMicNow').textContent = track && track.label ? `使っているマイク：${track.label}` : '';
+  $('recMicNow').hidden = !(track && track.label);
+  renderMicChoices();
+}
 
 $('recWithMetronome').checked = settings.recWithMetronome;
 $('recWithMetronome').addEventListener('change', (e) => {

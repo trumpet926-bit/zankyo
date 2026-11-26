@@ -18,11 +18,47 @@ function setAudioSessionForMic(useMic) {
   }
 }
 
-function requestMicrophone() {
-  // 楽器の音をそのまま拾うため、通話用の自動補正は切る
-  return navigator.mediaDevices.getUserMedia({
-    audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
-  });
+// 使うマイク（'' = おまかせ）。外付けのレコーダーやUSBマイクを選べる
+let preferredMicId = '';
+function setPreferredMic(id) {
+  preferredMicId = id || '';
+}
+
+function requestMicrophone({ simple = false, deviceId = preferredMicId } = {}) {
+  // 楽器の音をそのまま拾うため、通話用の自動補正は切る（simple のときはブラウザにまかせる）
+  const audio = simple ? {} : { echoCancellation: false, noiseSuppression: false, autoGainControl: false };
+  if (deviceId) audio.deviceId = { exact: deviceId };
+  return navigator.mediaDevices.getUserMedia({ audio: Object.keys(audio).length ? audio : true });
+}
+
+// Android で外付けのレコーダー（ZOOM H4n Pro など）をつなぐと、細かい指定のままでは開けないことがある。
+// そのときは指定をゆるめたり、ほかのマイクを順に試したりする（許可されていないときは試さない）
+async function requestMicrophoneSafely() {
+  try {
+    return await requestMicrophone();
+  } catch (first) {
+    if (first.name === 'NotAllowedError' || first.name === 'SecurityError') throw first;
+    const tries = [{ simple: true }];
+    if (preferredMicId) tries.push({ deviceId: '' }, { simple: true, deviceId: '' });
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      devices.filter((d) => d.kind === 'audioinput' && d.deviceId && d.deviceId !== 'default' && d.deviceId !== preferredMicId)
+        .forEach((d) => tries.push({ simple: true, deviceId: d.deviceId }));
+    } catch (e) { /* 一覧がとれなくても、ゆるめた指定は試す */ }
+    for (const t of tries) {
+      try {
+        return await requestMicrophone(t);
+      } catch (e) { /* 次を試す */ }
+    }
+    throw first;
+  }
+}
+
+// 選べるマイクの一覧（名前はマイクを一度許可したあとでないと出ない）
+async function listMicrophones() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return [];
+  const devices = await navigator.mediaDevices.enumerateDevices();
+  return devices.filter((d) => d.kind === 'audioinput' && d.deviceId && d.deviceId !== 'default' && d.deviceId !== 'communications');
 }
 
 // 今使っているマイクの数（オンライン合奏とタイミング調整など、同時に使うことがある）
@@ -33,14 +69,14 @@ async function openMicrophone() {
   setAudioSessionForMic(true);
   let stream;
   try {
-    stream = await requestMicrophone();
+    stream = await requestMicrophoneSafely();
   } catch (e) {
     // 「おまかせ」でマイクを使えなかったときは、以前の「再生と録音」に切り替えてもう一度試す
     if (navigator.audioSession && micSessionType === 'auto' && e.name !== 'NotAllowedError') {
       micSessionType = 'play-and-record';
       setAudioSessionForMic(true);
       try {
-        stream = await requestMicrophone();
+        stream = await requestMicrophoneSafely();
       } catch (retryError) {
         if (!openMics) setAudioSessionForMic(false);
         throw retryError;
