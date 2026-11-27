@@ -579,7 +579,7 @@
     }
   });
 
-  $('syncCalib').addEventListener('click', autoCalibrate);
+  $('syncCalib').addEventListener('click', () => autoCalibrate()); // (the click event must not be taken for a 'given' calibration)
 
   // ---------- 招待（QRコードとリンク） ----------
   function inviteUrl() {
