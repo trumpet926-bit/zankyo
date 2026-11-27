@@ -26,7 +26,7 @@ function setPreferredMic(id) {
 
 function requestMicrophone({ simple = false, deviceId = preferredMicId } = {}) {
   // 楽器の音をそのまま拾うため、通話用の自動補正は切る（simple のときはブラウザにまかせる）
-  const audio = simple ? {} : { echoCancellation: false, noiseSuppression: false, autoGainControl: false };
+  const audio = simple ? {} : { echoCancellation: false, noiseSuppression: false, autoGainControl: false, sampleRate: { ideal: 48000 } };
   if (deviceId) audio.deviceId = { exact: deviceId };
   return navigator.mediaDevices.getUserMedia({ audio: Object.keys(audio).length ? audio : true });
 }
@@ -133,7 +133,9 @@ function setElementRoute(on) {
 
 function getAudioContext() {
   if (!sharedAudioContext) {
-    sharedAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+    // 音の扱いは 48kHz にそろえる（外付けレコーダーも 48kHz で使う。違う速さどうしをつなぐと途切れの原因になる）
+    const AC = window.AudioContext || window.webkitAudioContext;
+    try { sharedAudioContext = new AC({ sampleRate: 48000 }); } catch (e) { sharedAudioContext = new AC(); }
     applySpeaker(sharedAudioContext);
   }
   return sharedAudioContext;
