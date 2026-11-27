@@ -1,4 +1,4 @@
-// 聞いてほしい録音：持ち主が選んだ録音だけを、残響のページ（ロゴを5回たたくと開く）に置いて、誰でも聞けるようにする
+// 今日の練習（旧：聞いてほしい録音）：持ち主が選んだ録音だけを、残響のページ（ロゴを5回たたくと開く）に置いて、誰でも聞けるようにする
 // 録音は持ち主の Google Drive（受け取り口）に置く。置く・外すは、時計の登録の番号を持っている端末（持ち主）だけ
 
 const SHARE_DRIVE_URL = 'https://script.google.com/macros/s/AKfycbyBRsbow4IEWd_5cUlqTn5QV6GqzOmiVE6MX3zUJQ7sWn3z1AoUiGW4zNcYd01yuFTznA/exec';
@@ -70,7 +70,7 @@ function startHiddenShare(item, rec) {
   form.querySelector('textarea').focus();
 }
 
-// 残響のページの「聞いてほしい録音」
+// 残響のページの「今日の練習」
 async function renderSharedRecordings() {
   const section = $('zkSharedSection');
   const box = $('zkShared');

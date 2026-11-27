@@ -1544,7 +1544,7 @@ html.theme-xmas .tool-section::before {
 .zk-watch-note { margin: 8px 0 0; font-size: 11px; color: #a8a28f; }
 #watchCopy { margin-top: 8px; }
 
-/* 残響のページの「聞いてほしい録音」 */
+/* 残響のページの「今日の練習」 */
 #zkSharedSection { margin-top: 36px; }
 .zk-shared { display: grid; gap: 14px; }
 .zk-shared-item { padding: 14px; border: 1px solid rgba(214, 178, 94, 0.3); border-radius: 14px; background: rgba(255, 255, 255, 0.03); }
