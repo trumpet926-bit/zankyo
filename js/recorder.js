@@ -14,16 +14,24 @@ class Recorder {
     // ブラウザが対応している形式を選ぶ（Chrome/Android は webm、iPhone は mp4）
     const mimeType = ['audio/webm;codecs=opus', 'audio/mp4', 'audio/webm']
       .find((type) => MediaRecorder.isTypeSupported(type));
-    this.mediaRecorder = new MediaRecorder(this.stream, mimeType ? { mimeType } : undefined);
+    // a little more than the default bit rate; data comes in every second (nothing is lost if the device hiccups at the end)
+    this.mediaRecorder = new MediaRecorder(this.stream, Object.assign({ audioBitsPerSecond: 160000 }, mimeType ? { mimeType } : {}));
     this.chunks = [];
     this.mediaRecorder.ondataavailable = (e) => {
       if (e.data.size > 0) this.chunks.push(e.data);
     };
-    this.mediaRecorder.start();
+    this.mediaRecorder.start(1000);
     this.startedAt = performance.now();
 
     // 音量メーター用
-    const ctx = getAudioContext();
+    // 外付けのレコーダー（USB）は 44.1kHz などで動くことが多い。メトロノームと同じ音の部品（48kHz など）に
+    // つなぐと、Android では途中で音が途切れることがあるため、音量メーターはマイクと同じ速さの別の部品で見る
+    let ctx = getAudioContext();
+    const micRate = (this.stream.getAudioTracks()[0].getSettings() || {}).sampleRate;
+    this.meterCtx = null;
+    if (micRate && micRate !== ctx.sampleRate) {
+      try { this.meterCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: micRate }); ctx = this.meterCtx; } catch (e) { this.meterCtx = null; }
+    }
     await ctx.resume();
     this.source = ctx.createMediaStreamSource(this.stream);
     this.analyser = ctx.createAnalyser();
@@ -44,6 +52,7 @@ class Recorder {
       this.mediaRecorder.onstop = () => {
         const blob = new Blob(this.chunks, { type: this.mediaRecorder.mimeType });
         this.source.disconnect();
+        if (this.meterCtx) { this.meterCtx.close().catch(() => {}); this.meterCtx = null; }
         if (this.ownStream) closeMicrophone(this.stream);
         resolve({ blob, duration });
       };
