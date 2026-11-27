@@ -918,9 +918,42 @@ function fileNameFor(rec) {
   return `${base}.${ext}`;
 }
 
+// 選んで削除：録音をまとめて消す（チェックをつけたものだけ／すべて）
+let selecting = false;
+const picked = new Set();
+function updateSelectBar() {
+  $('selectBar').hidden = !selecting;
+  $('selectButton').hidden = selecting || recordings.length === 0;
+  $('selectDelete').disabled = picked.size === 0;
+  $('selectDelete').textContent = picked.size ? `削除（${picked.size}件）` : '削除';
+  $('selectAll').textContent = picked.size === recordings.length && recordings.length ? '選ぶのをやめる' : 'すべて選ぶ';
+}
+function setSelecting(on) {
+  selecting = on; picked.clear();
+  renderRecordings();
+}
+$('selectButton').addEventListener('click', () => setSelecting(true));
+$('selectCancel').addEventListener('click', () => setSelecting(false));
+$('selectAll').addEventListener('click', () => {
+  if (picked.size === recordings.length) picked.clear(); else recordings.forEach((r) => picked.add(r.id));
+  renderRecordings();
+});
+$('selectDelete').addEventListener('click', async () => {
+  const targets = recordings.filter((r) => picked.has(r.id));
+  if (!targets.length) return;
+  if (!confirm(`${targets.length}件の録音を削除しますか？（元に戻せません）`)) return;
+  recordings = recordings.filter((r) => !picked.has(r.id));
+  if (picked.has(selectedId)) { player.unload(); selectedId = null; $('player').hidden = true; }
+  if (canSaveRecordings) {
+    for (const r of targets) { try { await recordingsDb.remove(r.id); } catch (e) { /* 画面からは消す */ } }
+  }
+  setSelecting(false);
+});
+
 function renderRecordings() {
   const list = $('recList');
   list.innerHTML = '';
+  updateSelectBar();
   if (!canSaveRecordings) {
     list.innerHTML = '<p class="note">この開き方では録音を保存できないため、ページを閉じると消えます。</p>';
   }
@@ -931,6 +964,23 @@ function renderRecordings() {
   recordings.forEach((rec) => {
     const item = document.createElement('div');
     item.className = 'rec-item' + (rec.id === selectedId ? ' selected' : '');
+    if (selecting) {
+      // 選ぶあいだは、行をたたくとチェックがつく・外れる
+      item.classList.add('picking');
+      if (picked.has(rec.id)) item.classList.add('picked');
+      item.innerHTML = `
+        <label class="rec-pick"><input type="checkbox" ${picked.has(rec.id) ? 'checked' : ''}>
+          <span class="rec-main-text"><span class="rec-title"></span>
+          <span class="rec-meta">${formatDate(rec.createdAt)} ・ ${formatTime(rec.duration)}</span></span></label>`;
+      item.querySelector('.rec-title').textContent = displayName(rec);
+      item.querySelector('input').addEventListener('change', (e) => {
+        if (e.target.checked) picked.add(rec.id); else picked.delete(rec.id);
+        item.classList.toggle('picked', e.target.checked);
+        updateSelectBar();
+      });
+      list.appendChild(item);
+      return;
+    }
     item.innerHTML = `
       <button class="rec-main">
         <span class="rec-title"></span>

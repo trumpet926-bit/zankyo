@@ -570,8 +570,14 @@
 
       <div class="list-head">
         <h2>録音したもの</h2>
+        <button class="btn small" id="selectButton">選んで削除</button>
         <button class="btn small" id="importButton">ファイルを開く</button>
         <input type="file" id="importInput" accept="audio/*,.m4a,.mp3,.wav,.webm,.aac,.ogg" multiple hidden>
+      </div>
+      <div class="select-bar" id="selectBar" hidden>
+        <button class="btn small" id="selectAll">すべて選ぶ</button>
+        <button class="btn small danger" id="selectDelete" disabled>削除</button>
+        <button class="btn small" id="selectCancel">やめる</button>
       </div>
       <div id="recList"></div>
     </section>

@@ -2113,3 +2113,11 @@ html.theme-xmas .tool-section::before {
 
 /* 録音：使うマイク（名前が長いことがある） */
 .mic-select { max-width: 62%; text-overflow: ellipsis; }
+
+/* 録音：選んで削除 */
+.select-bar { display: flex; gap: 8px; margin: 4px 0 10px; flex-wrap: wrap; }
+.rec-item.picking { cursor: pointer; }
+.rec-item.picked { outline: 2px solid var(--accent); }
+.rec-pick { display: flex; align-items: center; gap: 12px; width: 100%; padding: 6px 4px; cursor: pointer; }
+.rec-pick input { width: 22px; height: 22px; accent-color: #E4572E; flex: none; }
+.rec-main-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
